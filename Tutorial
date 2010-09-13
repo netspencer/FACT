@@ -1,0 +1,70 @@
+ ________   ________   ________   _________
+/\  _____\ /\  ___  \ /\  _____\ /\___  ___\
+\ \ \____/ \ \ \__L\ \\ \ \____/ \/__/\ \__/
+ \ \  ___\  \ \  ____ \\ \ \         \ \ \
+  \ \ \__/   \ \ \__/\ \\ \ \______   \ \ \
+   \ \_\      \ \_\ \ \_\\ \_______\   \ \_\
+    \/_/       \/_/  \/_/ \/_______/    \/_/
+
+    ~ 	  A Primer     ~
+    ~ By Matthew Plant ~
+
+Welcome to FACT. Unless you download random tars off the
+internet, you are probably aware that FACT is a programming
+language. I'm guessing you want to learn how to program in
+it, as you are reading the tutorial, so we'll dive in
+almost right away, but the first thing we need to do is
+discuss what FACT really is. Not for your benefit, but
+mine.
+
+Okay, so we are all aware that FACT is a programming
+language, but what kind? Object Oriented? As the creator, 
+I can safely say that I have absolutely no clue whatsoever.
+I mean, really, want to know what FACT stands for? Functions 
+Are Classes Too. I Don't even know how I managed to work that 
+out, but it's awesome. Of course that doesn't mean that
+there aren't any regular functions, there are. But they can
+also function as classes. Crazy. I think Lisp did this but
+I am unsure of it.
+
+ANYWAY, on to the tutorial!
+
+Also, a little note before I start, things entered into the
+interpreter will be preceded by "%". Output from the inter-
+preter will be preceded by ">". My comments will be
+preceded by "#". Now, let us begin.
+
+Declaring variables.
+This is simple. Try:
+% def var;
+> 0
+Congratulations! You've declared a variable! You can re-declare
+it if you want...
+% def var;
+> 0
+Or you could set it!
+% var = 241;
+> 241
+% var + 5;
+> 246
+Yaaaaaaaay!
+But what about arrays? Simple!
+% def [10] var;
+> 0
+% def [10][10] var;
+> 0
+% def [10][10][10][10][10][10] var;
+# this may take a bit, hopefully not to long
+# it takes less than a second on my computer
+> 0
+% var [9][9][9][9][9][9];
+> 
+% (var [9][9][9][9][9][9]) = 1243;
+# the parenthesis are necessary in this version
+# of the interpreter, as I haven't bothered to
+# fix the parser to allow for it.
+Well, now you get how that works.
+
+Control:
+There's if and while.
+That's it. Sorry man. No for, because I'm tired.
