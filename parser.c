@@ -121,6 +121,8 @@ get_block_code (char *block)
     return FUNC_OBJ;
   else if (!strcmp (block, ":"))
     return IN_SCOPE;
+  else if (!strcmp (block, ","))
+    return COMMA;
   else if (!strcmp (block, "{"))
     return OP_CURLY;
   else if (!strcmp (block, "}"))
@@ -359,6 +361,7 @@ void rev_shunting_yard (linked_word *scan)
 	  return;
 	  
 	case IN_SCOPE:
+	case COMMA:
 	case RETURN_STAT:
 	  scan->next->previous = NULL;
 	  rev_shunting_yard (scan->next);

@@ -1,51 +1,78 @@
 #include "interpreter.h"
 
-struct { 
-  const char *name;
-  a_type (*function)(func *, char **);
-} primitives[] = {
-  {"=", set},
-  {"(", paren},
-  {"{", lambda_proc},
-  {"def", define},
-  {"defunc", defunc},
-  {"[", return_array},
-  {"sizeof", size_of},
-  {"@", add_func},
-  {"$", run_func},
-  {"&", new_scope},
-  {":", in_scope},
-  {"\"", new_string},
-  {"printc", print_character},
-  {"getc", input_character},
-  {"printv", print_var},
-};
 
-struct { 
+struct _MATH_PRIMS
+{ 
   const char *name;
   a_type (*function)(a_type, a_type);
-} math_calls[] = {
-  {"+", add},
-  {"-", sub},
-  {"*", mult},
-  {"/", divide},
-  {"%", mod},
-  {"eq", equal},
-  {"nq", not_equal},
-  {">", more},
-  {"<", less},
-  {"meq", more_equal},
-  {"leq", less_equal},
-  {"and", and},
-  {"or", or},
 };
 
-int isprim (char *word)
-{
-  int num_of_prims;
-  int pos;
+static struct _MATH_PRIMS math_calls[] =
+  {
+    {"+",   add},
+    {"-",   sub},
+    {"*",   mult},
+    {"/",   divide},
+    {"%",   mod},
+    {"eq",  equal},
+    {"nq",  not_equal},
+    {">",   more},
+    {"<",   less},
+    {"meq", more_equal},
+    {"leq", less_equal},
+    {"and", and},
+    {"or",  or}
+  };
 
-  num_of_prims = ((sizeof primitives) / (sizeof primitives[0]));
+#define NUM_MATH_PRIMS 13
+
+struct _prims
+{ 
+  const char *name;
+  a_type (*function)(func *, char **);
+};
+
+static int num_of_prims = 0; 
+
+static struct _prims *primitives = NULL;
+
+void
+add_prim (const char *prim_name,
+	  a_type (*new_function)(func *, char **))
+{
+  num_of_prims++;
+
+  primitives = (struct _prims *) better_realloc (primitives,
+						 sizeof (struct _prims) * num_of_prims);
+
+  primitives[num_of_prims - 1].name = prim_name;
+  primitives[num_of_prims - 1].function = new_function;
+}
+
+void
+init_std_prims (void)
+{
+  add_prim ("=", set);
+  add_prim ("(", paren);
+  add_prim ("{", lambda_proc);
+  add_prim ("def", define);
+  add_prim ("defunc", defunc);
+  /* add_prim ("[", return_array); */
+  add_prim ("sizeof", size_of);
+  add_prim ("@", add_func);
+  add_prim ("$", run_func);
+  add_prim ("&", new_scope);
+  add_prim (":", in_scope);
+  add_prim ("\'", new_string);
+  add_prim ("printc", print_character);
+  add_prim ("getc", input_character);
+  add_prim ("printv", print_var);
+}
+
+int
+isprim (char *word)
+{
+  int pos;
 
   for (pos = 0; pos < num_of_prims; pos++)
     {
@@ -56,14 +83,12 @@ int isprim (char *word)
   return -1;
 }
 
-int ismathcall (char *word)
+int
+ismathcall (char *word)
 {
-  int num_of_math_prims;
   int pos;
 
-  num_of_math_prims = ((sizeof math_calls) / (sizeof math_calls[0]));
-
-  for (pos = 0; pos < num_of_math_prims; pos++)
+  for (pos = 0; pos < NUM_MATH_PRIMS; pos++)
     {
       if (strcmp (math_calls[pos].name, word) == 0)
         return pos;
@@ -72,7 +97,8 @@ int ismathcall (char *word)
   return -1;
 }
 
-a_type runprim (func *scope, char **words)
+a_type
+runprim (func *scope, char **words)
 {
   a_type return_value;
   int prim_num;
