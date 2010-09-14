@@ -319,7 +319,8 @@ void swap (linked_word *swapping)
     temp_prev->next = swapping;
 }
 
-void rev_shunting_yard (linked_word *scan)
+void
+rev_shunting_yard (linked_word *scan)
 {
   linked_word *find_end;
 
@@ -331,7 +332,16 @@ void rev_shunting_yard (linked_word *scan)
 	case OP_BRACKET:
 	case OP_PAREN:
 	  rev_shunting_yard (scan->hidden);
-	  break;
+	  scan->next->previous = NULL;
+	  rev_shunting_yard (scan->next);
+
+	  for (find_end = scan->next;
+	       find_end->previous != NULL;
+	       find_end = find_end->previous);
+
+	  scan->next = find_end;
+	  find_end->previous = scan;
+	  return;
 	  
 	case PLUS:
 	case MINUS:
@@ -341,6 +351,12 @@ void rev_shunting_yard (linked_word *scan)
 	    swap (scan);
 	  break;
 	  
+	case MULTIPLY:
+	case DIVIDE:
+	case MOD:
+	  swap (scan);
+	  break;
+
 	case SET:
 	case AND:
 	case OR:
@@ -351,43 +367,32 @@ void rev_shunting_yard (linked_word *scan)
 	case LESS_EQ:
 	case MORE_EQ:
 	  swap (scan);
-	  scan->next->next->previous = NULL;
-	  rev_shunting_yard (scan->next->next);
-	  for (find_end = scan->next->next;
-	       find_end->previous != NULL;
-	       find_end = find_end->previous);
-	  scan->next->next = find_end;
-	  find_end->previous = scan->next;
-	  return;
-	  
-	case IN_SCOPE:
-	case COMMA:
-	case RETURN_STAT:
-	  scan->next->previous = NULL;
-	  rev_shunting_yard (scan->next);
-	  scan->next->previous = scan;
-	  return;
-	  
-	case MULTIPLY:
-	case DIVIDE:
-	case MOD:
-	  swap (scan);
-	  break;
 	  
 	case FUNC_RET:
 	case FUNC_OBJ:
 	  scan->next->next->previous = NULL;
 	  rev_shunting_yard (scan->next->next);
-	  scan->next->next->previous = scan->next;
-	  return;
+
+	  for (find_end = scan->next->next;
+	       find_end->previous != NULL;
+	       find_end = find_end->previous);
 	  
+	  scan->next->next = find_end;
+	  find_end->previous = scan;
+	  return;
+
+	case IN_SCOPE:
+	case COMMA:
+	case RETURN_STAT:
 	case CL_CURLY:
 	case SEMI:
 	  scan->next->previous = NULL;
 	  rev_shunting_yard (scan->next);
+
 	  for (find_end = scan->next;
 	       find_end->previous != NULL;
 	       find_end = find_end->previous);
+
 	  scan->next = find_end;
 	  find_end->previous = scan;
 	  return;
@@ -400,8 +405,9 @@ void rev_shunting_yard (linked_word *scan)
     }
 }
 
-void set_end (linked_word *start,
-	      linked_word *end)
+void
+set_end (linked_word *start,
+	 linked_word *end)
 {
   while (start->next != NULL)
     start = start->next;
@@ -412,7 +418,8 @@ void set_end (linked_word *start,
     end->previous = start;
 }
 
-void set_link (linked_word *scan)
+void
+set_link (linked_word *scan)
 {
   linked_word *temp_next;
   
@@ -425,12 +432,13 @@ void set_link (linked_word *scan)
 	  scan->hidden->previous = scan;
 	  set_end (scan->next, temp_next);
 	}
-      
+       
       scan = scan->next;
     }
 }  
 
-char **convert_link (linked_word *list)
+char **
+convert_link (linked_word *list)
 {
   char **result;
   int position;
@@ -444,102 +452,139 @@ char **convert_link (linked_word *list)
 	case PLUS:
 	  result[position] = "+";
 	  break;
+
 	case MINUS:
 	  result[position] = "-";
 	  break;
+
 	case MULTIPLY:
 	  result[position] = "*";
 	  break;
+
 	case DIVIDE:
 	  result[position] = "/";
 	  break;
+
 	case MOD:
 	  result[position] = "%";
 	  break;
+
 	case AT:
 	  result[position] = "@";
 	  break;
+
 	case SET:
 	  result[position] = "=";
 	  break;
+
 	case DEF:
 	  result[position] = "def";
 	  break;
+
 	case DEFUNC:
 	  result[position] = "defunc";
 	  break;
+
 	case FUNC_RET:
 	  result[position] = "$";
 	  break;
+
 	case FUNC_OBJ:
 	  result[position] = "&";
 	  break;
+
 	case IN_SCOPE:
 	  result[position] = ":";
 	  break;
+
+	case COMMA:
+	  result[position] = ",";
+	  break;
+	  
 	case OP_CURLY:
 	  result[position] = "{";
 	  break;
+
 	case CL_CURLY:
 	  result[position] = "}";
 	  break;
+
 	case OP_BRACKET:
 	  result[position] = "[";
 	  break;
+
 	case CL_BRACKET:
 	  result[position] = "]";
 	  break;
+
 	case OP_PAREN:
 	  result[position] = "(";
 	  break;
+
 	case CL_PAREN:
 	  result[position] = ")";
 	  break;
+
 	case QUOTE:
 	  result[position] = "\"";
 	  break;
+
 	case AND:
 	  result[position] = "and";
 	  break;
+
 	case OR:
 	  result[position] = "or";
 	  break;
+
 	case EQ:
 	  result[position] = "eq";
 	  break;
+
 	case NEQ:
 	  result[position] = "nq";
 	  break;
+
 	case LESS:
 	  result[position] = "<";
 	  break;
+
 	case MORE:
 	  result[position] = ">";
 	  break;
+
 	case LESS_EQ:
 	  result[position] = "leq";
 	  break;
+
 	case MORE_EQ:
 	  result[position] = "meq";
 	  break;
+
 	case SIZE:
 	  result[position] = "sizeof";
 	  break;
+
 	case IF:
 	  result[position] = "if";
 	  break;
+
 	case WHILE:
 	  result[position] = "while";
 	  break;
+
 	case SEMI:
 	  result[position] = ";";
 	  break;
+
 	case RETURN_STAT:
 	  result[position] = "return";
 	  break;
+
 	case UNKNOWN:
 	  result[position] = list->physical;
 	  break;
+
 	default:
 	  break;
 	}
@@ -661,23 +706,25 @@ int rev_shunting_yard (char **words, int block)
 
 #endif
 
-int get_exp_length (char **words, int block)//1, int block2)
+int
+get_exp_length (char **words, int block)
 {
   int pos;
 
   for (pos = 0; words[pos] != NULL
-         && words[pos][0] != block/*1
-				    && words[pos][0] != block2*/; pos++)
+         && words[pos][0] != block; pos++)
     {
       switch (words[pos][0])
         {
         case '(':
-          pos += get_exp_length (words + pos + 1, ')'/*, '\0'*/);
+          pos += get_exp_length (words + pos + 1, ')');
           break;
+	  
 	case '{':
         case '[':
-          pos += get_exp_length (words + pos + 1, words[pos][0] + 2/*, '\0'*/);
+          pos += get_exp_length (words + pos + 1, words[pos][0] + 2);
           break;
+	  
         default:
           break;
         }
@@ -686,24 +733,35 @@ int get_exp_length (char **words, int block)//1, int block2)
   return (words[pos] == NULL) ? pos : pos + 1;
 }
 
-int get_exp_length_first (char **words, int block)//1, int block2)
+int
+get_exp_length_first (char **words, int block)
 {
   int pos;
 
   for (pos = 0; words[pos] != NULL
-         && words[pos][0] != block/*1
-				    && words[pos][0] != block2*/; pos++)
+         && words[pos][0] != block; pos++)
     {
       switch (words[pos][0])
         {
         case '(':
-          pos += get_exp_length (words + pos + 1, ')'/*, '\0'*/);
+          pos += get_exp_length (words + pos + 1, ')');
           break;
+	  
 	case '{':
-	  return 1 + pos + get_exp_length (words + pos + 1, '}');
+	  pos += get_exp_length (words + pos + 1, '}');
+	  pos++;
+
+	  if (words[pos] != NULL && !strcmp (words[pos], "else"))
+	    {
+	      pos++;
+	      pos += get_exp_length_first (words + pos, ';');
+	    }
+	  return pos;
+	  
         case '[':
-          pos += get_exp_length (words + pos + 1, words[pos][0] + 2/*, '\0'*/);
+          pos += get_exp_length (words + pos + 1, words[pos][0] + 2);
           break;
+	  
         default:
           break;
         }

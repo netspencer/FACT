@@ -3,7 +3,8 @@
 unsigned int bytes_used = 0;
 bool mem_trackopt = false;
 
-int main (int argc, char **argv)
+int
+main (int argc, char **argv)
 {
   int c;
   
@@ -20,6 +21,7 @@ int main (int argc, char **argv)
       }
   
   GC_INIT ();
+  init_std_prims ();
   //GC_enable_incremental ();
   
   mp_set_memory_functions (&gmp_malloc,

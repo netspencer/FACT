@@ -1,6 +1,7 @@
 #include "interpreter.h"
 
-a_type if_statement (func *scope, char **words)
+a_type
+if_statement (func *scope, char **words)
 {
   a_type return_value, error;
   a_type conditional;
@@ -12,17 +13,18 @@ a_type if_statement (func *scope, char **words)
   error.error.function = "if_statement";
   error.error.scope = scope;
 
-  func temp_scope = {
-    "if_temp",
-    NULL,
-    NULL,
-    1,
-    NULL,
-    NULL,
-    scope,
-    NULL,
-    NULL
-  };
+  func temp_scope =
+    {
+      "if_temp",
+      NULL,
+      NULL,
+      1,
+      NULL,
+      NULL,
+      scope,
+      NULL,
+      NULL
+    };
   
   mpz_init (zero);
   
@@ -42,11 +44,8 @@ a_type if_statement (func *scope, char **words)
   
   if (mpz_cmp (conditional.v_point->data, zero) == 0)
     {
-      for (pos = 1, count = 0; strcmp (words[pos], ";") != 0 || count != 0; pos++)
+      for (pos = 1, count = 0; words[pos] != NULL; pos++)
         {
-          if (words[pos] == NULL)
-            break;
-
           if (words[pos][0] == '{'
 	      || words[pos][0] == '('
 	      || words[pos][0] == '[')
@@ -55,7 +54,7 @@ a_type if_statement (func *scope, char **words)
 		   || words[pos][0] == ')'
 		   || words[pos][0] == ']')
             count--;
-          else if (strcmp (words[pos], "else") == 0)
+          else if (strcmp (words[pos], "else") == 0 && count == 0)
             break;
         }
 
@@ -73,10 +72,22 @@ a_type if_statement (func *scope, char **words)
           return return_value;
         }
       else
-        return expression (&temp_scope, (words + pos + 1));
+	{
+	  return_value = expression (&temp_scope, (words + pos + 1));
+
+	  if (return_value.type == ERROR_TYPE)
+	    return_value.error.scope = scope;
+
+	  return return_value;
+	}
     }
   
-  return expression (&temp_scope, (words + 1));
+  return_value = expression (&temp_scope, (words + 1));
+
+  if (return_value.type == ERROR_TYPE)
+    return_value.error.scope = scope;
+  
+  return return_value;
 }
 
 a_type while_loop (func *scope, char **words)

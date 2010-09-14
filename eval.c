@@ -1,6 +1,7 @@
 #include "interpreter.h"
 
-a_type expression (func *scope, char **words)
+a_type 
+expression (func *scope, char **words)
 {
   a_type return_value; /* value to be eventually returned if nothing fails */
   a_type error; /* value to be returned if there is an error */
@@ -63,7 +64,8 @@ a_type expression (func *scope, char **words)
   return return_value;
 }
 
-a_type procedure (func *scope, char **words)
+a_type
+ procedure (func *scope, char **words)
 {
   a_type return_value; /* value returned */
   a_type error;
@@ -98,9 +100,11 @@ a_type procedure (func *scope, char **words)
   return (expression (scope, ++words));
 }
 
-a_type lambda_proc (func *scope, char **words)
+a_type
+lambda_proc (func *scope, char **words)
 {
-  func temp_local = {
+  func temp_local = 
+    {
       "lambda",
       NULL,
       NULL,
@@ -110,7 +114,7 @@ a_type lambda_proc (func *scope, char **words)
       scope,
       NULL,
       NULL,
-  }; /*
+    }; /*
        this is a temporary scope created to contain
        lambda procedures. Note, these are different
        from lambda functions. A lot.
@@ -119,7 +123,8 @@ a_type lambda_proc (func *scope, char **words)
   return procedure (&temp_local, words);
 }
 
-a_type eval (func *scope, char **words)
+a_type
+eval (func *scope, char **words)
 {
   a_type return_value;
   a_type error;
