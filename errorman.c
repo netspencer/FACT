@@ -18,15 +18,28 @@ const char *errors [] = {
     "syntax error"
 };
 
+a_type
+errorman_throw_reg (func *scope, char *description)
+{
+  a_type return_value;
+
+  return_value.type = ERROR_TYPE;
+
+  return_value.error.scope = scope;
+  return_value.error.description = description;
+
+  return return_value;
+}
+
 void
-errorman_dump (err error, int line_num, const char *filename)
+errorman_dump (_ERROR error, int line_num, const char *filename)
 {
   printf ("Error in <%s> on line %d", filename, line_num);
 
   if (error.scope != NULL)
     printf (", function [%s]", error.scope->name);
 
-  printf (": %s\n",  errors[error.error_code]);
+  printf (": %s\n",  error.description);
 }
 /*
 struct error {

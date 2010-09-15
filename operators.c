@@ -19,31 +19,19 @@
  * each other.                                 *
  * * * * * * * * * * * * * * * * * * * * * * * */
 
-a_type equal (a_type arg1, a_type arg2)
+a_type
+equal (a_type arg1, a_type arg2)
 {
-  a_type return_value, error;
+  a_type return_value;
   func *scope;
 
   scope = NULL;
 
   return_value.type = VAR_TYPE;
   return_value.v_point = alloc_var ();
-  
-  error.type = ERROR_TYPE;
-  error.error.function = "equal";
-  error.error.scope = scope;
-
-  if (arg1.type == ERROR_TYPE || arg2.type == ERROR_TYPE)
-    {
-      error.error.error_code = LESSPRIM; /* if there is a missing argument */
-      return error;
-    }
-
+    
   if (arg1.type != arg2.type)
-    {
-      error.error.error_code = INVALPRIM; /* if the arguments' types do not match */
-      return error;
-    }
+    return errorman_throw_reg (scope, "argument types to == do not match");
   
   if (arg1.type == VAR_TYPE)
     {
@@ -68,9 +56,10 @@ a_type equal (a_type arg1, a_type arg2)
  * not equal to each other.                  *
  * * * * * * * * * * * * * * * * * * * * * * */
 
-a_type not_equal (a_type arg1, a_type arg2)
+a_type
+not_equal (a_type arg1, a_type arg2)
 {
-  a_type return_value, error;
+  a_type return_value;
   func *scope;
 
   scope = NULL;
@@ -78,21 +67,8 @@ a_type not_equal (a_type arg1, a_type arg2)
   return_value.type = VAR_TYPE;
   return_value.v_point = alloc_var ();
 
-  error.type = ERROR_TYPE;
-  error.error.function = "not_equal";
-  error.error.scope = scope;
-
-  if (arg1.type == ERROR_TYPE || arg2.type == ERROR_TYPE)
-    {
-      error.error.error_code = LESSPRIM; /* if there is a missing argument */
-      return error;
-    }
-
   if (arg1.type != arg2.type)
-    {
-      error.error.error_code = INVALPRIM; /* if the arguments' types do not match */
-      return error;
-    }
+    return errorman_throw_reg (scope, "argument types to != do not match");
     
   if (arg1.type == VAR_TYPE)
     {
@@ -119,9 +95,10 @@ a_type not_equal (a_type arg1, a_type arg2)
  * throws an error.                          *
  * * * * * * * * * * * * * * * * * * * * * * */
 
-a_type more (a_type arg1, a_type arg2)
+a_type
+more (a_type arg1, a_type arg2)
 {
-  a_type return_value, error;
+  a_type return_value;
   func *scope;
 
   scope = NULL;
@@ -129,15 +106,8 @@ a_type more (a_type arg1, a_type arg2)
   return_value.type = VAR_TYPE;
   return_value.v_point = alloc_var ();
 
-  error.type = ERROR_TYPE;
-  error.error.function = "more";
-  error.error.scope = scope;
-
   if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
-    {
-      error.error.error_code = INVALPRIM; /* if either of the arguments are invalid */
-      return error;
-    }
+    return errorman_throw_reg (scope, "arguments to > must be vars");
 
   if (mpz_cmp (arg1.v_point->data, arg2.v_point->data) > 0)
       mpz_init_set_si (return_value.v_point->data, 1);
@@ -154,25 +124,19 @@ a_type more (a_type arg1, a_type arg2)
  * variable, it throws an error.             *
  * * * * * * * * * * * * * * * * * * * * * * */
 
-a_type more_equal (a_type arg1, a_type arg2)
+a_type
+more_equal (a_type arg1, a_type arg2)
 {
-  a_type return_value, error;
+  a_type return_value;
   func *scope;
 
   scope = NULL;
 
   return_value.type = VAR_TYPE;
   return_value.v_point = alloc_var ();
-
-  error.type = ERROR_TYPE;
-  error.error.function = "more_equal";
-  error.error.scope = scope;
-
+  
   if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
-    {
-      error.error.error_code = INVALPRIM; /* if either of the arguments are invalid */
-      return error;
-    }
+    return errorman_throw_reg (scope, "arguments to >= must be vars");
   
   if (mpz_cmp (arg1.v_point->data, arg2.v_point->data) >= 0)
       mpz_init_set_si (return_value.v_point->data, 1);
@@ -189,9 +153,10 @@ a_type more_equal (a_type arg1, a_type arg2)
  * throws an error.                          *
  * * * * * * * * * * * * * * * * * * * * * * */
 
-a_type less (a_type arg1, a_type arg2)
+a_type
+less (a_type arg1, a_type arg2)
 {
-  a_type return_value, error;
+  a_type return_value;
   func *scope;
 
   scope = NULL;
@@ -199,15 +164,8 @@ a_type less (a_type arg1, a_type arg2)
   return_value.type = VAR_TYPE;
   return_value.v_point = alloc_var ();
 
-  error.type = ERROR_TYPE;
-  error.error.function = "less";
-  error.error.scope = scope;
-
   if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
-    {
-      error.error.error_code = INVALPRIM; /* if either of the arguments are invalid */
-      return error;
-    }
+    return errorman_throw_reg (scope, "arguments to < must be vars");
 
   if (mpz_cmp (arg1.v_point->data, arg2.v_point->data) < 0)
       mpz_init_set_si (return_value.v_point->data, 1);
@@ -224,9 +182,10 @@ a_type less (a_type arg1, a_type arg2)
  * variable, it throws an error.             *
  * * * * * * * * * * * * * * * * * * * * * * */
 
-a_type less_equal (a_type arg1, a_type arg2)
+a_type
+less_equal (a_type arg1, a_type arg2)
 {
-  a_type return_value, error;
+  a_type return_value;
   func *scope;
 
   scope = NULL;
@@ -234,15 +193,8 @@ a_type less_equal (a_type arg1, a_type arg2)
   return_value.type = VAR_TYPE;
   return_value.v_point = alloc_var ();
 
-  error.type = ERROR_TYPE;
-  error.error.function = "less_equal";
-  error.error.scope = scope;
-
   if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
-    {
-      error.error.error_code = INVALPRIM; /* if either of the arguments are invalid */
-      return error;
-    }
+    return errorman_throw_reg (scope, "arguments to <= must be vars");
 
   if (mpz_cmp (arg1.v_point->data, arg2.v_point->data) <= 0)
       mpz_init_set_si (return_value.v_point->data, 1);
@@ -258,9 +210,10 @@ a_type less_equal (a_type arg1, a_type arg2)
  * must not be equal to zero.                *
  * * * * * * * * * * * * * * * * * * * * * * */
 
-a_type and (a_type arg1, a_type arg2)
+a_type
+and (a_type arg1, a_type arg2)
 {
-  a_type return_value, error;
+  a_type return_value;
   func *scope;
 
   scope = NULL;
@@ -268,15 +221,8 @@ a_type and (a_type arg1, a_type arg2)
   return_value.type = VAR_TYPE;
   return_value.v_point = alloc_var ();
 
-  error.type = ERROR_TYPE;
-  error.error.function = "and";
-  error.error.scope = scope;
-
   if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
-    {
-      error.error.error_code = INVALPRIM; /* if either of the arguments are invalid */
-      return error;
-    }
+    return errorman_throw_reg (scope, "arguments to && must be vars");
   
   mpz_init_set_si (return_value.v_point->data, 0); /* set the return value to false as the default */ 
 
@@ -295,9 +241,10 @@ a_type and (a_type arg1, a_type arg2)
  * passed arguments evaluate to true.      *
  * * * * * * * * * * * * * * * * * * * * * */
 
-a_type or (a_type arg1, a_type arg2)
+a_type
+or (a_type arg1, a_type arg2)
 {
-  a_type return_value, error;
+  a_type return_value;
   func *scope;
 
   scope = NULL;
@@ -305,15 +252,8 @@ a_type or (a_type arg1, a_type arg2)
   return_value.type = VAR_TYPE;
   return_value.v_point = alloc_var ();
 
-  error.type = ERROR_TYPE;
-  error.error.function = "or";
-  error.error.scope = scope;
-
   if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
-    {
-      error.error.error_code = INVALPRIM; /* if either of the arguments are invalid */
-      return error;
-    }
+    return errorman_throw_reg (scope, "arguments to || must be vars");
 
   mpz_init_set_si (return_value.v_point->data, 0);
 

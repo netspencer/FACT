@@ -20,32 +20,26 @@
  * * * * * * * * * * * * * * * * * * * * */
 			
  
-a_type add_func (func *scope, char **words)
+a_type
+add_func (func *scope, char **words)
 {
   a_type func;
-  a_type error;
   char **args_formatted;
   char **block_formatted;
   int pos_args;
   int pos_block;
   int position;
 
-  error.type = ERROR_TYPE;
-  error.error.function = "add_func";
-
   func = eval (scope, words);
 
+  if (func.type == ERROR_TYPE)
+    return func;
+  
   if (func.type != FUNCTION_TYPE)
-    {
-      error.error.error_code = INVALPRIM;
-      return error;
-    }
+    return errorman_throw_reg (scope, "cannot give body to non-function");
 
   if (words[1] == NULL || strcmp (words[1], "("))
-    {
-      error.error.error_code = SYNTAX;
-      return error;
-    }
+    return errorman_throw_reg (scope, "expected '(' after function");
 
   pos_args = get_exp_length (words + 2, ')');
   
@@ -61,10 +55,7 @@ a_type add_func (func *scope, char **words)
     }
     
   if (words[pos_args] == NULL)
-    {
-      error.error.error_code = SYNTAX;
-      return error;
-    }
+    return errorman_throw_reg (scope, "no body given");
 
   pos_block = get_exp_length (words + pos_args + 1, ';');
   block_formatted = (char **) better_malloc ((sizeof (char *)) * pos_block);
@@ -85,33 +76,12 @@ a_type add_func (func *scope, char **words)
   return func;
 }
 
-char **copy (char **words)
-{
-  int pos;
-  int count;
-  char **temp;
-
-  if (words == NULL)
-    return NULL;
-
-  for (pos = 0; *(words + pos) != NULL; pos++);
-
-  temp = (char **) better_malloc (sizeof (char *) * (pos + 1));
-
-  for (count = 0; count < pos; count++)
-    temp[count] = words[count];
-
-  temp[count] =  NULL;
-
-  return temp;
-}
-
-a_type prepare_function (func *scope, func *new_scope, char **words)
+a_type
+prepare_function (func *scope, func *new_scope, char **words)
 {
   a_type evald;
   a_type arg;
   a_type passed;
-  a_type error;
   var *hold;
   var *temp;
   int pos;
@@ -120,15 +90,14 @@ a_type prepare_function (func *scope, func *new_scope, char **words)
 
   evald = eval (scope, words);
 
-  error.type = ERROR_TYPE;
-  error.error.function = "prepare_function";
+  if (evald.type == ERROR_TYPE)
+    return evald;
 
-  if (evald.type != FUNCTION_TYPE
-      || evald.f_point->args == NULL)
-    {
-      error.error.error_code = INVALPRIM;
-      return error;
-    }
+  if (evald.type != FUNCTION_TYPE)
+    return errorman_throw_reg (scope, "cannot run a non-function");
+
+  if (evald.f_point->args == NULL)
+    return errorman_throw_reg (scope, "given function has no body");
 
   words++;
   args_stored = copy (evald.f_point->args);
@@ -139,18 +108,15 @@ a_type prepare_function (func *scope, func *new_scope, char **words)
       arg = eval (new_scope, args_stored + pos);
 
       if (*(words + pos) == NULL)
-	{
-	  error.error.error_code = LESSFUNC;
-	  return error;
-	}
+	return errorman_throw_reg (scope, "unexpected arguments");
 
       passed = eval (scope, words + pos);
 
-      if (passed.type != arg.type || arg.type == ERROR_TYPE)
-	{
-	  error.error.error_code = INVALFUNC;
-	  return error;
-	}
+      if (arg.type == ERROR_TYPE)
+	return arg;
+      
+      if (passed.type != arg.type)
+	return errorman_throw_reg (scope, "expected argument type does not match passed argument type");
 
       if (arg.type == VAR_TYPE)
 	{
@@ -174,28 +140,17 @@ a_type prepare_function (func *scope, func *new_scope, char **words)
       if (args_stored[++pos] == NULL)
         {
           if (*(words + pos) != NULL && strcmp (*(words + pos), ",") == 0)
-	    {
-	      error.error.error_code = MOREFUNC;
-	      return error;
-	    }
+	    return errorman_throw_reg (scope, "expected more arguments");
 	  
 	  break;
         }
       else if (strcmp (*(args_stored + pos), ",") == 0)
 	{
 	  if (strcmp (*(words + pos),",") != 0)
-	    {
-	      error.error.error_code = LESSFUNC;
-	      return error;
-	    }
+	    return errorman_throw_reg (scope, "expected more arguments");
 	}
-	
       else
-        {
-	  printf ("%s\n", args_stored[pos]);
-	  error.error.error_code = SYNTAX;
-	  return error;
-        }
+	return errorman_throw_reg (scope, "syntax error in argument declarations");
     }
 
   for (count = pos, pos = -1; words[pos + count] != NULL; pos++)
@@ -206,7 +161,8 @@ a_type prepare_function (func *scope, func *new_scope, char **words)
   return evald;
 }
 
-a_type new_scope (func *scope, char **words)
+a_type
+new_scope (func *scope, char **words)
 {
   a_type prepared;
   a_type return_value;
@@ -219,16 +175,13 @@ a_type new_scope (func *scope, char **words)
   prepared = prepare_function (scope, new_scope, words);
 
   if (prepared.type == ERROR_TYPE) 
-    return prepared;
+    return prepared; /* ha ha, that makes me chortle */
 
   copy_body = copy (prepared.f_point->body + 1);
   prepared = procedure (new_scope, copy_body);
 
   if (prepared.type == ERROR_TYPE)
-    {
-      prepared.error.scope = new_scope;
-      return prepared;
-    }
+    return prepared;
 
   return_value.f_point = new_scope;
   return_value.type = FUNCTION_TYPE;
@@ -236,7 +189,8 @@ a_type new_scope (func *scope, char **words)
   return return_value;
 }
 
-a_type run_func (func *scope, char **words)
+a_type
+run_func (func *scope, char **words)
 {
   a_type return_value;
   a_type prepared;
@@ -249,10 +203,7 @@ a_type run_func (func *scope, char **words)
   prepared = prepare_function (scope, new_scope, words);
 
   if (prepared.type == ERROR_TYPE)
-    {
-      prepared.error.scope = new_scope;
-      return prepared;
-    }
+    return prepared; 
   
   copied_body = copy (prepared.f_point->body);
 
@@ -264,25 +215,18 @@ a_type run_func (func *scope, char **words)
 }
 
 
-a_type in_scope (func *scope, char **words)
+a_type
+in_scope (func *scope, char **words)
 {
   a_type new_scope;
-  a_type error;
   a_type to_return;
   int pos;
-
-  error.type = ERROR_TYPE;
-  error.error.function = "in_scope";
 
   new_scope = eval (scope, words);
 
   if (new_scope.type != FUNCTION_TYPE)
-    {
-      error.error.scope = scope;
-      error.error.error_code = INVALPRIM;
-      return error;
-    }
-
+    return errorman_throw_reg (scope, "the argument to : must be a function");
+  
   to_return = eval (new_scope.f_point, words + 1);
 
   for (pos = 0; words[pos] != NULL; pos++)

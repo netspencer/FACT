@@ -1,9 +1,9 @@
 #include "interpreter.h"
 
-a_type defunc_array (func *base, func *scope, char **words)
+a_type
+defunc_array (func *base, func *scope, char **words)
 {
   a_type return_value;
-  a_type error;
   a_type array_size;
   a_type checker;
   int size;
@@ -11,19 +11,12 @@ a_type defunc_array (func *base, func *scope, char **words)
   char **temp;
   func *scroller;
 
-  extern char **copy (char **);
-
-  error.type = ERROR_TYPE;
-  error.error.function = "defunc_array";
-  error.error.scope = scope;
+  return_value.f_point = alloc_func ();
 
   if (words[0] == NULL)
-    {
-      error.error.error_code = INVALPRIM;
-      return error;
-    }
+    return errorman_throw_reg (scope, "cannot make an anonymous function array");
   
-  return_value.type = VAR_TYPE;
+  return_value.type = FUNCTION_TYPE;
 
   if (base == NULL)
     base = alloc_func ();
@@ -36,17 +29,14 @@ a_type defunc_array (func *base, func *scope, char **words)
     {
       array_size = get_array_size (scope, words + 1);
 
+      if (array_size.type == ERROR_TYPE)
+	return array_size;
+      
       if (array_size.type != VAR_TYPE)
-	{
-	  error.error.error_code = INVALPRIM;
-	  return error;
-	}
+	return errorman_throw_reg (scope, "array size needs to be a variable");
 
       if (((size = (mpz_get_si (array_size.v_point->data))) > 1000 || size < 1))
-	{
-	  error.error.error_code = ESCAPARR;
-	  return error;
-	}
+	return errorman_throw_reg (scope, "array size give is invalid");
 
       base = resize_func (base, size);
 
@@ -67,22 +57,17 @@ a_type defunc_array (func *base, func *scope, char **words)
   return return_value;
 }     
 
-a_type defunc (func *scope, char **words)
+a_type
+defunc (func *scope, char **words)
 {
   a_type return_value;
-  a_type error;
   a_type temp;
   int pos;
 
-  error.type = ERROR_TYPE;
-  error.error.function = "defunc";
-  error.error.scope = scope;
+  return_value.f_point = alloc_func ();
   
   if (words[0] == NULL)
-    {
-      error.error.error_code = LESSPRIM;
-      return error;
-    }
+    return errorman_throw_reg (scope, "cannot define anonymous functions");
 
   return_value.type = FUNCTION_TYPE;
 
@@ -96,21 +81,17 @@ a_type defunc (func *scope, char **words)
 	  return_value.f_point->array_up = temp.f_point->array_up;
 	  return_value.f_point->up = scope;
 	  return_value.f_point->array_size = temp.f_point->array_size;
+	  GC_free (temp.f_point);
 	}
       else
 	return_value = temp;
-      
-      GC_free (temp.f_point);
     }
   else
     {
       return_value.f_point = addFunc (scope, words[0]);
 
       if (return_value.f_point == NULL)
-	{
-	  error.error.error_code = INVALPRIM;
-	  return error;
-	}
+	return errorman_throw_reg (scope, "could not define function");
 
       return_value.f_point->up = scope;
       return_value.f_point->array_size = 1;
@@ -122,9 +103,10 @@ a_type defunc (func *scope, char **words)
   return return_value;
 }
 
-a_type def_array (var *base, func *scope, char **words)
+a_type
+def_array (var *base, func *scope, char **words)
 {
-  a_type return_value, error;
+  a_type return_value;
   a_type array_size;
   a_type checker;
   int size;
@@ -132,18 +114,10 @@ a_type def_array (var *base, func *scope, char **words)
   char **temp;
   var *scroller;
 
-  extern char **copy (char **);
-
-  error.type = ERROR_TYPE;
-  error.error.function = "def_array";
-  error.error.scope = scope;
   return_value.v_point = alloc_var ();
 
   if (words[0] == NULL)
-    {
-      error.error.error_code = INVALPRIM;
-      return error;
-    }
+    return errorman_throw_reg (scope, "cannot define anonymous array");
   
   return_value.type = VAR_TYPE;
 
@@ -156,17 +130,14 @@ a_type def_array (var *base, func *scope, char **words)
     {
       array_size = get_array_size (scope, words + 1);
 
+      if (array_size.type == ERROR_TYPE)
+	return array_size;
+
       if (array_size.type != VAR_TYPE)
-	{
-	  error.error.error_code = INVALPRIM;
-	  return error;
-	}
+	return errorman_throw_reg (scope, "array size needs to be a variable");
       
       if ((size = (mpz_get_si (array_size.v_point->data))) > 1000 || size < 2)
-	{
-	  error.error.error_code = ESCAPARR;
-	  return error;
-	}
+	return errorman_throw_reg (scope, "invalid array size");
       
       base = resize_array (base, size);
 
@@ -176,10 +147,7 @@ a_type def_array (var *base, func *scope, char **words)
 	  checker = def_array (scroller, scope, temp);
 	  
 	  if (checker.type == ERROR_TYPE)
-	    {
-	      error.error.error_code = INVALPRIM;
-	      return error;
-	    }
+	    return checker;
 	}
       base->name = base->array_up->name;
     }
@@ -189,22 +157,17 @@ a_type def_array (var *base, func *scope, char **words)
   return return_value;
 }     
 
-a_type define (func *scope, char **words)
+a_type
+define (func *scope, char **words)
 {
-  a_type return_value, error;
+  a_type return_value;
   a_type temp;
   int pos;
 
-  error.type = ERROR_TYPE;
-  error.error.function = "define";
-  error.error.scope = scope;
   return_value.v_point = alloc_var ();
 
   if (words[0] == NULL)
-    {
-      error.error.error_code = LESSPRIM;
-      return error;
-    }
+    return errorman_throw_reg (scope, "cannot define anonymous var");
     
   return_value.type = VAR_TYPE;
 
@@ -233,7 +196,8 @@ a_type define (func *scope, char **words)
   return return_value;
 }
 
-var *clone_var (var *surrogate, char *name)
+var *
+clone_var (var *surrogate, char *name)
 {
   var *clone;
 
@@ -252,11 +216,11 @@ var *clone_var (var *surrogate, char *name)
   return clone;
 }
 
-a_type set (func *scope, char **words)
+a_type
+set (func *scope, char **words)
 {
   a_type arg1;
   a_type arg2;
-  a_type error;
   var *hold;
   var *copy;
   int pos;
@@ -264,25 +228,14 @@ a_type set (func *scope, char **words)
   arg1 = eval (scope, words);
   arg2 = eval (scope, words + 1);
 
-  error.type = ERROR_TYPE;
-  error.error.function = "set";
-  error.error.scope = scope;
-  
   if (arg1.type == ERROR_TYPE || arg2.type == ERROR_TYPE)
-    {
-      error.error.error_code = (arg1.type == ERROR_TYPE)
-	? arg1.error.error_code
-	: arg2.error.error_code;
-      return error;
-    }
+    return (arg1.type == ERROR_TYPE) ? arg1 : arg2;
+
   
   if (arg1.type == VAR_TYPE)
     {
       if (arg2.type == FUNCTION_TYPE)
-	{
-	  error.error.error_code = CFTV;
-	  return error;
-	}
+	return errorman_throw_reg (scope, "cannot set a var to a function");
       
       hold = arg2.v_point->next;
       arg2.v_point->next = NULL;
@@ -296,10 +249,7 @@ a_type set (func *scope, char **words)
   else if (arg1.type == FUNCTION_TYPE)
     {
       if (arg2.type == VAR_TYPE)
-	{
-	  error.error.error_code = CVTF;
-	  return error;
-	}
+	return errorman_throw_reg (scope, "cannot set a function to a var");
 
       arg1.f_point->array_size = arg2.f_point->array_size;
       arg1.f_point->vars = arg2.f_point->vars;
@@ -316,24 +266,17 @@ a_type set (func *scope, char **words)
   return arg1;
 }
 
-a_type get_array_size (func *scope, char **words) /* this REALLY needs to get fixed (in terms of syntax. It's a mess) */
+a_type
+get_array_size (func *scope, char **words) /* this REALLY needs to get fixed (in terms of syntax. It's a mess) */
 {
   int pos;
   int count;
   char **formatted;
-  a_type error;
-
-  error.type = ERROR_TYPE;
-  error.error.function = "get_array_size";
-  error.error.scope = scope;
-
+  
   pos = get_exp_length (words, ']');
 
   if (pos == 0)
-    {
-      error.error.error_code = SYNTAX;
-      return error;
-    }
+    return errorman_throw_reg (scope, "cannot evaluate empty brackets");
 
   formatted = (char **) better_malloc ((sizeof (char *)) * pos);
 
@@ -355,54 +298,41 @@ a_type get_array_size (func *scope, char **words) /* this REALLY needs to get fi
   return eval (scope, formatted);
 }
 
-/* needs to be fixed. Comming up with a solution
-   as you read */
-a_type return_array (func *scope, char **words)
+/* deprecated as FUCK */
+a_type
+return_array (func *scope, char **words)
 {
-  a_type return_value, error;
+  a_type return_value;
   int count;
   var *var_scroll_through;
   func *func_scroll_through;
   a_type evald_pos;
   a_type evald_var;
  
-  error.type = ERROR_TYPE;
-  error.error.function = "return_array";
-  error.error.scope = scope;
-  
   return_value.type = VAR_TYPE;
   return_value.v_point = alloc_var ();
   
   if (words[0] == NULL)
-    {
-      error.error.error_code = INVALPRIM;
-      return error;
-    }
+    return errorman_throw_reg (scope, "FUCK YOU FAGGGGG");
 
   evald_pos = get_array_size (scope, words);
   count = mpz_get_si (evald_pos.v_point->data);
 
+  if (evald_pos.type == ERROR_TYPE)
+    return evald_pos;
+  
   if (evald_pos.type != VAR_TYPE)
-    {
-      error.error.error_code = INVALPRIM;
-      return error;
-    }
+    return errorman_throw_reg (scope, "EEEEEEERRREER");
 
   evald_var = eval (scope, words);
 
   if (evald_var.type == ERROR_TYPE)
-    {
-      error.error.error_code = INVALPRIM;
-      return error;
-    }
+    return evald_var;
   else if (evald_var.type == VAR_TYPE)
     {
       if (count >= evald_var.v_point->array_size
 	  || count < 0)
-	{
-	  error.error.error_code = ESCAPARR;
-	  return error;
-	}
+	return errorman_throw_reg (scope, "array out of bounds");
 
       if (evald_var.v_point->array_size == 1)
 	return_value.v_point = evald_var.v_point;
@@ -421,10 +351,7 @@ a_type return_array (func *scope, char **words)
     {
       if (count >= evald_var.f_point->array_size
 	  || count < 0)
-	{
-	  error.error.error_code = ESCAPARR;
-	  return error;
-	}
+	return errorman_throw_reg (scope, "array out of bounds");
 
       if (evald_var.f_point->array_size == 1)
 	return_value.f_point = evald_var.f_point;
@@ -445,28 +372,19 @@ a_type return_array (func *scope, char **words)
   return return_value;
 }
 
-a_type size_of (func *scope, char **words)
+a_type
+size_of (func *scope, char **words)
 {
-  a_type return_value, error;
+  a_type return_value;
   a_type evald;
-
-  error.type = ERROR_TYPE;
-  error.error.function = "size_of";
-  error.error.scope = scope;
   
   if (words[0] == NULL)
-    {
-      error.error.error_code = LESSPRIM;
-      return error;
-    }
+    return errorman_throw_reg (scope, "cannot find the sizeof nothing");
 
   evald = eval (scope, words);
 
   if (evald.type == ERROR_TYPE)
-    {
-      error.error.error_code = INVALPRIM;
-      return error;
-    }
+    return evald;
 
   return_value.v_point = alloc_var ();
   return_value.type = VAR_TYPE;
@@ -477,20 +395,15 @@ a_type size_of (func *scope, char **words)
 }
 
 
-/* needs to be fixed and such */
-a_type get_array (var *base, func *scope, char **words)
+/* 
+a_type
+get_array (var *base, func *scope, char **words)
 {
-  a_type return_value, error;
+  a_type return_value;
   a_type array_size;
   int size;
   int pos;
   var *scroller;
-
-  extern char **copy (char **);
-
-  error.type = ERROR_TYPE;
-  error.error.function = "get_array";
-  error.error.scope = scope;
 
   if (words[0] == NULL)
     {
@@ -529,18 +442,15 @@ a_type get_array (var *base, func *scope, char **words)
 
   return return_value;
 }
+*/
 
-a_type get_array_var (var *root, func *scope, char **words)
+a_type
+get_array_var (var *root, func *scope, char **words)
 {
   a_type return_value;
   a_type array_size;
-  a_type error;
   int size;
   int position;
-
-  error.type = ERROR_TYPE;
-  error.error.function = "get_array";
-  error.error.scope = scope;
 
   return_value.type = VAR_TYPE;
   
@@ -551,25 +461,22 @@ a_type get_array_var (var *root, func *scope, char **words)
     }
 
   array_size = get_array_size (scope, words + 1);
+
+  if (array_size.type == ERROR_TYPE)
+    return array_size;
   
   if (array_size.type != VAR_TYPE)
-    return array_size;
+    return errorman_throw_reg (scope, "array position cannot be a function");
 
   size = mpz_get_si (array_size.v_point->data);
 
   if (size >= root->array_size || size < 0)
-    {
-      error.error.error_code = ESCAPARR;
-      return error;
-    }
+    return errorman_throw_reg (scope, "array out of bounds");
 
   if (root->array_size == 1)
     {
       if (words[1] != NULL && !strcmp (words[1], "["))
-	{
-	  error.error.error_code = ESCAPARR;
-	  return error;
-	}
+	return errorman_throw_reg (scope, "array out of bounds");
 
       return_value.v_point = root;
       return return_value;
@@ -587,17 +494,13 @@ a_type get_array_var (var *root, func *scope, char **words)
   return return_value;
 }
 
-a_type get_array_func (func *root, func *scope, char **words)
+a_type
+get_array_func (func *root, func *scope, char **words)
 {
   a_type return_value;
   a_type array_size;
-  a_type error;
   int size;
   int position;
-
-  error.type = ERROR_TYPE;
-  error.error.function = "get_array";
-  error.error.scope = scope;
 
   return_value.type = FUNCTION_TYPE;
   
@@ -608,25 +511,22 @@ a_type get_array_func (func *root, func *scope, char **words)
     }
 
   array_size = get_array_size (scope, words + 1);
-  
-  if ( array_size.type != VAR_TYPE)
+
+  if (array_size.type == ERROR_TYPE)
     return array_size;
+  
+  if (array_size.type != VAR_TYPE)
+    return errorman_throw_reg (scope, "array position cannot be a function");
 
   size = mpz_get_si (array_size.v_point->data);
 
   if (size >= root->array_size || size < 0)
-    {
-      error.error.error_code = ESCAPARR;
-      return error;
-    }
+    return errorman_throw_reg (scope, "array out of bounds");
 
   if (root->array_size == 1)
     {
       if (words[1] != NULL && !strcmp (words[1], "["))
-	{
-	  error.error.error_code = ESCAPARR;
-	  return error;
-	}
+	return errorman_throw_reg (scope, "array out of bounds");
 
       return_value.f_point = root;
       return return_value;
@@ -643,4 +543,3 @@ a_type get_array_func (func *root, func *scope, char **words)
 
   return return_value;
 }
-

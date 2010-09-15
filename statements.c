@@ -3,15 +3,11 @@
 a_type
 if_statement (func *scope, char **words)
 {
-  a_type return_value, error;
+  a_type return_value;
   a_type conditional;
   int pos;
   int count;
   mpz_t zero;
-
-  error.type = ERROR_TYPE;
-  error.error.function = "if_statement";
-  error.error.scope = scope;
 
   func temp_scope =
     {
@@ -29,18 +25,16 @@ if_statement (func *scope, char **words)
   mpz_init (zero);
   
   if (strcmp (*words, "(") != 0)
-    {
-      error.error.error_code = SYNTAX;
-      return error;
-    }
+    return errorman_throw_reg (scope, "expected '(' after if statement");
 
   conditional = eval (scope, words);
 
-  if (conditional.type != VAR_TYPE)
-    {
-      error.error.error_code = INVALPRIM;
-      return error;
-    }
+  if (conditional.type == ERROR_TYPE)
+    return errorman_throw_reg (scope, combine_strs ("error in if statement conditional; ",
+						    conditional.error.description));
+
+  if (conditional.type == FUNCTION_TYPE)
+    return errorman_throw_reg (scope, "if statement conditional must return a var");
   
   if (mpz_cmp (conditional.v_point->data, zero) == 0)
     {
@@ -59,10 +53,7 @@ if_statement (func *scope, char **words)
         }
 
       if (count > 0)
-	{
-	  error.error.error_code = SYNTAX;
-	  return error;
-	}
+	return errorman_throw_reg (scope, "syntax error in if statement");
 
       if (words[pos] == NULL || strcmp (words[pos], "else") != 0)
         {
@@ -76,7 +67,8 @@ if_statement (func *scope, char **words)
 	  return_value = expression (&temp_scope, (words + pos + 1));
 
 	  if (return_value.type == ERROR_TYPE)
-	    return_value.error.scope = scope;
+	    return errorman_throw_reg (scope, combine_strs ("error in if statement block; ",
+							    return_value.error.description));
 
 	  return return_value;
 	}
@@ -85,7 +77,8 @@ if_statement (func *scope, char **words)
   return_value = expression (&temp_scope, (words + 1));
 
   if (return_value.type == ERROR_TYPE)
-    return_value.error.scope = scope;
+    return errorman_throw_reg (scope, combine_strs ("error in if statement block; ",
+						    return_value.error.description));
   
   return return_value;
 }
@@ -101,21 +94,12 @@ a_type while_loop (func *scope, char **words)
   char **block_temp;
   a_type conditional_evald;
   a_type block_evald;
-  a_type error;
   mpz_t zero;
 
-  extern char **copy (char **);
   extern int get_exp_length_first (char **, int);
 
-  error.type = ERROR_TYPE;
-  error.error.function = "while";
-  error.error.scope = scope;
-
   if (words[0] == NULL || words[0][0] != '(')
-    {
-      error.error.error_code = SYNTAX;
-      return error;
-    }
+    return errorman_throw_reg (scope, "expected '(' after while");
 
   pos_cond = get_exp_length (words + 1, ')');
   conditional_saved = (char **) better_malloc ((sizeof (char *)) * (pos_cond + 1));
@@ -130,10 +114,7 @@ a_type while_loop (func *scope, char **words)
     }
 
   if (words[pos_cond] == NULL)
-    {
-      error.error.error_code = SYNTAX;
-      return error;
-    }
+    return errorman_throw_reg (scope, "syntax error in while loop");
 
   pos_block = get_exp_length_first (words + pos_cond, ';');
   block_saved = (char **) better_malloc ((sizeof (char *)) * (pos_block + 2));
@@ -161,11 +142,12 @@ a_type while_loop (func *scope, char **words)
       conditional_temp = copy (conditional_saved);
 
       conditional_evald = eval (scope, conditional_temp);
-      if (conditional_evald.type != VAR_TYPE)
-	{
-	  error.error.error_code = INVALPRIM;
-	  return error;
-	}
+      
+      if (conditional_evald.type == ERROR_TYPE)
+	return errorman_throw_reg (scope, combine_strs ("error in while loop conditional; ",
+						       conditional_evald.error.description));
+      if (conditional_evald.type == FUNCTION_TYPE)
+	return errorman_throw_reg (scope, "while loop conditional must return a var");
 
       if (mpz_cmp (conditional_evald.v_point->data, zero) == 0)
         break;
@@ -174,7 +156,10 @@ a_type while_loop (func *scope, char **words)
 
       block_evald = expression (scope, block_temp);
 
-      if (block_evald.type == ERROR_TYPE || block_evald.isret == true)
+      if (block_evald.type == ERROR_TYPE)
+	return errorman_throw_reg (scope, combine_strs ("error in while loop block; ",
+							block_evald.error.description));
+      if (block_evald.isret == true)
         break;
     }
 

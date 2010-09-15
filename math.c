@@ -13,7 +13,8 @@
  * otherwise.                                  *
  * * * * * * * * * * * * * * * * * * * * * * * */
 
-bool isnum (char *word)
+bool
+isnum (char *word)
 {
   int pos;
 
@@ -32,7 +33,8 @@ bool isnum (char *word)
  * variable type wrapped in an ambigious type. *
  * * * * * * * * * * * * * * * * * * * * * * * */
 
-a_type num_to_var (char *word)
+a_type
+num_to_var (char *word)
 {
   a_type return_value;
 
@@ -54,9 +56,10 @@ a_type num_to_var (char *word)
  * error if the second variable is missing.    *
  * * * * * * * * * * * * * * * * * * * * * * * */
 
-a_type add (a_type arg1, a_type arg2)
+a_type
+add (a_type arg1, a_type arg2)
 {
-  a_type return_value, error;
+  a_type return_value;
   func *scope;
 
   scope = NULL;
@@ -64,15 +67,8 @@ a_type add (a_type arg1, a_type arg2)
   return_value.type = VAR_TYPE;
   return_value.v_point = alloc_var ();
   
-  error.type = ERROR_TYPE;
-  error.error.function = "add";
-  error.error.scope = scope;
-  
-  if (arg2.type != VAR_TYPE)
-    {
-      error.error.error_code = INVALPRIM;
-      return error;
-    }
+  if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
+    return errorman_throw_reg (scope, "both arguments to + need to be vars");
   
   mpz_add (return_value.v_point->data, arg1.v_point->data, arg2.v_point->data);
   
@@ -86,7 +82,8 @@ a_type add (a_type arg1, a_type arg2)
  * error.                                      *
  * * * * * * * * * * * * * * * * * * * * * * * */
 
-a_type sub (a_type arg1, a_type arg2)
+a_type
+sub (a_type arg1, a_type arg2)
 {
   a_type return_value;
   func *scope;
@@ -95,6 +92,9 @@ a_type sub (a_type arg1, a_type arg2)
 
   return_value.type = VAR_TYPE;  
   return_value.v_point = alloc_var ();
+
+  if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
+    return errorman_throw_reg (scope, "both arguments to - need to be vars");
   
   if (arg2.type != VAR_TYPE)
     mpz_neg (return_value.v_point->data, arg1.v_point->data);
@@ -110,9 +110,10 @@ a_type sub (a_type arg1, a_type arg2)
  * errors in the same cases as "add."          *
  * * * * * * * * * * * * * * * * * * * * * * * */
 
-a_type mult (a_type arg1, a_type arg2)
+a_type
+mult (a_type arg1, a_type arg2)
 {
-  a_type return_value, error;
+  a_type return_value;
   func *scope;
 
   scope = NULL;
@@ -120,15 +121,8 @@ a_type mult (a_type arg1, a_type arg2)
   return_value.type = VAR_TYPE;
   return_value.v_point = alloc_var ();
 
-  error.type = ERROR_TYPE;
-  error.error.function = "mult";
-  error.error.scope = scope;
-
-  if (arg2.type != VAR_TYPE)
-    {
-      error.error.error_code = INVALPRIM;
-      return error;
-    }
+  if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
+    return errorman_throw_reg (scope, "both arguments to * need to be vars");
 
   mpz_mul (return_value.v_point->data, arg1.v_point->data, arg2.v_point->data);
 
@@ -142,9 +136,10 @@ a_type mult (a_type arg1, a_type arg2)
  * "mult," as well as when arg2 is equal to 0. *
  * * * * * * * * * * * * * * * * * * * * * * * */
 
-a_type divide (a_type arg1, a_type arg2)
+a_type
+divide (a_type arg1, a_type arg2)
 {
-  a_type return_value, error;
+  a_type return_value;
   func *scope;
   mpz_t zero_check; /* gmp variable to check if arg2 is zero */
 
@@ -152,24 +147,14 @@ a_type divide (a_type arg1, a_type arg2)
 
   return_value.type = VAR_TYPE;
   return_value.v_point = alloc_var ();
-  
-  error.type = ERROR_TYPE;
-  error.error.function = "divide";
-  error.error.scope = scope;
 
+  if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
+    return errorman_throw_reg (scope, "both arguments to / need to be vars");
+  
   mpz_init (zero_check);
   
-  if (arg2.type != VAR_TYPE)
-    {
-      error.error.error_code = INVALPRIM;
-      return error;
-    }
-  
   if (mpz_cmp (zero_check, arg2.v_point->data) == 0)
-    {
-      error.error.error_code = DIVNON;
-      return error;
-    }
+    return errorman_throw_reg (scope, "divide by zero error");
 
   mpz_cdiv_q (return_value.v_point->data, arg1.v_point->data, arg2.v_point->data);
 
@@ -181,9 +166,10 @@ a_type divide (a_type arg1, a_type arg2)
  * "divide" function except performs modulus.  *
  * * * * * * * * * * * * * * * * * * * * * * * */
 
-a_type mod (a_type arg1, a_type arg2)
+a_type
+mod (a_type arg1, a_type arg2)
 {
-  a_type return_value, error;
+  a_type return_value;
   func *scope;
   mpz_t zero_check;
 
@@ -192,23 +178,13 @@ a_type mod (a_type arg1, a_type arg2)
   return_value.type = VAR_TYPE;
   return_value.v_point = alloc_var ();
 
-  error.type = ERROR_TYPE;
-  error.error.function = "mod";
-  error.error.scope = scope;
+  if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
+    return errorman_throw_reg (scope, "both arguments to % need to be vars");
   
   mpz_init (zero_check);
-  
-  if (arg2.type != VAR_TYPE)
-    {
-      error.error.error_code = INVALPRIM;
-      return error;
-    }
 
   if (mpz_cmp (zero_check, arg2.v_point->data) == 0)
-    {
-      error.error.error_code = MODNON;
-      return error;
-    }
+    return errorman_throw_reg (scope, "mod by zero error");
   
   mpz_mod (return_value.v_point->data, arg1.v_point->data, arg2.v_point->data);
 
@@ -222,24 +198,17 @@ a_type mod (a_type arg1, a_type arg2)
  * parens and sends it to "eval."              *
  * * * * * * * * * * * * * * * * * * * * * * * */
 
-a_type paren (func *scope, char **words)
+a_type
+paren (func *scope, char **words)
 {
   int pos;
   int count;
   char **formatted;
-  a_type error;
 
-  error.type = ERROR_TYPE;
-  error.error.function = "paren";
-  error.error.scope = scope;
-
-  pos = get_exp_length (words, ')'/*, '\0'*/);
+  pos = get_exp_length (words, ')');
 
   if (pos == 0)
-    {
-      error.error.error_code = SYNTAX;
-      return error;
-    }
+    return errorman_throw_reg (scope, "parenthesis has no body");
 
   formatted = (char **) better_malloc ((sizeof (char *)) * pos);
 
@@ -252,12 +221,6 @@ a_type paren (func *scope, char **words)
       pos--;
       formatted[pos] = words[pos];
     }
-
-  /*
-  for (count = pos, formatted[--pos] = NULL, pos--;
-       pos > 0; pos--)
-    formatted[pos] = words[pos];
-  */
 
   for (pos = 0; words[count] != NULL; pos++, count++)
     words[pos] = words[count];

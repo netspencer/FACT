@@ -2,7 +2,7 @@
 #define MEM_H_
 
 /**
- * Mem.h:
+ * mem:
  * Functions for the creation
  * and handeling of variables
  * and objects.
@@ -15,7 +15,7 @@
  * (c) 2010 Matthew Plant. Sorry for the bloat.
  */
 
-extern a_type get_array (var *, func *, char **);
+//extern a_type get_array (var *, func *, char **);
 extern a_type get_array_size (func *, char **);
 extern a_type define (func *, char **);
 extern a_type defunc (func *, char **);

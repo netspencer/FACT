@@ -81,19 +81,13 @@ a_type new_string (func *scope, char **words)
 
 a_type print_character (func *scope, char **words)
 {
-  a_type error;
   a_type evald;
   int pos;
 
-  error.type = ERROR_TYPE;
-  error.error.function = "print_character";
   evald = eval (scope, words);
 
   if (evald.type == FUNCTION_TYPE)
-    {
-      error.error.error_code = INVALPRIM;
-      return error;
-    }
+    return errorman_throw_reg (scope, "cannot print a function");
   
   if (evald.type == VAR_TYPE)
     putchar (mpz_get_si (evald.v_point->data));
@@ -134,7 +128,7 @@ unsigned char *array_to_string (var *convertable)
   unsigned char *return_value;
   unsigned char *setter;
 
-  return_value = (unsigned char *) better_malloc (sizeof (unsigned char) * convertable->array_size); /* yes, I am well aware the unsigned won't make any difference */ 
+  return_value = (unsigned char *) better_malloc (sizeof (unsigned char) * convertable->array_size); /* yes, I am well aware the unsigned in the cast won't make any difference */ 
   setter = return_value;
 
   if (convertable->array_size > 1)

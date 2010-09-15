@@ -13,7 +13,7 @@
  * (c) 2010 Matthew Plant - sorry for the bloat.
  */
 
-extern a_type if_statement  (func *scope, char **words);
-extern a_type while_loop (func *scope, char **words);
+extern a_type if_statement  (func *, char **);
+extern a_type while_loop (func *, char **);
  
 #endif

@@ -113,30 +113,21 @@ runprim (func *scope, char **words)
   return return_value;
 }
 
-a_type eval_math (func *scope, char **words)
+a_type
+eval_math (func *scope, char **words)
 {
   a_type arg1;
   a_type arg2;
+  a_type return_value;
   int pos;
-  a_type return_value, error;
 
   arg1 = eval (scope, words + 1);
   arg2 = eval (scope, words + 2);
-
-  /*
-  words[1] = words[3];
-  words[2] = words[4];
-  */
-
-  error.type = ERROR_TYPE;
-  error.error.function = "eval_math";
-  error.error.scope = scope;
   
-  if (arg1.type != VAR_TYPE || arg2.type == FUNCTION_TYPE)
-    {
-      error.error.error_code = INVALPRIM;
-      return error;
-    }
+  if (arg1.type == ERROR_TYPE)
+    return arg1;
+  if (arg2.type == ERROR_TYPE)
+    return arg2;
 
   return_value = math_calls[ismathcall (words[0])].function (arg1, arg2);
 

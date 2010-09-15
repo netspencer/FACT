@@ -2,7 +2,7 @@
 #define EVAL_H_
 
 /**
- * Eval.h
+ * eval:
  * Functions for the evaluation of
  * statements and procedures. I'm
  * not sure I can explain it better
@@ -16,9 +16,9 @@
  * (c) 2010 Matthew Plant. Sorry for the bloat.
  */
 
-extern a_type eval (func *scope, char **words);
-extern a_type expression (func *scope, char **words);
-extern a_type procedure (func *scope, char **words);
-extern a_type lambda_proc (func *scope, char **words);
+extern a_type eval (func *, char **);
+extern a_type expression (func *, char **);
+extern a_type procedure (func *, char **);
+extern a_type lambda_proc (func *, char **);
 
 #endif

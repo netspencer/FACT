@@ -4,27 +4,34 @@ a_type
 expression (func *scope, char **words)
 {
   a_type return_value; /* value to be eventually returned if nothing fails */
-  a_type error; /* value to be returned if there is an error */
   int position; /* current position in "words" */
   char **formatted_expression; /* the block to be evaluated */
   bool isreturn; /* if the block starts with a return or not */
+
+  static int depth = -1;
+  static bool ifopen[100];
 
   extern int get_exp_length_first (char **, int);
 
   isreturn = false;
   return_value.type = VAR_TYPE;
-  error.type = ERROR_TYPE;
-  error.error.function = "expression";
-  error.error.scope = scope;
+
+  depth++;
   
   position = get_exp_length_first (words, ';'); /* find out how long the statement is */
 
+  if (depth == 100)
+    {
+      depth--;
+      return errorman_throw_reg (scope, "reached the maximum recursion depth of 100");
+    }
+  
   if (position < 1
       || (words[position - 1][0] != ';'
 	  && words[position - 1][0] != '}'))
     {
-      error.error.error_code = SYNTAX;
-      return error;
+      depth--;
+      return errorman_throw_reg (scope, "syntax error; expected closing ';' or '}'");
     }
 
   formatted_expression = (char **) better_malloc (sizeof (char *) * (position + 2)); /* allocate space for expression */
@@ -38,42 +45,56 @@ expression (func *scope, char **words)
 						    come at the beginning of the statement.
 						  */
     {
+      ifopen[depth] = true;
       return_value = if_statement (scope, formatted_expression + 1);
+    }
+  else if (strcmp (formatted_expression[0], "else") == 0)
+    {
+      if (ifopen[depth])
+	{
+	  return_value = expression (scope, formatted_expression + 1);
+	  ifopen[depth] = false;
+	}
+      else
+	{
+	  depth--;
+	  return errorman_throw_reg (scope, "unmatched 'else'");
+	}
     }
   else if (strcmp (formatted_expression[0], "while") == 0)
     {
+      ifopen[depth] = false;
       return_value = while_loop (scope, formatted_expression + 1);
     }
   else if (strcmp (formatted_expression[0], "{") == 0)
     {
+      ifopen[depth] = false;
       return_value = lambda_proc (scope, formatted_expression + 1);
     }
   else if (strcmp (formatted_expression[0], "return") == 0)
     {
+      ifopen[depth] = false;
       return_value = eval (scope, formatted_expression + 1);
       isreturn = true;
     }
   else
     {
+      ifopen[depth] = false;
       return_value = eval (scope, formatted_expression);
     }
 
   if (!return_value.isret)
     return_value.isret = isreturn;
 
+  depth--;
   return return_value;
 }
 
 a_type
- procedure (func *scope, char **words)
+procedure (func *scope, char **words)
 {
   a_type return_value; /* value returned */
-  a_type error;
   int len_to_move; /* length moved each time */
-
-  error.type = ERROR_TYPE;
-  error.error.function = "procedure";
-  error.error.scope = scope;
 
   extern int get_exp_length_first (char **, int);
 
@@ -127,23 +148,14 @@ a_type
 eval (func *scope, char **words)
 {
   a_type return_value;
-  a_type error;
-
-  error.type = ERROR_TYPE;
-  error.error.function = "evaluator";
-  error.error.scope = scope;
 
   if (words[0] == NULL)
-    {
-      error.error.error_code = SYNTAX;
-      return error;
-    }
+    return errorman_throw_reg (scope, "cannot evaluate empty expression");
   
   if (strcmp (words[0], "list") == 0)
     {
       scroll (scope);
-      error.error.error_code = NON;
-      return error;
+      return_value = num_to_var ("1");
     }
   else if (isnum (words[0]))
     {
@@ -165,17 +177,10 @@ eval (func *scope, char **words)
     return_value = get_array_func (get_func (scope, words[0]),
 				   scope,
 				   words + 1);
-  /*
-    {
-      return_value.type = FUNCTION_TYPE;
-      return_value.f_point = getFunc (scope, words[0]);
-    }
-  */
   else
     {
-      printf ("Unknown word: [%s]\n", words[0]);
-      error.error.error_code = SYNTAX;
-      return error;
+      return errorman_throw_reg (scope, combine_strs ("cannot evaluate ",
+						      words[0]));
     } 
 
   return_value.isret = false;

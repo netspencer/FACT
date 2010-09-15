@@ -6,9 +6,9 @@ PARSERV = 2
 SRCS = main.c gmp_mallocs.c functions.c string.c \
 	management.c scroll.c math.c mem.c shell.c \
 	operators.c parser.c primitives.c eval.c \
-	errorman.c statements.c 
+	errorman.c statements.c utilities.c
 
-LIBS = -lgc -lgmp -lreadline
+LIBS = -lgc -lgmp
 
 all: $(PROG)
 

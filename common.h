@@ -181,9 +181,8 @@ typedef struct _FUNC
 typedef struct 
 {
   func *scope;
-  int error_code;
-  char *function;
-} err;
+  char *description;
+} _ERROR;
 
 typedef struct 
 {
@@ -191,48 +190,49 @@ typedef struct
   bool isret;
   var *v_point;
   func *f_point;
-  err error;
+  _ERROR error;
 } a_type;
 
 #if PARSING >= 2
-typedef enum _word_codes {
-  PARSING_ERROR = -1,
-  END,                     /* -1 */
-  UNKNOWN,                 /* 0  */
-  PLUS,                    
-  MINUS,
-  MULTIPLY,
-  DIVIDE,
-  MOD,
-  AT,
-  SET,
-  DEF,
-  DEFUNC,
-  FUNC_RET,
-  FUNC_OBJ,
-  COMMA,
-  IN_SCOPE,
-  OP_CURLY,
-  CL_CURLY,
-  OP_BRACKET,
-  CL_BRACKET,
-  OP_PAREN,
-  CL_PAREN,
-  QUOTE,
-  AND,
-  OR,
-  EQ,
-  NEQ,
-  LESS,
-  MORE,
-  LESS_EQ,
-  MORE_EQ,
-  SIZE,
-  IF,
-  WHILE,
-  SEMI,
-  RETURN_STAT,
-} word_code;
+typedef enum _word_codes
+  {
+    PARSING_ERROR = -1,
+    END,                     /* -1 */
+    UNKNOWN,                 /* 0  */
+    PLUS,                    
+    MINUS,
+    MULTIPLY,
+    DIVIDE,
+    MOD,
+    AT,
+    SET,
+    DEF,
+    DEFUNC,
+    FUNC_RET,
+    FUNC_OBJ,
+    COMMA,
+    IN_SCOPE,
+    OP_CURLY,
+    CL_CURLY,
+    OP_BRACKET,
+    CL_BRACKET,
+    OP_PAREN,
+    CL_PAREN,
+    QUOTE,
+    AND,
+    OR,
+    EQ,
+    NEQ,
+    LESS,
+    MORE,
+    LESS_EQ,
+    MORE_EQ,
+    SIZE,
+    IF,
+    WHILE,
+    SEMI,
+    RETURN_STAT,
+  } word_code;
 
 typedef struct _LINKED_WORD
 {
@@ -252,11 +252,11 @@ typedef struct _LINKED_WORD
  * macros.                                     *
  *---------------------------------------------*/
 
+#include "utilities.h"
 #include "gmp_mallocs.h"
 #include "garbage.h"
 #include "errorman.h"
 #include "management.h"
-//#include "interpreter.h"
 #include "shell.h"
 #include "parser.h"
 #include "eval.h"

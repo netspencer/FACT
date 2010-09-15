@@ -11,8 +11,9 @@
  * (c) 2010 Matthew Plant
  */
 
+extern a_type errorman_throw_reg (func *, char *);
 
-extern void errorman_dump (err, int, const char *);
+extern void errorman_dump (_ERROR, int, const char *);
 
 enum error_calls {
   NON = 0, /* not an error */

@@ -2,7 +2,7 @@
 #define MATH_H_
 
 /**
- * Math.h:
+ * math:
  * provides various math operations, such as
  * addition, subtraction, etc.
  *

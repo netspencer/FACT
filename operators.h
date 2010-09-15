@@ -2,7 +2,7 @@
 #define OPERATORS_H_
 
 /**
- * Operators.h
+ * operators:
  * Provides logical and comparison
  * operators, such as more than,
  * less than, and, or, etc.
@@ -18,13 +18,13 @@
   the idea from math.h.
 */
 
-extern a_type equal (a_type arg1, a_type arg2);
-extern a_type not_equal (a_type arg1, a_type arg2);
-extern a_type more (a_type arg1, a_type arg2);
-extern a_type more_equal (a_type arg1, a_type arg2);
-extern a_type less (a_type arg1, a_type arg2);
-extern a_type less_equal (a_type arg1, a_type arg2);
-extern a_type and (a_type arg1, a_type arg2);
-extern a_type or (a_type arg1, a_type arg2);
+extern a_type equal (a_type, a_type);
+extern a_type not_equal (a_type, a_type);
+extern a_type more (a_type, a_type);
+extern a_type more_equal (a_type, a_type);
+extern a_type less (a_type, a_type);
+extern a_type less_equal (a_type, a_type);
+extern a_type and (a_type, a_type);
+extern a_type or (a_type, a_type);
 
 #endif
