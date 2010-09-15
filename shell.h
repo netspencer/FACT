@@ -1,5 +1,5 @@
-#ifndef _SHELL_H
-#define _SHELL_H
+#ifndef SHELL_H_
+#define SHELL_H_
 
 #include "common.h"
 

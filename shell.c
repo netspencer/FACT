@@ -10,6 +10,8 @@ static void print_logo () {
 	  "    \\/_/       \\/_/  \\/_/ \\/_______/    \\/_/\n");
 }
 
+static int line_number = 0; /* current line being read */
+
 char *get_input (FILE *fp)
 {
   int count;
@@ -38,7 +40,10 @@ char *get_input (FILE *fp)
       if (c != '\n')
 	input[count - 1] = c;
       else
-	count--;
+	{
+	  count--;
+	  line_number++;
+	}
 
       if (c == ';' || c == '}')
 	{
@@ -153,7 +158,7 @@ void shell ()
 
       if (returned.type == ERROR_TYPE)
         {
-          errorman_dump (returned.error);
+          errorman_dump (returned.error, line_number, "stdin");
           continue;
         }
 

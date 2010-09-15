@@ -12,7 +12,7 @@
  */
 
 
-extern void errorman_dump ( err );
+extern void errorman_dump (err, int, const char *);
 
 enum error_calls {
   NON = 0, /* not an error */
