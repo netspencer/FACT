@@ -3,7 +3,7 @@
 
 #include "common.h"
 
-extern char *get_input (const char *line_begin, const char *incomplete, FILE *fp);
+extern char *get_input (FILE *);
 extern void shell (void);
 
 #endif

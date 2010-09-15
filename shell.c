@@ -10,7 +10,7 @@ static void print_logo () {
 	  "    \\/_/       \\/_/  \\/_/ \\/_______/    \\/_/\n");
 }
 
-char *get_input (const char *line_begin, const char *incomplete, FILE *fp)
+char *get_input (FILE *fp)
 {
   int count;
   int paren_count;
@@ -23,15 +23,24 @@ char *get_input (const char *line_begin, const char *incomplete, FILE *fp)
   char *input;
   char *temp;
 
-  printf("%s", line_begin);
-
-  for (count = 1, input = NULL; (c = fgetc (fp)) != EOF; count++)
+  for (count = 1, input = NULL, in_quotes = false; (c = fgetc (fp)) != EOF; count++)
     {
       input = (char *) better_realloc (input, (count + 1) * sizeof (char));
-   
-      input[count - 1] = c;
 
-      if (c == '\n')
+      if (c == '#')
+	{
+	  while ((c = fgetc (fp)) != EOF && c != '\n')
+	    ;
+	  count--;
+	  continue;
+	}
+
+      if (c != '\n')
+	input[count - 1] = c;
+      else
+	count--;
+
+      if (c == ';' || c == '}')
 	{
 	  input[count] = '\0';
 	  temp = input;
@@ -55,19 +64,23 @@ char *get_input (const char *line_begin, const char *incomplete, FILE *fp)
 		curly_count--;
 	      else if (*temp == '"')
 		in_quotes = !in_quotes;
-	      else if (*temp == '#')
-		while (*temp++ != '\n');
 	      temp++;
 	    }
-	  if (paren_count > 0 || bracket_count > 0 || curly_count > 0 || in_quotes)
-	    printf ("%s", incomplete);
-	  else
+
+	  if (paren_count == 0 && bracket_count == 0 && curly_count == 0 && !in_quotes
+	      && (input[count - 1] == ';' || input[count - 1] == '}'))
 	    break;
+	  
 	}
       
     }
+  
   if (input != NULL)
-    input[count] = '\0';
+    {
+      input = better_realloc (input, sizeof (char) * (count + 2));
+      input[count] = c;
+      input[count + 1] = '\0';
+    }
 
   return input;
 }
@@ -100,7 +113,7 @@ void shell ()
 
   for (;;)
     {
-      input = get_input ("% ", "> ", stdin);
+      input = get_input (stdin);
 
       if (input == NULL)
         {
@@ -110,6 +123,12 @@ void shell ()
       
       parsed_input = get_words (input);
 #if PARSING >= 2
+      if (parsed_input == NULL)
+	{
+	  printf ("\nExiting...\n");
+	  return;
+	}
+      
       formatted = create_list (parsed_input);
 
       formatted = set_list (formatted, END);
@@ -124,6 +143,7 @@ void shell ()
 
       set_link (formatted);
       parsed_input = convert_link (formatted);
+
 #endif
 
 #if PARSING < 2

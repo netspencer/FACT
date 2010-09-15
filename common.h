@@ -210,6 +210,7 @@ typedef enum _word_codes {
   DEFUNC,
   FUNC_RET,
   FUNC_OBJ,
+  COMMA,
   IN_SCOPE,
   OP_CURLY,
   CL_CURLY,
