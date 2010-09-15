@@ -97,15 +97,8 @@ a_type print_character (func *scope, char **words)
 
   return evald;
 }
-
-int unb_getchar  (void) /* yes I stole this from K&R who cares? */
-{
-  char c;
-
-  return (read (0, &c, 1) == 1) ? (unsigned char) c : EOF;
-}
-
-a_type input_character (func *scope, char **words)
+a_type
+input_character (func *scope, char **words)
 {
   a_type return_value;
   int pos;
@@ -114,7 +107,7 @@ a_type input_character (func *scope, char **words)
 
   return_value.v_point = alloc_var ();
 
-  mpz_set_si (return_value.v_point->data, unb_getchar ());
+  mpz_set_si (return_value.v_point->data, getchar ());
 
   for (pos = 0; words[pos] != NULL; pos++)
     words[pos] = words[pos + 1];

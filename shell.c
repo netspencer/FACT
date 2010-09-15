@@ -10,7 +10,7 @@ static void print_logo () {
 	  "    \\/_/       \\/_/  \\/_/ \\/_______/    \\/_/\n");
 }
 
-static int line_number = 0; /* current line being read */
+int line_number = 0; /* current line being read */
 
 char *get_input (FILE *fp)
 {
@@ -90,27 +90,18 @@ char *get_input (FILE *fp)
   return input;
 }
 
-void shell ()
+void
+shell (func *main_scope)
 {
   char *input;
   char **parsed_input;
+  int read;
 
   a_type returned;
 
 #if PARSING >= 2
   linked_word *formatted;
 #endif
-
-  func main_scope = {
-    "main",
-    NULL,
-    NULL,
-    0,
-    NULL,
-    NULL,
-    NULL,
-    NULL
-  };
 
   /* Print out the disclaimer and logo. */
   printf ("The FACT programming language interactive shell\n(c) 2010 Matthew Plant, under a copyleft license.\n");
@@ -149,12 +140,18 @@ void shell ()
       set_link (formatted);
       parsed_input = convert_link (formatted);
 
+      /*
+      for (read = 0; parsed_input[read] != NULL; read++)
+	printf ("%s ", parsed_input[read]);
+      putchar ('\n');
+      */
+
 #endif
 
 #if PARSING < 2
       rev_shunting_yard (parsed_input, '\0');
 #endif
-      returned = expression (&main_scope, parsed_input);
+      returned = expression (main_scope, parsed_input);
 
       if (returned.type == ERROR_TYPE)
         {

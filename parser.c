@@ -332,16 +332,7 @@ rev_shunting_yard (linked_word *scan)
 	case OP_BRACKET:
 	case OP_PAREN:
 	  rev_shunting_yard (scan->hidden);
-	  scan->next->previous = NULL;
-	  rev_shunting_yard (scan->next);
-
-	  for (find_end = scan->next;
-	       find_end->previous != NULL;
-	       find_end = find_end->previous);
-
-	  scan->next = find_end;
-	  find_end->previous = scan;
-	  return;
+	  break;
 	  
 	case PLUS:
 	case MINUS:

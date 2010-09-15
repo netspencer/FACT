@@ -34,9 +34,8 @@
 #include <stdbool.h>
 #include <assert.h>
 #include <gmp.h>
-#include <readline/readline.h>
-//#include <allegro.h>
 #include <gc/gc.h>
+#include <getopt.h>
 
 /* global variables: */
 
@@ -266,6 +265,7 @@ typedef struct _LINKED_WORD
 #include "operators.h"
 #include "string.h"
 #include "statements.h"
+#include "execfile.h"
 #include "primitives.h"
 
 #endif

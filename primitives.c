@@ -63,7 +63,7 @@ init_std_prims (void)
   add_prim ("$", run_func);
   add_prim ("&", new_scope);
   add_prim (":", in_scope);
-  add_prim ("\'", new_string);
+  add_prim ("\"", new_string);
   add_prim ("printc", print_character);
   add_prim ("getc", input_character);
   add_prim ("printv", print_var);
