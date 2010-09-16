@@ -4,7 +4,7 @@
 #include "common.h"
 
 /**
- * errorman.c:
+ * errorman:
  * Provides functions for the easy handling of
  * errors in code.
  *
@@ -12,25 +12,8 @@
  */
 
 extern a_type errorman_throw_reg (func *, char *);
+extern a_type errorman_throw_prim (func *, char **);
 
 extern void errorman_dump (_ERROR, int, const char *);
-
-enum error_calls {
-  NON = 0, /* not an error */
-  CVTF,
-  CFTV,
-  RV,
-  RF,
-  LESSPRIM,
-  LESSFUNC,
-  MOREPRIM,
-  MOREFUNC,
-  INVALPRIM,
-  INVALFUNC,
-  ESCAPARR,
-  DIVNON,
-  MODNON,
-  SYNTAX
-};
 
 #endif

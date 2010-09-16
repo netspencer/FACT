@@ -3,25 +3,34 @@
 a_type
 run_file (func *scope, const char *filename)
 {
-  FILE *fp;
+  unsigned int line_num;
+  
   char *input;
   char **parsed_input;
+
+  FILE *fp;
+
   linked_word *formatted;
+
   a_type returned;
+
+  printf ("Opening file <%s>\n", filename);
 
   fp = fopen (filename, "r");
 
   if (fp == NULL)
     return errorman_throw_reg (scope, "could not open file");
 
+  line_num = 1;
+
   for (;;)
     {
-      input = get_input (fp);
+      input = get_input (fp, &line_num);
 
       if (input == NULL)
 	{
 	  fclose (fp);
-	  printf ("Exiting...\n");
+	  printf ("Closing file <%s>.\n", filename);
 	  returned.type = VAR_TYPE;
 	  returned.isret = false;
 	  return returned;
@@ -32,7 +41,7 @@ run_file (func *scope, const char *filename)
       if (parsed_input == NULL)
 	{
 	  fclose (fp);
-	  printf ("Exiting...\n");
+	  printf ("Closing file <%s>.\n", filename);
 	  returned.type = VAR_TYPE;
 	  return returned;
 	}
@@ -56,14 +65,14 @@ run_file (func *scope, const char *filename)
 
       if (returned.type == ERROR_TYPE)
         {
-          errorman_dump (returned.error, line_number, filename);
+          errorman_dump (returned.error, line_num, filename);
           continue;
         }
 
       if (returned.isret == true)
         {
 	  fclose (fp);
-          printf ("Exiting...\n");
+	  printf ("Closing file <%s>.\n", filename);
 	  return returned;
         }
     }

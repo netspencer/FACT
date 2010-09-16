@@ -10,9 +10,7 @@ static void print_logo () {
 	  "    \\/_/       \\/_/  \\/_/ \\/_______/    \\/_/\n");
 }
 
-int line_number = 0; /* current line being read */
-
-char *get_input (FILE *fp)
+char *get_input (FILE *fp, unsigned int *line_number)
 {
   int count;
   int paren_count;
@@ -42,7 +40,7 @@ char *get_input (FILE *fp)
       else
 	{
 	  count--;
-	  line_number++;
+	  (*line_number)++;
 	}
 
       if (c == ';' || c == '}')
@@ -95,7 +93,7 @@ shell (func *main_scope)
 {
   char *input;
   char **parsed_input;
-  int read;
+  unsigned int line_num;
 
   a_type returned;
 
@@ -109,7 +107,7 @@ shell (func *main_scope)
 
   for (;;)
     {
-      input = get_input (stdin);
+      input = get_input (stdin, &line_num);
 
       if (input == NULL)
         {
@@ -155,7 +153,7 @@ shell (func *main_scope)
 
       if (returned.type == ERROR_TYPE)
         {
-          errorman_dump (returned.error, line_number, "stdin");
+          errorman_dump (returned.error, line_num, "stdin");
           continue;
         }
 

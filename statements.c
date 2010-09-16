@@ -1,12 +1,12 @@
 #include "interpreter.h"
 
 a_type
-if_statement (func *scope, char **words)
+if_statement (func *scope, char **words, bool *success)
 {
   a_type return_value;
   a_type conditional;
-  int pos;
-  int count;
+  /*int pos;
+    int count;*/
   mpz_t zero;
 
   func temp_scope =
@@ -24,21 +24,25 @@ if_statement (func *scope, char **words)
   
   mpz_init (zero);
   
+  (*success) = true;
+  
   if (strcmp (*words, "(") != 0)
     return errorman_throw_reg (scope, "expected '(' after if statement");
 
   conditional = eval (scope, words);
 
   if (conditional.type == ERROR_TYPE)
-    return errorman_throw_reg (scope, combine_strs ("error in if statement conditional; ",
-						    conditional.error.description));
+    {
+      conditional.error.scope = scope;
+      return conditional; //errorman_throw_reg (scope, conditional.error.description);
+    }
 
   if (conditional.type == FUNCTION_TYPE)
     return errorman_throw_reg (scope, "if statement conditional must return a var");
   
   if (mpz_cmp (conditional.v_point->data, zero) == 0)
     {
-      for (pos = 1, count = 0; words[pos] != NULL; pos++)
+      /*for (pos = 1, count = 0; words[pos] != NULL; pos++)
         {
           if (words[pos][0] == '{'
 	      || words[pos][0] == '('
@@ -56,12 +60,15 @@ if_statement (func *scope, char **words)
 	return errorman_throw_reg (scope, "syntax error in if statement");
 
       if (words[pos] == NULL || strcmp (words[pos], "else") != 0)
-        {
+      { */
           return_value.v_point = alloc_var ();
 	  return_value.type = VAR_TYPE;
 	  return_value.isret = false;
+
+	  (*success) = false;  
+	  
           return return_value;
-        }
+	  /*  }
       else
 	{
 	  return_value = expression (&temp_scope, (words + pos + 1));
@@ -71,19 +78,45 @@ if_statement (func *scope, char **words)
 							    return_value.error.description));
 
 	  return return_value;
-	}
+	  } */
     }
   
   return_value = expression (&temp_scope, (words + 1));
 
   if (return_value.type == ERROR_TYPE)
-    return errorman_throw_reg (scope, combine_strs ("error in if statement block; ",
-						    return_value.error.description));
-  
+    return_value.error.scope = scope;//errorman_throw_reg (scope, return_value.error.description);
+    
   return return_value;
 }
 
-a_type while_loop (func *scope, char **words)
+a_type
+else_clause (func *scope, char **words)
+{
+  a_type return_value;
+  
+  func temp_scope =
+    {
+      "if_temp",
+      NULL,
+      NULL,
+      1,
+      NULL,
+      NULL,
+      scope,
+      NULL,
+      NULL
+    };
+
+  return_value = expression (&temp_scope, words);
+
+  if (return_value.type == ERROR_TYPE)
+    return errorman_throw_reg (scope, return_value.error.description);
+
+  return return_value;
+}
+
+a_type
+while_loop (func *scope, char **words)
 {
   int pos_cond;
   int pos_block;
@@ -144,8 +177,8 @@ a_type while_loop (func *scope, char **words)
       conditional_evald = eval (scope, conditional_temp);
       
       if (conditional_evald.type == ERROR_TYPE)
-	return errorman_throw_reg (scope, combine_strs ("error in while loop conditional; ",
-						       conditional_evald.error.description));
+	return conditional_evald;/*errorman_throw_reg (scope, combine_strs ("error in while loop conditional; ",
+		 conditional_evald.error.description));*/
       if (conditional_evald.type == FUNCTION_TYPE)
 	return errorman_throw_reg (scope, "while loop conditional must return a var");
 
@@ -157,8 +190,8 @@ a_type while_loop (func *scope, char **words)
       block_evald = expression (scope, block_temp);
 
       if (block_evald.type == ERROR_TYPE)
-	return errorman_throw_reg (scope, combine_strs ("error in while loop block; ",
-							block_evald.error.description));
+	return block_evald;/*errorman_throw_reg (scope, combine_strs ("error in while loop block; ",
+		 block_evald.error.description));*/
       if (block_evald.isret == true)
         break;
     }

@@ -1,5 +1,9 @@
 #include "interpreter.h"
 
+#define OPEN_SUCCESS 0
+#define OPEN_FAILED  1
+#define CLOSED       2
+
 a_type 
 expression (func *scope, char **words)
 {
@@ -7,9 +11,10 @@ expression (func *scope, char **words)
   int position; /* current position in "words" */
   char **formatted_expression; /* the block to be evaluated */
   bool isreturn; /* if the block starts with a return or not */
+  bool getif;
 
   static int depth = -1;
-  static bool ifopen[100];
+  static int ifopen[100];
 
   extern int get_exp_length_first (char **, int);
 
@@ -39,21 +44,28 @@ expression (func *scope, char **words)
   for (formatted_expression[position + 1] = NULL; position >= 0; position--)
     formatted_expression[position] = words[position];
 
-  if (strcmp (formatted_expression[0], "if") == 0)/*
-						    Checks to see if it is an if of while statement a
-						    This ensures that an if or while loop will have to
-						    come at the beginning of the statement.
-						  */
+  if (strcmp (formatted_expression[0], "if") == 0)
     {
-      ifopen[depth] = true;
-      return_value = if_statement (scope, formatted_expression + 1);
+      return_value = if_statement (scope, formatted_expression + 1, &getif);
+
+      if (getif)
+	ifopen[depth] = OPEN_SUCCESS;
+      else
+	ifopen[depth] = OPEN_FAILED;
     }
   else if (strcmp (formatted_expression[0], "else") == 0)
     {
-      if (ifopen[depth])
+      if (ifopen[depth] == OPEN_FAILED)
 	{
-	  return_value = expression (scope, formatted_expression + 1);
-	  ifopen[depth] = false;
+	  depth--;
+	  return_value = else_clause (scope, formatted_expression + 1);
+	  depth++;
+	  //	  ifopen[depth] = CLOSED;
+	}
+      else if (ifopen[depth] == OPEN_SUCCESS)
+	{
+	  if (strcmp (formatted_expression[1], "if") != 0)
+	    ifopen[depth] = CLOSED;
 	}
       else
 	{
@@ -63,23 +75,23 @@ expression (func *scope, char **words)
     }
   else if (strcmp (formatted_expression[0], "while") == 0)
     {
-      ifopen[depth] = false;
+      ifopen[depth] = CLOSED;
       return_value = while_loop (scope, formatted_expression + 1);
     }
   else if (strcmp (formatted_expression[0], "{") == 0)
     {
-      ifopen[depth] = false;
+      ifopen[depth] = CLOSED;
       return_value = lambda_proc (scope, formatted_expression + 1);
     }
   else if (strcmp (formatted_expression[0], "return") == 0)
     {
-      ifopen[depth] = false;
+      ifopen[depth] = CLOSED;
       return_value = eval (scope, formatted_expression + 1);
       isreturn = true;
     }
   else
     {
-      ifopen[depth] = false;
+      ifopen[depth] = CLOSED;
       return_value = eval (scope, formatted_expression);
     }
 
@@ -126,7 +138,7 @@ lambda_proc (func *scope, char **words)
 {
   func temp_local = 
     {
-      "lambda",
+      scope->name,
       NULL,
       NULL,
       1,
@@ -158,17 +170,11 @@ eval (func *scope, char **words)
       return_value = num_to_var ("1");
     }
   else if (isnum (words[0]))
-    {
-      return_value = num_to_var (words[0]);
-    }
+    return_value = num_to_var (words[0]);
   else if (isprim (words[0]) > -1)
-    {
-      return runprim (scope, words);
-    }
+    return runprim (scope, words);
   else if (ismathcall (words[0]) > -1)
-    {
-      return eval_math (scope, words);
-    }
+    return eval_math (scope, words);
   else if (get_var (scope, words[0]) != NULL)
     return_value = get_array_var (get_var (scope, words[0]),
 				  scope,
@@ -178,11 +184,9 @@ eval (func *scope, char **words)
 				   scope,
 				   words + 1);
   else
-    {
-      return errorman_throw_reg (scope, combine_strs ("cannot evaluate ",
-						      words[0]));
-    } 
-
+    return errorman_throw_reg (scope, combine_strs ("cannot evaluate ",
+						    words[0]));
+  
   return_value.isret = false;
 
   return return_value;

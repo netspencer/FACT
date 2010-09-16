@@ -64,6 +64,7 @@ init_std_prims (void)
   add_prim ("&", new_scope);
   add_prim (":", in_scope);
   add_prim ("\"", new_string);
+  add_prim ("?", errorman_throw_prim);
   add_prim ("printc", print_character);
   add_prim ("getc", input_character);
   add_prim ("printv", print_var);
@@ -123,6 +124,13 @@ eval_math (func *scope, char **words)
 
   arg1 = eval (scope, words + 1);
   arg2 = eval (scope, words + 2);
+
+  if ((words[2] == NULL || words[2][0] == ';')
+      && ismathcall (words[0]) == 1 && arg1.type == VAR_TYPE)
+    {
+      mpz_neg (arg1.v_point->data, arg1.v_point->data);
+      return arg1;
+    }
   
   if (arg1.type == ERROR_TYPE)
     return arg1;

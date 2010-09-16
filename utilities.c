@@ -43,3 +43,24 @@ copy (char **words)
 
   return temp;
 }
+
+char *
+array_to_string (var *convertable)
+{
+  var *scroller;
+  char *return_value;
+  char *setter;
+
+  return_value = (char *) better_malloc (sizeof (char) * convertable->array_size);
+  setter = return_value;
+
+  if (convertable->array_size > 1)
+    {
+      for (scroller = convertable->array_up; scroller != NULL; scroller = scroller->next, setter++)
+	setter[0] = mpz_get_si (scroller->data);
+    }
+  else
+    setter[0] = mpz_get_si (convertable->data);
+
+  return return_value;
+}

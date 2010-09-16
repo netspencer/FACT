@@ -3,9 +3,7 @@
 
 #include "common.h"
 
-extern int line_number;
-
-extern char *get_input (FILE *);
+extern char *get_input (FILE *, unsigned int *);
 extern void shell (func *);
 
 #endif

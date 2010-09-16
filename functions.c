@@ -102,6 +102,7 @@ prepare_function (func *scope, func *new_scope, char **words)
   words++;
   args_stored = copy (evald.f_point->args);
   new_scope->up = evald.f_point->up;
+  new_scope->name = evald.f_point->name;
 
   for (pos = 0; *(args_stored + pos) != NULL; pos++)
     {
@@ -170,7 +171,7 @@ new_scope (func *scope, char **words)
   char **copy_body;
 
   new_scope = alloc_func ();
-  new_scope->name = "lambda";
+  //  new_scope->name = scope->name;
   
   prepared = prepare_function (scope, new_scope, words);
 
@@ -198,7 +199,7 @@ run_func (func *scope, char **words)
   char **copied_body;
 
   new_scope = alloc_func ();
-  new_scope->name = "lambda";
+  //  new_scope->name = scope->name;
 
   prepared = prepare_function (scope, new_scope, words);
 

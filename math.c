@@ -96,10 +96,7 @@ sub (a_type arg1, a_type arg2)
   if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
     return errorman_throw_reg (scope, "both arguments to - need to be vars");
   
-  if (arg2.type != VAR_TYPE)
-    mpz_neg (return_value.v_point->data, arg1.v_point->data);
-  else
-    mpz_sub (return_value.v_point->data, arg1.v_point->data, arg2.v_point->data);
+  mpz_sub (return_value.v_point->data, arg1.v_point->data, arg2.v_point->data);
 
   return return_value;
 }

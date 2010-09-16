@@ -63,11 +63,12 @@ extern bool mem_trackopt;
  * between functions.                          *
  *---------------------------------------------*/
 
-enum {   
-  VAR_TYPE,
-  FUNCTION_TYPE,
-  ERROR_TYPE
-};
+typedef enum _TYPE_DEFINE
+  {   
+    VAR_TYPE = 0,
+    FUNCTION_TYPE,
+    ERROR_TYPE, 
+  } type_define;
 
 #define MAX_BYTES 10000000
 
@@ -181,11 +182,12 @@ typedef struct
 {
   func *scope;
   char *description;
+  bool thrown;
 } _ERROR;
 
 typedef struct 
 {
-  char type;
+  type_define type;
   bool isret;
   var *v_point;
   func *f_point;
@@ -253,7 +255,7 @@ typedef struct _LINKED_WORD
 
 #include "utilities.h"
 #include "gmp_mallocs.h"
-#include "garbage.h"
+//#include "garbage.h"
 #include "errorman.h"
 #include "management.h"
 #include "shell.h"

@@ -16,5 +16,6 @@
 
 extern char *combine_strs (char *, char *);
 extern char **copy (char **);
+extern char *array_to_string (var *);
 
 #endif

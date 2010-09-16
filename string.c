@@ -115,26 +115,6 @@ input_character (func *scope, char **words)
   return return_value;
 }
 
-unsigned char *array_to_string (var *convertable)
-{
-  var *scroller;
-  unsigned char *return_value;
-  unsigned char *setter;
-
-  return_value = (unsigned char *) better_malloc (sizeof (unsigned char) * convertable->array_size); /* yes, I am well aware the unsigned in the cast won't make any difference */ 
-  setter = return_value;
-
-  if (convertable->array_size > 1)
-    {
-      for (scroller = convertable->array_up; scroller != NULL; scroller = scroller->next, setter++)
-	setter[0] = mpz_get_si (scroller->data);
-    }
-  else
-    setter[0] = mpz_get_si (convertable->data);
-
-  return return_value;
-}
-
 a_type print_var (func *scope, char **words)
 {
   a_type evald;

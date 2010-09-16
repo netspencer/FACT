@@ -15,21 +15,27 @@ process_args (int argc, char **argv)
   scope = alloc_func ();
   scope->name = "main";
 
+  file_open = run_file (scope, "stdlib.ft");
+
+  if (file_open.type == ERROR_TYPE)
+    errorman_dump (file_open.error, 0, optarg);
+
   for (;;)
     {
       static struct option long_options[] =
 	{
-	  {"show-heap", no_argument,       &memt,  1},
-	  {"hide-heap", no_argument,       &memt,  0},
-	  {"stdin",     no_argument,       &cmdln, 1},
-	  {"no-stdin",  no_argument,       &cmdln, 0},
+	  {"show-heap", no_argument,       &memt,    1},
+	  {"hide-heap", no_argument,       &memt,    0},
+	  {"stdin",     no_argument,       &cmdln,   1},
+	  {"no-stdin",  no_argument,       &cmdln,   0},
+	  {"shebang",   required_argument, 0, 'i'},
 	  {"file",      required_argument, 0, 'f'},
 	  {0, 0, 0, 0}
 	};
 
       int option_index = 0;
 
-      arg = getopt_long (argc, argv, "mnsdf:", long_options, &option_index);
+      arg = getopt_long (argc, argv, "mnsdi:f:", long_options, &option_index);
 
       if (arg == -1)
 	break;
@@ -60,13 +66,21 @@ process_args (int argc, char **argv)
 
 	case 'f':
 	  mem_trackopt = memt;
-	  line_number = 0;
 	  file_open = run_file (scope, optarg);
 
 	  if (file_open.type == ERROR_TYPE)
 	    errorman_dump (file_open.error, 0, optarg);
 
 	  break;
+
+	case 'i':
+	  mem_trackopt = memt;
+	  file_open = run_file (scope, optarg);
+
+	  if (file_open.type == ERROR_TYPE)
+	    errorman_dump (file_open.error, 0, optarg);
+
+	  exit (0);
 
 	case '?':
 	  break;
