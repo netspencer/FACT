@@ -105,6 +105,8 @@ shell (func *main_scope)
   printf ("The FACT programming language interactive shell\n(c) 2010 Matthew Plant, under a copyleft license.\n");
   print_logo ();
 
+  line_num = 0;
+
   for (;;)
     {
       input = get_input (stdin, &line_num);
