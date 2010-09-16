@@ -192,6 +192,7 @@ typedef struct
   var *v_point;
   func *f_point;
   _ERROR error;
+  bool break_signal;
 } a_type;
 
 #if PARSING >= 2

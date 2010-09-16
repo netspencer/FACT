@@ -21,6 +21,7 @@ expression (func *scope, char **words)
   isreturn = false;
   return_value.type = VAR_TYPE;
 
+
   depth++;
   
   position = get_exp_length_first (words, ';'); /* find out how long the statement is */
@@ -89,10 +90,16 @@ expression (func *scope, char **words)
       return_value = eval (scope, formatted_expression + 1);
       isreturn = true;
     }
+  else if (strcmp (formatted_expression[0], "break") == 0)
+    {
+      ifopen[depth] = CLOSED;
+      return_value.break_signal = true;
+    }
   else
     {
       ifopen[depth] = CLOSED;
       return_value = eval (scope, formatted_expression);
+      return_value.break_signal = false;
     }
 
   if (!return_value.isret)
@@ -116,7 +123,8 @@ procedure (func *scope, char **words)
       return_value = expression (scope, words);
 
       if (return_value.type == ERROR_TYPE
-	  || return_value.isret == true)
+	  || return_value.isret
+	  || return_value.break_signal)
 	return return_value;
 
       words += len_to_move;

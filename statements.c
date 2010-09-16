@@ -64,6 +64,7 @@ if_statement (func *scope, char **words, bool *success)
           return_value.v_point = alloc_var ();
 	  return_value.type = VAR_TYPE;
 	  return_value.isret = false;
+	  return_value.break_signal = false;
 
 	  (*success) = false;  
 	  
@@ -194,6 +195,12 @@ while_loop (func *scope, char **words)
 		 block_evald.error.description));*/
       if (block_evald.isret == true)
         break;
+
+      if (block_evald.break_signal == true)
+	{
+	  block_evald.break_signal = false;
+	  break;
+	}
     }
 
   return block_evald;
