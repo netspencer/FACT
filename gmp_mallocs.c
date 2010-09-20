@@ -1,17 +1,30 @@
 #include "gmp_mallocs.h"
 
-
-void *gmp_malloc (size_t alloc_size)
+void *
+gmp_malloc (size_t alloc_size)
 {
   void *temp_pointer;
 
   if (mem_trackopt)
     printf("Heap size = %d\n", (int) GC_get_heap_size());
-
-  temp_pointer = GC_malloc (alloc_size);
-
-  if (temp_pointer == NULL)
+  
+  if (bytes_used >= MAX_BYTES)
     {
+#ifdef MEM_DEBUG
+      printf ("bytes_used exceeds MAX_BYTES\n"
+	      "Current-heap = %d\n", (int) GC_get_heap_size ());
+#endif
+      GC_gcollect ();
+#ifdef MEM_DEBUG
+      printf ("Heap-after-collect = %d\n", (int) GC_get_heap_size ());
+#endif
+      bytes_used = 0;
+    }
+    
+  temp_pointer = GC_malloc (alloc_size);
+  
+  if (temp_pointer == NULL)
+      {
       /*
 	if GC returns a NULL pointer, garbage collection is enforced
 	in order to free up as much space as possible. Then,
@@ -30,16 +43,24 @@ void *gmp_malloc (size_t alloc_size)
   return temp_pointer;
 }
 
-void *gmp_realloc (void *to_resize, size_t alloc_size, size_t new_size)
+void *
+gmp_realloc (void *to_resize, size_t alloc_size, size_t new_size)
 {
   void *temp_pointer;
 
   if (mem_trackopt)
-    printf("Heap size = %d\n", (int) GC_get_heap_size());
+    printf("Heap size = %d\n", (int) GC_get_heap_size ());
 
   if (bytes_used >= MAX_BYTES)
     {
+#ifdef MEM_DEBUG
+      printf ("bytes_used exceeds MAX_BYTES\n"
+	      "Current-heap = %d\n", (int) GC_get_heap_size ());
+#endif
       GC_gcollect ();
+#ifdef MEM_DEBUG
+      printf ("Heap-after-collect = %d\n", (int) GC_get_heap_size ());
+#endif
       bytes_used = 0;
     }
 
@@ -62,5 +83,6 @@ void *gmp_realloc (void *to_resize, size_t alloc_size, size_t new_size)
   return temp_pointer;
 }
 
-void gmp_free (void *to_free, size_t unneeded) { GC_free (to_free); }
+void
+gmp_free (void *to_free, size_t unneeded) { GC_free (to_free); }
 

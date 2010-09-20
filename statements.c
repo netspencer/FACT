@@ -1,6 +1,24 @@
 #include "interpreter.h"
 
 a_type
+invalid_if (func *scope, char **words)
+{
+  return errorman_throw_reg (scope, "invalid syntax, if statements must start at the beginning of the expression");
+}
+
+a_type
+invalid_else (func *scope, char **words)
+{
+  return errorman_throw_reg (scope, "invalid syntax, else statements must follow if statements at the beginning of the expression");
+}
+
+a_type
+invalid_while (func *scope, char **words)
+{
+  return errorman_throw_reg (scope, "invalid syntax, while loops must start at the beginning of the expression");
+}
+
+a_type
 if_statement (func *scope, char **words, bool *success)
 {
   a_type return_value;

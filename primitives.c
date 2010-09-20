@@ -1,6 +1,5 @@
 #include "interpreter.h"
 
-
 struct _MATH_PRIMS
 { 
   const char *name;
@@ -14,17 +13,22 @@ static struct _MATH_PRIMS math_calls[] =
     {"*",   mult},
     {"/",   divide},
     {"%",   mod},
-    {"eq",  equal},
-    {"nq",  not_equal},
+    {"+=",   add_assignment},
+    {"-=",   sub_assignment},
+    {"*=",   mult_assignment},
+    {"/=",   div_assignment},
+    {"%=",   mod_assignment},
+    {/*"eq"*/ "==",  equal},
+    {/*"nq"*/ "!=",  not_equal},
     {">",   more},
     {"<",   less},
-    {"meq", more_equal},
-    {"leq", less_equal},
-    {"and", and},
-    {"or",  or}
+    {/*"meq"*/ ">=", more_equal},
+    {/*"leq"*/ "<=", less_equal},
+    {/*"and"*/ "&&", and},
+    {/*"or"*/  "||",  or}
   };
 
-#define NUM_MATH_PRIMS 13
+#define NUM_MATH_PRIMS 18
 
 struct _prims
 { 
@@ -59,12 +63,15 @@ init_std_prims (void)
   add_prim ("defunc", defunc);
   /* add_prim ("[", return_array); */
   add_prim ("sizeof", size_of);
-  add_prim ("@", add_func);
+  add_prim ("@", liven_func);
   add_prim ("$", run_func);
   add_prim ("&", new_scope);
   add_prim (":", in_scope);
   add_prim ("\"", new_string);
   add_prim ("?", errorman_throw_prim);
+  add_prim ("if", invalid_if);
+  add_prim ("else", invalid_else);
+  add_prim ("while", invalid_while);
   add_prim ("printc", print_character);
   add_prim ("getc", input_character);
   add_prim ("printv", print_var);

@@ -1,9 +1,10 @@
 #include "execfile.h"
 
 a_type
-run_file (func *scope, const char *filename)
+run_file (func *scope, const char *filename, bool silent)
 {
   unsigned int line_num;
+  //  int read;
   
   char *input;
   char **parsed_input;
@@ -14,7 +15,8 @@ run_file (func *scope, const char *filename)
 
   a_type returned;
 
-  printf ("Opening file <%s>\n", filename);
+  if (!silent)
+    printf ("Opening file <%s>\n", filename);
 
   fp = fopen (filename, "r");
 
@@ -30,7 +32,10 @@ run_file (func *scope, const char *filename)
       if (input == NULL)
 	{
 	  fclose (fp);
-	  printf ("Closing file <%s>.\n", filename);
+
+	  if (!silent)
+	    printf ("Closing file <%s>.\n", filename);
+
 	  returned.type = VAR_TYPE;
 	  returned.isret = false;
 	  return returned;
@@ -41,7 +46,10 @@ run_file (func *scope, const char *filename)
       if (parsed_input == NULL)
 	{
 	  fclose (fp);
-	  printf ("Closing file <%s>.\n", filename);
+
+	  if (!silent)
+	    printf ("Closing file <%s>.\n", filename);
+
 	  returned.type = VAR_TYPE;
 	  return returned;
 	}
@@ -61,6 +69,12 @@ run_file (func *scope, const char *filename)
       set_link (formatted);
       parsed_input = convert_link (formatted);
 
+      /*
+      for (read = 0; parsed_input[read] != NULL; read++)
+	printf ("%s ", parsed_input[read]);
+      putchar ('\n');
+      */
+
       returned = expression (scope, parsed_input);
 
       if (returned.type == ERROR_TYPE)
@@ -72,7 +86,9 @@ run_file (func *scope, const char *filename)
       if (returned.isret == true)
         {
 	  fclose (fp);
-	  printf ("Closing file <%s>.\n", filename);
+
+	  if (!silent)
+	    printf ("Closing file <%s>.\n", filename);
 	  return returned;
         }
     }

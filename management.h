@@ -16,7 +16,7 @@ extern func *get_func (func *, char *);
 extern void scroll (func *);
 
 extern var *add_var (func *, char *);
-extern func *addFunc (func *, char *);
+extern func *add_func (func *, char *);
 
 #define resize_array(arg1, arg2) resize_var (arg1, arg2)
 #define resize_func_array(arg1, arg2) resize_func (arg1, arg2);

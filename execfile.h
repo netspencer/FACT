@@ -12,6 +12,6 @@
  *
  */
 
-extern a_type run_file (func *, const char *);
+extern a_type run_file (func *, const char *, bool);
 
 #endif

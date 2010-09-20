@@ -1,6 +1,8 @@
 #include "shell.h"
 
-static void print_logo () {
+static void
+print_logo ()
+{
   printf (" ________   ________   ________   _________\n"
 	  "/\\  _____\\ /\\  ___  \\ /\\  _____\\ /\\___  ___\\\n"
 	  "\\ \\ \\____/ \\ \\ \\__L\\ \\\\ \\ \\____/ \\/__/\\ \\__/\n"
@@ -10,7 +12,8 @@ static void print_logo () {
 	  "    \\/_/       \\/_/  \\/_/ \\/_______/    \\/_/\n");
 }
 
-char *get_input (FILE *fp, unsigned int *line_number)
+char *
+get_input (FILE *fp, unsigned int *line_number)
 {
   int count;
   int paren_count;
@@ -21,13 +24,14 @@ char *get_input (FILE *fp, unsigned int *line_number)
   bool in_quotes;
   
   char *input;
-  char *temp;
+  //  char *temp;
 
-  for (count = 1, input = NULL, in_quotes = false; (c = fgetc (fp)) != EOF; count++)
+  for (count = 1, input = NULL, in_quotes = false,
+	 paren_count = bracket_count = curly_count = 0; (c = fgetc (fp)) != EOF; count++)
     {
       input = (char *) better_realloc (input, (count + 1) * sizeof (char));
 
-      if (c == '#')
+      if (c == '#' && !in_quotes)
 	{
 	  while ((c = fgetc (fp)) != EOF && c != '\n')
 	    ;
@@ -35,18 +39,34 @@ char *get_input (FILE *fp, unsigned int *line_number)
 	  continue;
 	}
 
-      if (c != '\n')
-	input[count - 1] = c;
+      if (c != '\n' || in_quotes)
+ 	input[count - 1] = c;
       else
 	{
 	  count--;
 	  (*line_number)++;
 	}
 
+      if (c == '(')
+	paren_count++;
+      else if (c == ')')
+	paren_count--;
+      else if (c == '[')
+	bracket_count++;
+      else if (c == ']')
+	bracket_count--;
+      else if (c == '{')
+	curly_count++;
+      else if (c == '}')
+	curly_count--;
+      else if (c == '"')
+	in_quotes = !in_quotes;
+
       if (c == ';' || c == '}')
 	{
 	  input[count] = '\0';
-	  temp = input;
+
+	  /*
 	  in_quotes = 0;
 	  paren_count = 0;
 	  bracket_count = 0;
@@ -69,6 +89,7 @@ char *get_input (FILE *fp, unsigned int *line_number)
 		in_quotes = !in_quotes;
 	      temp++;
 	    }
+	  */
 
 	  if (paren_count == 0 && bracket_count == 0 && curly_count == 0 && !in_quotes
 	      && (input[count - 1] == ';' || input[count - 1] == '}'))
@@ -94,6 +115,7 @@ shell (func *main_scope)
   char *input;
   char **parsed_input;
   unsigned int line_num;
+  //  int read;
 
   a_type returned;
 
@@ -105,7 +127,7 @@ shell (func *main_scope)
   printf ("The FACT programming language interactive shell\n(c) 2010 Matthew Plant, under a copyleft license.\n");
   print_logo ();
 
-  line_num = 0;
+  line_num = 1;
 
   for (;;)
     {
@@ -139,6 +161,7 @@ shell (func *main_scope)
 
       set_link (formatted);
       parsed_input = convert_link (formatted);
+
 
       /*
       for (read = 0; parsed_input[read] != NULL; read++)

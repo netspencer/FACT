@@ -73,8 +73,15 @@ a_type new_string (func *scope, char **words)
       return_value.v_point->array_up = string;
     }
 
+  /*
+  printf ("words[0] = %s, words[increase] = %s, increase = %d\n", words[0], words[increase], increase);
+
   for (pos = 0; words[pos] != NULL; pos++)
     words[pos] = words[pos + increase];
+  */
+
+  for (pos = 0; words[pos] != NULL; pos++)
+    words[pos] = words[pos + 2];
 
   return return_value;
 }

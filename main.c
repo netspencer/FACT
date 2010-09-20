@@ -11,11 +11,13 @@ process_args (int argc, char **argv)
   static int memt = false;
   static int cmdln = true;
   func *scope;
-
+  var *inter_argc;
+  var *inter_argv;
+ 
   scope = alloc_func ();
   scope->name = "main";
 
-  file_open = run_file (scope, "stdlib.ft");
+  file_open = run_file (scope, "stdlib.ft", true);
 
   if (file_open.type == ERROR_TYPE)
     errorman_dump (file_open.error, 0, optarg);
@@ -66,7 +68,7 @@ process_args (int argc, char **argv)
 
 	case 'f':
 	  mem_trackopt = memt;
-	  file_open = run_file (scope, optarg);
+	  file_open = run_file (scope, optarg, false);
 
 	  if (file_open.type == ERROR_TYPE)
 	    errorman_dump (file_open.error, 0, optarg);
@@ -75,7 +77,22 @@ process_args (int argc, char **argv)
 
 	case 'i':
 	  mem_trackopt = memt;
-	  file_open = run_file (scope, optarg);
+	  
+	  /* parse remaining arguments into variables */
+	  inter_argc = add_var (scope, "argc");
+	  mpz_set_si (inter_argc->data, argc - 2);
+
+	  inter_argv = add_var (scope, "argv");
+
+	  if (argc - 2 <= 1)
+	    inter_argv->array_size = 1;
+	  else
+	    {
+	      inter_argv->array_size = argc - 2;
+	      inter_argv->array_up = string_array_to_var (argv + 2, "argv", argc - 2);
+	    }
+
+	  file_open = run_file (scope, optarg, true);
 
 	  if (file_open.type == ERROR_TYPE)
 	    errorman_dump (file_open.error, 0, optarg);
@@ -89,6 +106,8 @@ process_args (int argc, char **argv)
 	  abort ();
 	}
     }
+
+  mem_trackopt = memt;
 
   if (cmdln)
     shell (scope);

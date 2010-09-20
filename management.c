@@ -173,7 +173,7 @@ var *add_var (func *scope, char *name)
   return scroller->next;
 }
 
-func *addFunc (func *scope, char *name)
+func *add_func (func *scope, char *name)
 {
   func *scroller;
   func *hold_next;

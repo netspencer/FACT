@@ -21,7 +21,7 @@
 			
  
 a_type
-add_func (func *scope, char **words)
+liven_func (func *scope, char **words)
 {
   a_type func;
   char **args_formatted;
@@ -132,6 +132,8 @@ prepare_function (func *scope, func *new_scope, char **words)
       else if (arg.type == FUNCTION_TYPE)
 	{
 	  arg.f_point->array_size = passed.f_point->array_size;
+	  arg.f_point->args = passed.f_point->args;
+	  arg.f_point->body = passed.f_point->body;
 	  arg.f_point->vars = passed.f_point->vars;
 	  arg.f_point->funcs = passed.f_point->funcs;
 	  arg.f_point->array_up = passed.f_point->array_up;

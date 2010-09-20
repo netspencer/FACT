@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -ggdb -m64
 PROG = FACT-GCC
-PARSERV = 2
+PARSERV = 3
 
 SRCS = main.c gmp_mallocs.c functions.c string.c \
 	management.c scroll.c math.c mem.c shell.c \

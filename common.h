@@ -70,7 +70,9 @@ typedef enum _TYPE_DEFINE
     ERROR_TYPE, 
   } type_define;
 
-#define MAX_BYTES 10000000
+#define MAX_BYTES 1000000
+
+//#define MEM_DEBUG
 
 //#define PARSING 2
 
@@ -80,17 +82,25 @@ typedef enum _TYPE_DEFINE
   returns a NULL pointer.
 */
 
-static inline void *better_malloc (size_t alloc_size)
+static inline void *
+better_malloc (size_t alloc_size)
 {
   void *temp_pointer;
 
   if (mem_trackopt)
-    printf("Heap size = %d\n", (int) GC_get_heap_size());
+    printf("Heap size = %d\n", (int) GC_get_heap_size ());
 
   
   if (bytes_used >= MAX_BYTES)
     {
+#ifdef MEM_DEBUG
+      printf ("bytes_used exceeds MAX_BYTES\n"
+	      "Current-heap = %d\n", (int) GC_get_heap_size ());
+#endif
       GC_gcollect ();
+#ifdef MEM_DEBUG
+      printf ("Heap-after-collect = %d\n", (int) GC_get_heap_size ());
+#endif
       bytes_used = 0;
     }
 
@@ -119,7 +129,8 @@ static inline void *better_malloc (size_t alloc_size)
   pointer.
 */
 
-static inline void *better_realloc (void *to_resize, size_t alloc_size)
+static inline void *
+better_realloc (void *to_resize, size_t alloc_size)
 {
   void *temp_pointer;
   
@@ -128,7 +139,14 @@ static inline void *better_realloc (void *to_resize, size_t alloc_size)
 
   if (bytes_used >= MAX_BYTES)
     {
+#ifdef MEM_DEBUG
+      printf ("bytes_used exceeds MAX_BYTES\n"
+	      "Current-heap = %d\n", (int) GC_get_heap_size ());
+#endif
       GC_gcollect ();
+#ifdef MEM_DEBUG
+      printf ("Heap-after-collect = %d\n", (int) GC_get_heap_size ());
+#endif
       bytes_used = 0;
     }
 
@@ -206,6 +224,11 @@ typedef enum _word_codes
     MULTIPLY,
     DIVIDE,
     MOD,
+    ADD_ASSIGN,
+    SUB_ASSIGN,
+    MULT_ASSIGN,
+    DIV_ASSIGN,
+    MOD_ASSIGN,
     AT,
     SET,
     DEF,
@@ -232,6 +255,7 @@ typedef enum _word_codes
     SIZE,
     IF,
     WHILE,
+    ELSE,
     SEMI,
     RETURN_STAT,
   } word_code;

@@ -18,4 +18,7 @@ extern char *combine_strs (char *, char *);
 extern char **copy (char **);
 extern char *array_to_string (var *);
 
+extern var *string_to_array (char *, char *);
+extern var *string_array_to_var (char **, char *, int);
+
 #endif

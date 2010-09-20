@@ -77,7 +77,7 @@ defunc (func *scope, char **words)
 
       if (temp.type != ERROR_TYPE)
 	{
-	  return_value.f_point = addFunc (scope, temp.f_point->array_up->name);
+	  return_value.f_point = add_func (scope, temp.f_point->array_up->name);
 	  return_value.f_point->array_up = temp.f_point->array_up;
 	  return_value.f_point->up = scope;
 	  return_value.f_point->array_size = temp.f_point->array_size;
@@ -88,7 +88,7 @@ defunc (func *scope, char **words)
     }
   else
     {
-      return_value.f_point = addFunc (scope, words[0]);
+      return_value.f_point = add_func (scope, words[0]);
 
       if (return_value.f_point == NULL)
 	return errorman_throw_reg (scope, "could not define function");
@@ -252,6 +252,8 @@ set (func *scope, char **words)
 	return errorman_throw_reg (scope, "cannot set a function to a var");
 
       arg1.f_point->array_size = arg2.f_point->array_size;
+      arg1.f_point->args = arg2.f_point->args;
+      arg1.f_point->body = arg2.f_point->body;
       arg1.f_point->vars = arg2.f_point->vars;
       arg1.f_point->funcs = arg2.f_point->funcs;
       arg1.f_point->array_up = arg2.f_point->array_up;
@@ -313,7 +315,7 @@ return_array (func *scope, char **words)
   return_value.v_point = alloc_var ();
   
   if (words[0] == NULL)
-    return errorman_throw_reg (scope, "FUCK YOU FAGGGGG");
+    return errorman_throw_reg (scope, "FUCK YOU");
 
   evald_pos = get_array_size (scope, words);
   count = mpz_get_si (evald_pos.v_point->data);

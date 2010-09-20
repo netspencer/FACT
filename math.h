@@ -32,5 +32,10 @@ extern a_type paren (func *, char **); /* isolates all the characters between
 					  two parenthesis and then evaluates
 					  them.
 				       */
+extern a_type add_assignment (a_type, a_type);
+extern a_type sub_assignment (a_type, a_type);
+extern a_type mult_assignment (a_type, a_type);
+extern a_type div_assignment (a_type, a_type);
+extern a_type mod_assignment (a_type, a_type);
 
 #endif

@@ -64,3 +64,54 @@ array_to_string (var *convertable)
 
   return return_value;
 }
+
+var *
+string_to_array (char *convertable, char *name)
+{
+  int length;
+  int pos;
+  var *root;
+  var *scroller;
+
+  length = strlen (convertable) + 1;
+
+  root = alloc_var ();
+
+  for (scroller = root, pos = 1; pos < length; pos++)
+    {
+      scroller->name = name;
+      mpz_set_si (scroller->data, (int) (convertable [pos - 1]));
+      scroller->next = alloc_var ();
+      scroller = scroller->next;
+    }
+
+  scroller->name = name;
+
+  return root;
+}
+
+var *
+string_array_to_var (char **strings, char *var_name, int array_size)
+{
+  int pos;
+  var *root;
+  var *scroller;
+  
+  root = alloc_var ();
+  root->name = var_name;
+
+  for (scroller = root, pos = 0; pos < array_size; pos++)
+    {
+      if (pos != 0)
+	{
+	  scroller->next = alloc_var ();
+	  scroller = scroller->next;
+	}
+
+      scroller->name = var_name;
+      scroller->array_up = string_to_array (strings[pos], var_name);
+      scroller->array_size = strlen (strings[pos]) + 1;
+    }
+
+  return root;
+}

@@ -188,6 +188,105 @@ mod (a_type arg1, a_type arg2)
   return return_value;
 }
 
+a_type
+add_assignment (a_type arg1, a_type arg2)
+{
+  if (arg1.type == ERROR_TYPE)
+    return arg1;
+  else if (arg2.type == ERROR_TYPE)
+    return arg2;
+
+  if (arg1.type == FUNCTION_TYPE
+      || arg2.type == FUNCTION_TYPE)
+    return errorman_throw_reg (NULL, "both arguments to += must be variables");
+
+  mpz_add (arg1.v_point->data, arg1.v_point->data, arg2.v_point->data);
+
+  return arg1;
+}
+
+a_type
+sub_assignment (a_type arg1, a_type arg2)
+{
+  if (arg1.type == ERROR_TYPE)
+    return arg1;
+  else if (arg2.type == ERROR_TYPE)
+    return arg2;
+
+  if (arg1.type == FUNCTION_TYPE
+      || arg2.type == FUNCTION_TYPE)
+    return errorman_throw_reg (NULL, "both arguments to -= must be variables");
+
+  mpz_sub (arg1.v_point->data, arg1.v_point->data, arg2.v_point->data);
+
+  return arg1;
+}
+
+a_type
+mult_assignment (a_type arg1, a_type arg2)
+{
+  if (arg1.type == ERROR_TYPE)
+    return arg1;
+  else if (arg2.type == ERROR_TYPE)
+    return arg2;
+
+  if (arg1.type == FUNCTION_TYPE
+      || arg2.type == FUNCTION_TYPE)
+    return errorman_throw_reg (NULL, "both arguments to *= must be variables");
+
+  mpz_mul (arg1.v_point->data, arg1.v_point->data, arg2.v_point->data);
+
+  return arg1;
+}
+
+a_type
+div_assignment (a_type arg1, a_type arg2)
+{
+  mpz_t zero_check;
+
+  if (arg1.type == ERROR_TYPE)
+    return arg1;
+  else if (arg2.type == ERROR_TYPE)
+    return arg2;
+  
+  if (arg1.type == FUNCTION_TYPE
+      || arg2.type == FUNCTION_TYPE)
+    return errorman_throw_reg (NULL, "both arguments to /= must be variables");
+
+  mpz_init (zero_check);
+
+  if (mpz_cmp (zero_check, arg2.v_point->data) == 0)
+    return errorman_throw_reg (NULL, "divide by zero error");
+
+  mpz_cdiv_q (arg1.v_point->data, arg1.v_point->data, arg2.v_point->data);
+
+  return arg1;
+}
+
+a_type
+mod_assignment (a_type arg1, a_type arg2)
+{
+  mpz_t zero_check;
+
+  if (arg1.type == ERROR_TYPE)
+    return arg1;
+  else if (arg2.type == ERROR_TYPE)
+    return arg2;
+  
+  if (arg1.type == FUNCTION_TYPE
+      || arg2.type == FUNCTION_TYPE)
+    return errorman_throw_reg (NULL, "both arguments to %= must be variables");
+
+  mpz_init (zero_check);
+
+  if (mpz_cmp (zero_check, arg2.v_point->data) == 0)
+    return errorman_throw_reg (NULL, "mod by zero error");
+
+  mpz_mod (arg1.v_point->data, arg1.v_point->data, arg2.v_point->data);
+
+  return arg1;
+}
+
 /* * * * * * * * * * * * * * * * * * * * * * * *
  * paren: evaluates a parenthesis. It does     *
  * this by allocating enough memory for as     *
