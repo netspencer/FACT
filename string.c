@@ -1,4 +1,4 @@
-#include "interpreter.h"
+#include "common.h"
 
 a_type new_string (func *scope, char **words)
 {

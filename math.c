@@ -1,4 +1,4 @@
-#include "interpreter.h"
+#include "common.h"
 
 /*---------------------------------------------*
  * math.c: Provides functions for various math *
@@ -153,7 +153,7 @@ divide (a_type arg1, a_type arg2)
   if (mpz_cmp (zero_check, arg2.v_point->data) == 0)
     return errorman_throw_reg (scope, "divide by zero error");
 
-  mpz_cdiv_q (return_value.v_point->data, arg1.v_point->data, arg2.v_point->data);
+  mpz_tdiv_q (return_value.v_point->data, arg1.v_point->data, arg2.v_point->data);
 
   return return_value;
 }
@@ -258,7 +258,7 @@ div_assignment (a_type arg1, a_type arg2)
   if (mpz_cmp (zero_check, arg2.v_point->data) == 0)
     return errorman_throw_reg (NULL, "divide by zero error");
 
-  mpz_cdiv_q (arg1.v_point->data, arg1.v_point->data, arg2.v_point->data);
+  mpz_tdiv_q (arg1.v_point->data, arg1.v_point->data, arg2.v_point->data);
 
   return arg1;
 }
@@ -299,12 +299,32 @@ paren (func *scope, char **words)
 {
   int pos;
   int count;
-  char **formatted;
+  a_type return_value;
+  //char **formatted;
 
   pos = get_exp_length (words, ')');
 
   if (pos == 0)
     return errorman_throw_reg (scope, "parenthesis has no body");
+  else if (words[pos - 1][0] != ')')
+    return errorman_throw_reg (scope, "syntax error; expected closing ')'");
+
+  words[pos - 1] = NULL;
+
+  return_value = eval (scope, words);
+
+  /*
+  if (return_value.type == ERROR_TYPE)
+    return return_value;
+  */
+
+  for (count = pos; words[pos] != NULL; pos++)
+    words[pos - count] = words[pos];
+
+  return return_value;
+  
+  
+  /*
 
   formatted = (char **) better_malloc ((sizeof (char *)) * pos);
 
@@ -324,4 +344,5 @@ paren (func *scope, char **words)
   words[pos] = NULL;
 
   return eval (scope, formatted);
+  */
 }

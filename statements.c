@@ -1,4 +1,4 @@
-#include "interpreter.h"
+#include "common.h"
 
 a_type
 invalid_if (func *scope, char **words)

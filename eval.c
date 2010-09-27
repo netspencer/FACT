@@ -1,4 +1,4 @@
-#include "interpreter.h"
+#include "common.h"
 
 #define OPEN_SUCCESS 0
 #define OPEN_FAILED  1
@@ -11,6 +11,7 @@ expression (func *scope, char **words)
   int position; /* current position in "words" */
   char **formatted_expression; /* the block to be evaluated */
   bool isreturn; /* if the block starts with a return or not */
+  bool isbreak;
   bool getif;
 
   static int depth = -1;
@@ -19,8 +20,8 @@ expression (func *scope, char **words)
   extern int get_exp_length_first (char **, int);
 
   isreturn = false;
+  isbreak = false;
   return_value.type = VAR_TYPE;
-
 
   depth++;
   
@@ -93,17 +94,18 @@ expression (func *scope, char **words)
   else if (strcmp (formatted_expression[0], "break") == 0)
     {
       ifopen[depth] = CLOSED;
-      return_value.break_signal = true;
+      isbreak = true;
     }
   else
     {
       ifopen[depth] = CLOSED;
       return_value = eval (scope, formatted_expression);
-      return_value.break_signal = false;
     }
 
   if (!return_value.isret)
     return_value.isret = isreturn;
+  if (!return_value.break_signal)
+    return_value.break_signal = isbreak;
 
   depth--;
   return return_value;
@@ -122,6 +124,9 @@ procedure (func *scope, char **words)
       len_to_move = get_exp_length_first (words, ';');
       return_value = expression (scope, words);
 
+      if (return_value.break_signal)
+	printf ("WWWWWWWWWWHOOO\n");
+
       if (return_value.type == ERROR_TYPE
 	  || return_value.isret
 	  || return_value.break_signal)
@@ -133,6 +138,7 @@ procedure (func *scope, char **words)
   if (*words == NULL || !strcmp(*words, "}"))
     {
       return_value.isret = false;
+      return_value.break_signal = false;
       return_value.v_point = alloc_var ();
       return_value.type = VAR_TYPE;
       return return_value;
@@ -196,6 +202,7 @@ eval (func *scope, char **words)
 						    words[0]));
   
   return_value.isret = false;
+  return_value.break_signal = false;
 
   return return_value;
 }

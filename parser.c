@@ -37,6 +37,8 @@ is_in_quotes (int character)
 static int
 isopt (int character)
 {
+  static int times = 0;
+  
   switch (character)
     {
     case '+':
@@ -50,13 +52,28 @@ isopt (int character)
     case '>':
     case '<':
     case '!':
+    case '[':
+      times++;
+
+      if (times > 3)
+	{
+	  times = 0;
+	  return false;
+	}
+      
       return true;
 
+      /*
+    case EOF:
+      times = 0;
+      return false;
+      */
+
     default:
+      times = 0;
       return false;
     }
 }
-
 
 char **
 get_words (char *start)
@@ -87,6 +104,7 @@ get_words (char *start)
 	{
 	  while (is_in_quotes ((int) *end))
 	    end++;
+	  
 	  end--;
 	  isstring = true;
 	}
@@ -160,6 +178,8 @@ get_block_code (char *block)
     return FUNC_RET;
   else if (!strcmp (block, "&"))
     return FUNC_OBJ;
+  else if (!strcmp (block, "<-"))
+    return FUNC_END;
   else if (!strcmp (block, ":"))
     return IN_SCOPE;
   else if (!strcmp (block, ","))
@@ -170,6 +190,8 @@ get_block_code (char *block)
     return CL_CURLY;
   else if (!strcmp (block, "["))
     return OP_BRACKET;
+  else if (!strcmp (block, "!["))
+    return NOP_BRACKET;
   else if (!strcmp (block, "]"))
     return CL_BRACKET;
   else if (!strcmp (block, "("))
@@ -262,7 +284,7 @@ set_list (linked_word *start, word_code stopper) /* Sets a list of linked words 
     {
       if (w_code == OP_CURLY) /* If the node is a opening curly bracket */
 	{
-	  /* Set the first hidden node to the next node in the list */ 
+ 	  /* Set the first hidden node to the next node in the list */ 
 	  start->hidden = start->next;
 	  /* Set the previous node in first hidden node to NULL */
 	  start->next->previous = NULL;
@@ -278,7 +300,8 @@ set_list (linked_word *start, word_code stopper) /* Sets a list of linked words 
 
 	  start->hidden->hidden_up = start;
 	}
-      else if (w_code == OP_BRACKET)
+      else if (w_code == OP_BRACKET
+	       || w_code == NOP_BRACKET)
 	{
 	  start->hidden = start->next;
 	  start->next->previous = NULL;
@@ -298,6 +321,22 @@ set_list (linked_word *start, word_code stopper) /* Sets a list of linked words 
 	  start->hidden = start->next;
 	  start->next->previous = NULL;
 	  temp_link = set_list (start->next, CL_PAREN);
+
+	  if (temp_link->code == END)
+	    return temp_link;
+	  
+	  start->next = temp_link->next;
+	  temp_link->next->previous = start;
+	  temp_link->next = NULL;
+
+	  start->hidden->hidden_up = start;
+	}
+      else if (w_code == FUNC_RET
+	       || w_code == FUNC_OBJ)
+	{
+	  start->hidden = start->next;
+	  start->next->previous = NULL;
+	  temp_link = set_list (start->next, FUNC_END);
 
 	  if (temp_link->code == END)
 	    return temp_link;
@@ -390,6 +429,7 @@ precedence_level1 (linked_word *scan)
       switch (scan->code)
 	{
 	case OP_CURLY:
+	case NOP_BRACKET:
 	case OP_BRACKET:
 	case OP_PAREN:
 	  rev_shunting_yard (scan->hidden);
@@ -408,7 +448,7 @@ precedence_level1 (linked_word *scan)
 		   find_end = find_end->previous);
 	      
 	      scan->next->next = find_end;
-	      find_end->previous = scan;
+	      find_end->previous = scan->next;
 	    }
 	  else
 	    {
@@ -426,16 +466,19 @@ precedence_level1 (linked_word *scan)
 
 	case FUNC_RET:
 	case FUNC_OBJ:
-	  scan->next->next->previous = NULL;
-	  rev_shunting_yard (scan->next->next);
+	  if (scan->hidden->hidden != NULL)
+	    rev_shunting_yard (scan->hidden->hidden);
 
-	  for (find_end = scan->next->next;
+	  scan->hidden->next->previous = NULL;
+	  rev_shunting_yard (scan->hidden->next);
+
+	  for (find_end = scan->hidden->next;
 	       find_end->previous != NULL;
 	       find_end = find_end->previous);
 	  
-	  scan->next->next = find_end;
-	  find_end->previous = scan;
-	  return;
+	  scan->hidden->next = find_end;
+	  find_end->previous = scan->hidden;
+	  break;
 
 	case ELSE:
 	case IN_SCOPE:
@@ -469,15 +512,17 @@ precedence_level2 (linked_word *scan)
       switch (scan->code)
 	{
 	  /*
-	case OP_CURLY:
+
 	case OP_BRACKET:
 	case OP_PAREN:
 	  */
 	case IF:
 	case WHILE:
 	case ELSE:
+	  /*
 	case FUNC_RET:
 	case FUNC_OBJ:
+	  */
 	case IN_SCOPE:
 	case COMMA:
 	case RETURN_STAT:
@@ -516,8 +561,10 @@ precedence_level3 (linked_word *scan)
 	case IF:
 	case WHILE:
 	case ELSE:
+	  /*
 	case FUNC_RET:
 	case FUNC_OBJ:
+	  */
 	case IN_SCOPE:
 	case COMMA:
 	case RETURN_STAT:
@@ -532,6 +579,7 @@ precedence_level3 (linked_word *scan)
 		 && scan->previous->code != PLUS
 		 && scan->previous->code != MINUS
 		 && scan->previous->code != SET
+		 && scan->previous->code != OP_CURLY
 		 && (scan->previous->code < ADD_ASSIGN
 		     || scan->previous->code > MOD_ASSIGN)
 		 && (scan->previous->code < AND
@@ -569,8 +617,10 @@ precedence_level4 (linked_word *scan)
 	case IF:
 	case WHILE:
 	case ELSE:
+	  /*
 	case FUNC_RET:
 	case FUNC_OBJ:
+	  */
 	case IN_SCOPE:
 	case COMMA:
 	case RETURN_STAT:
@@ -585,6 +635,7 @@ precedence_level4 (linked_word *scan)
 	  hold = scan->next;
 	  while (scan->previous != NULL
 		 && scan->previous->code != SET
+		 && scan->previous->code != OP_CURLY
 		 && (scan->previous->code < ADD_ASSIGN
 		     || scan->previous->code > MOD_ASSIGN)
 		 && (scan->previous->code < AND
@@ -619,8 +670,10 @@ precedence_level5 (linked_word *scan)
 	case IF:
 	case WHILE:
 	case ELSE:
+	  /*
 	case FUNC_RET:
 	case FUNC_OBJ:
+	  */
 	case IN_SCOPE:
 	case COMMA:
 	case RETURN_STAT:
@@ -633,6 +686,7 @@ precedence_level5 (linked_word *scan)
 	  hold = scan->next;
 	  while (scan->previous != NULL
 		 && scan->previous->code != SET
+		 && scan->previous->code != OP_CURLY
 		 && (scan->previous->code < ADD_ASSIGN
 		     || scan->previous->code > MOD_ASSIGN)
 		 && (scan->previous->code < AND
@@ -667,8 +721,10 @@ precedence_level6 (linked_word *scan)
 	case IF:
 	case WHILE:
 	case ELSE:
+	  /*
 	case FUNC_RET:
 	case FUNC_OBJ:
+	  */
 	case IN_SCOPE:
 	case COMMA:
 	case RETURN_STAT:
@@ -680,6 +736,7 @@ precedence_level6 (linked_word *scan)
 	  hold = scan->next;
 	  while (scan->previous != NULL
 		 && scan->previous->code != SET
+		 && scan->previous->code != OP_CURLY
 		 && (scan->previous->code < ADD_ASSIGN
 		     || scan->previous->code > MOD_ASSIGN)
 		 && scan->previous->code != AND
@@ -714,8 +771,10 @@ precedence_level7 (linked_word *scan)
 	case IF:
 	case WHILE:
 	case ELSE:
+	  /*
 	case FUNC_RET:
 	case FUNC_OBJ:
+	  */
 	case IN_SCOPE:
 	case COMMA:
 	case RETURN_STAT:
@@ -727,6 +786,7 @@ precedence_level7 (linked_word *scan)
 	  hold = scan->next;
 	  while (scan->previous != NULL
 		 && scan->previous->code != SET
+		 && scan->previous->code != OP_CURLY
 		 && (scan->previous->code < ADD_ASSIGN
 		     || scan->previous->code > MOD_ASSIGN)
 		 && scan->previous->code != OR)
@@ -760,8 +820,10 @@ precedence_level8 (linked_word *scan)
 	case IF:
 	case WHILE:
 	case ELSE:
+	  /*
 	case FUNC_RET:
 	case FUNC_OBJ:
+	  */
 	case IN_SCOPE:
 	case COMMA:
 	case RETURN_STAT:
@@ -778,6 +840,7 @@ precedence_level8 (linked_word *scan)
 	  hold = scan->next;
 	  while (scan->previous != NULL
 		 && scan->previous->code != SET
+		 && scan->previous->code != OP_CURLY
 		 && (scan->previous->code < ADD_ASSIGN
 		     || scan->previous->code > MOD_ASSIGN))
 	    swap (scan);
@@ -1066,6 +1129,10 @@ convert_link (linked_word *list)
 	  result[position] = "&";
 	  break;
 
+	case FUNC_END:
+	  result[position] = "<-";
+	  break;
+
 	case IN_SCOPE:
 	  result[position] = ":";
 	  break;
@@ -1084,6 +1151,10 @@ convert_link (linked_word *list)
 
 	case OP_BRACKET:
 	  result[position] = "[";
+	  break;
+
+	case NOP_BRACKET:
+	  result[position] = "![";
 	  break;
 
 	case CL_BRACKET:

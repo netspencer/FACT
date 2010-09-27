@@ -1,4 +1,4 @@
-#include "interpreter.h"
+#include "common.h"
 
 struct _MATH_PRIMS
 { 
@@ -24,11 +24,11 @@ static struct _MATH_PRIMS math_calls[] =
     {"<",   less},
     {/*"meq"*/ ">=", more_equal},
     {/*"leq"*/ "<=", less_equal},
-    {/*"and"*/ "&&", and},
+    //    {/*"and"*/ "&&", and},
     {/*"or"*/  "||",  or}
   };
 
-#define NUM_MATH_PRIMS 18
+#define NUM_MATH_PRIMS ((sizeof math_calls) / (sizeof (struct _MATH_PRIMS)))
 
 struct _prims
 { 
@@ -61,7 +61,7 @@ init_std_prims (void)
   add_prim ("{", lambda_proc);
   add_prim ("def", define);
   add_prim ("defunc", defunc);
-  /* add_prim ("[", return_array); */
+  add_prim ("![", return_array); 
   add_prim ("sizeof", size_of);
   add_prim ("@", liven_func);
   add_prim ("$", run_func);
@@ -69,6 +69,7 @@ init_std_prims (void)
   add_prim (":", in_scope);
   add_prim ("\"", new_string);
   add_prim ("?", errorman_throw_prim);
+  add_prim ("&&", and);
   add_prim ("if", invalid_if);
   add_prim ("else", invalid_else);
   add_prim ("while", invalid_while);
@@ -116,7 +117,10 @@ runprim (func *scope, char **words)
   return_value = primitives[prim_num].function(scope, words + 1);
 
   if (prim_num != 2)
-    return_value.isret = false;
+    {
+      return_value.isret = false;
+      return_value.break_signal = false;
+    }
   
   return return_value;
 }
@@ -153,6 +157,7 @@ eval_math (func *scope, char **words)
     words[pos] = words[pos + 2];
 
   return_value.isret = false;
+  return_value.break_signal = false;
 
   return return_value;
 }

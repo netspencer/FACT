@@ -115,7 +115,7 @@ shell (func *main_scope)
   char *input;
   char **parsed_input;
   unsigned int line_num;
-  //  int read;
+  int read;
 
   a_type returned;
 
@@ -163,11 +163,11 @@ shell (func *main_scope)
       parsed_input = convert_link (formatted);
 
 
-      /*
+      /**/
       for (read = 0; parsed_input[read] != NULL; read++)
 	printf ("%s ", parsed_input[read]);
       putchar ('\n');
-      */
+      /**/
 
 #endif
 

@@ -1,4 +1,4 @@
-#include "interpreter.h"
+#include "common.h"
 
 a_type
 defunc_array (func *base, func *scope, char **words)
@@ -273,12 +273,28 @@ get_array_size (func *scope, char **words) /* this REALLY needs to get fixed (in
 {
   int pos;
   int count;
-  char **formatted;
+  a_type return_value;
+  //char **formatted;
   
   pos = get_exp_length (words, ']');
 
   if (pos == 0)
     return errorman_throw_reg (scope, "cannot evaluate empty brackets");
+  else if (words[pos - 1][0] != ']')
+    return errorman_throw_reg (scope, "syntax error; expected closing ']'");
+
+  words[pos - 1] = NULL;
+
+  return_value = eval (scope, words);
+
+  for (count = pos; words[pos] != NULL; pos++)
+    words[pos - count] = words[pos];
+
+  words[pos - count] = NULL;
+
+  return return_value;
+
+  /*
 
   formatted = (char **) better_malloc ((sizeof (char *)) * pos);
 
@@ -298,9 +314,124 @@ get_array_size (func *scope, char **words) /* this REALLY needs to get fixed (in
   words[pos] = words[count];
 
   return eval (scope, formatted);
+  */
 }
 
+a_type
+return_array (func *scope, char **words)
+{
+  int size;
+  int pos;
+  char **hold_words;
+  a_type return_value;
+  a_type hold;
+  type_define type;
+
+  union
+  {
+    var  *var_root;
+    func *func_root;
+  } roots;
+
+  union
+  {
+    var  *var_value;
+    func *func_value;
+  } values;
+
+  hold_words = words;
+
+  if (!strcmp (words[0], "]"))
+    return errorman_throw_reg (scope, "expected body before ']'");
+
+  if ((hold = eval (scope, words)).type == ERROR_TYPE)
+    return hold;
+
+  type = hold.type;
+
+  if (type == VAR_TYPE)
+    {
+      values.var_value = hold.v_point;
+     
+      roots.var_root = alloc_var ();
+      roots.var_root->name = "result";
+      roots.var_root->array_up = values.var_value;
+    }
+  else if (type == FUNCTION_TYPE)    
+    {
+      values.func_value = hold.f_point;
+     
+      roots.func_root = alloc_func ();
+      roots.func_root->name = "result";
+      roots.func_root->array_up = values.func_value;
+    }
+  
+  for (size = 1; size <= 1000; size++)
+    {
+      if (!strcmp (words[size], "]"))
+	break;
+      else if (strcmp (words[size], ","))
+	return errorman_throw_reg (scope, "expected ',' or closing ']'");
+      else
+	words++;
+
+      hold = eval (scope, words + size);
+
+      if (hold.type == ERROR_TYPE)
+	return hold;
+      
+      if (type != hold.type)
+	{
+	  if (type == VAR_TYPE)
+	    return errorman_throw_reg (scope, "unexpected function returned in a variable array");
+	  else
+	    return errorman_throw_reg (scope, "unexpected variable returned in a function array");
+	}
+
+      if (type == VAR_TYPE)
+	{
+	  values.var_value->next = hold.v_point;
+	  values.var_value = values.var_value->next;
+	}
+      else if (type == FUNCTION_TYPE)
+	{
+	  values.func_value->next = hold.f_point;
+	  values.func_value = values.func_value->next;
+	}
+    }
+
+  for (pos = 0; hold_words[(size * 2) + pos] != NULL; pos++)
+    hold_words[pos] = hold_words[(size * 2) + pos];
+
+  hold_words[pos] = NULL;
+
+  return_value.type = type;
+
+  if (type == VAR_TYPE)
+    {
+      if (size == 1)
+	return_value.v_point = roots.var_root->array_up;
+      else
+	return_value.v_point = roots.var_root;
+
+      return_value.v_point->array_size = size;
+    }
+  else if (type == FUNCTION_TYPE)
+    {
+      if (size == 1)
+	return_value.f_point = roots.func_root->array_up;
+      else
+	return_value.f_point = roots.func_root;
+
+      return_value.f_point->array_size = size;
+    }
+  // return errorman_throw_reg (scope, "experimental");
+
+  return return_value;
+}
+	
 /* deprecated as FUCK */
+/*
 a_type
 return_array (func *scope, char **words)
 {
@@ -373,6 +504,7 @@ return_array (func *scope, char **words)
       
   return return_value;
 }
+*/
 
 a_type
 size_of (func *scope, char **words)
@@ -481,6 +613,10 @@ get_array_var (var *root, func *scope, char **words)
 	return errorman_throw_reg (scope, "array out of bounds");
 
       return_value.v_point = root;
+      
+      for (position = 0; words [position] != NULL; position++)
+	words[position] = words[position + 1];
+
       return return_value;
     }
 
@@ -531,6 +667,10 @@ get_array_func (func *root, func *scope, char **words)
 	return errorman_throw_reg (scope, "array out of bounds");
 
       return_value.f_point = root;
+
+      for (position = 0; words [position] != NULL; position++)
+	words[position] = words[position + 1];
+       
       return return_value;
     }
 

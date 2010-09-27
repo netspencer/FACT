@@ -235,11 +235,13 @@ typedef enum _word_codes
     DEFUNC,
     FUNC_RET,
     FUNC_OBJ,
+    FUNC_END,
     COMMA,
     IN_SCOPE,
     OP_CURLY,
     CL_CURLY,
     OP_BRACKET,
+    NOP_BRACKET,
     CL_BRACKET,
     OP_PAREN,
     CL_PAREN,
@@ -289,7 +291,7 @@ typedef struct _LINKED_WORD
 #include "mem.h"
 #include "functions.h"
 #include "math.h"
-#include "operators.h"
+#include "comparisons.h"
 #include "string.h"
 #include "statements.h"
 #include "execfile.h"

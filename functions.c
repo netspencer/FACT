@@ -1,4 +1,4 @@
-#include "interpreter.h"
+#include "common.h"
 
 /* * * * * * * * * * * * * * * * * * * * *
  * add_func:                             *
@@ -104,17 +104,19 @@ prepare_function (func *scope, func *new_scope, char **words)
   new_scope->up = evald.f_point->up;
   new_scope->name = evald.f_point->name;
 
-  for (pos = 0; *(args_stored + pos) != NULL; pos++)
+  for (pos = 0; args_stored[pos] != NULL; pos++)
     {
       arg = eval (new_scope, args_stored + pos);
 
-      if (*(words + pos) == NULL)
-	return errorman_throw_reg (scope, "unexpected arguments");
+      if (!strcmp (words[pos], "<-"))
+	return errorman_throw_reg (scope, "expected more arguments");
 
       passed = eval (scope, words + pos);
 
       if (arg.type == ERROR_TYPE)
 	return arg;
+      if (passed.type == ERROR_TYPE)
+	return passed;
       
       if (passed.type != arg.type)
 	return errorman_throw_reg (scope, "expected argument type does not match passed argument type");
@@ -142,22 +144,24 @@ prepare_function (func *scope, func *new_scope, char **words)
 
       if (args_stored[++pos] == NULL)
         {
-          if (*(words + pos) != NULL && strcmp (*(words + pos), ",") == 0)
-	    return errorman_throw_reg (scope, "expected more arguments");
+          if (strcmp (words[pos], "<-") && strcmp (words[pos], ",") == 0)
+	    return errorman_throw_reg (scope, "expected fewer arguments");
 	  
 	  break;
         }
-      else if (strcmp (*(args_stored + pos), ",") == 0)
+      else if (strcmp (args_stored[pos], ",") == 0)
 	{
-	  if (strcmp (*(words + pos),",") != 0)
+	  if (strcmp (words[pos],",") != 0)
 	    return errorman_throw_reg (scope, "expected more arguments");
 	}
       else
 	return errorman_throw_reg (scope, "syntax error in argument declarations");
     }
 
-  for (count = pos, pos = -1; words[pos + count] != NULL; pos++)
+  //printf ("name = %s, pos = %d, words[pos] = %s\n", new_scope->name, pos, words[pos]);
+  for (count = pos + 2, pos = -1; words[pos + count] != NULL; pos++)
     words[pos] = words[pos + count];
+  //printf ("pos = %d, count = %d\n", pos, count);
   for (pos++; pos < count; pos++)
     words[pos] = NULL;
   
@@ -188,6 +192,8 @@ new_scope (func *scope, char **words)
 
   return_value.f_point = new_scope;
   return_value.type = FUNCTION_TYPE;
+  return_value.isret = false;
+  return_value.break_signal = false;
 
   return return_value;
 }
@@ -213,6 +219,7 @@ run_func (func *scope, char **words)
   return_value = expression (new_scope, copied_body);
 
   return_value.isret = false;
+  return_value.break_signal = false;
 
   return return_value;
 }
@@ -248,7 +255,7 @@ static char **copy_to_paren (char **to_copy)
 
   if (to_copy[length] == NULL)
     return NULL;
-
+    
   return_value = (char **) better_malloc (sizeof (char *) length);
 
   return_value[length] = NULL;
