@@ -1396,15 +1396,7 @@ get_exp_length_first (char **words, int block)
           break;
 	  
 	case '{':
-	  pos += get_exp_length (words + pos + 1, '}');
-	  pos++;
-
-	  if (words[pos] != NULL && !strcmp (words[pos], "else"))
-	    {
-	      pos++;
-	      pos += get_exp_length_first (words + pos, ';');
-	    }
-	  return pos;
+	  return pos + get_exp_length (words + pos + 1, '}') + 1;
 	  
         case '[':
           pos += get_exp_length (words + pos + 1, words[pos][0] + 2);
