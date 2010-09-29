@@ -37,6 +37,10 @@
 #include <gc/gc.h>
 #include <getopt.h>
 
+/* The following include is an exception,
+   as it is need for the typedefs below. */
+#include "mpc_functions.h"
+
 /* global variables: */
 
 /*
@@ -178,7 +182,7 @@ typedef struct _VAR
 { 
   char *name;
   int array_size;
-  mpz_t data;
+  mpc_t data;
   struct _VAR *array_up;
   struct _VAR *next; 
 } var;

@@ -60,15 +60,12 @@ a_type
 add (a_type arg1, a_type arg2)
 {
   a_type return_value;
-  func *scope;
-
-  scope = NULL;
   
   return_value.type = VAR_TYPE;
   return_value.v_point = alloc_var ();
   
   if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
-    return errorman_throw_reg (scope, "both arguments to + need to be vars");
+    return errorman_throw_reg (NULL, "both arguments to + need to be vars");
   
   mpz_add (return_value.v_point->data, arg1.v_point->data, arg2.v_point->data);
   
@@ -86,15 +83,12 @@ a_type
 sub (a_type arg1, a_type arg2)
 {
   a_type return_value;
-  func *scope;
-
-  scope = NULL;
 
   return_value.type = VAR_TYPE;  
   return_value.v_point = alloc_var ();
 
   if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
-    return errorman_throw_reg (scope, "both arguments to - need to be vars");
+    return errorman_throw_reg (NULL, "both arguments to - need to be vars");
   
   mpz_sub (return_value.v_point->data, arg1.v_point->data, arg2.v_point->data);
 
@@ -111,15 +105,12 @@ a_type
 mult (a_type arg1, a_type arg2)
 {
   a_type return_value;
-  func *scope;
-
-  scope = NULL;
 
   return_value.type = VAR_TYPE;
   return_value.v_point = alloc_var ();
 
   if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
-    return errorman_throw_reg (scope, "both arguments to * need to be vars");
+    return errorman_throw_reg (NULL, "both arguments to * need to be vars");
 
   mpz_mul (return_value.v_point->data, arg1.v_point->data, arg2.v_point->data);
 
@@ -137,21 +128,15 @@ a_type
 divide (a_type arg1, a_type arg2)
 {
   a_type return_value;
-  func *scope;
-  mpz_t zero_check; /* gmp variable to check if arg2 is zero */
-
-  scope = NULL;
 
   return_value.type = VAR_TYPE;
   return_value.v_point = alloc_var ();
 
   if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
-    return errorman_throw_reg (scope, "both arguments to / need to be vars");
+    return errorman_throw_reg (NULL, "both arguments to / need to be vars");
   
-  mpz_init (zero_check);
-  
-  if (mpz_cmp (zero_check, arg2.v_point->data) == 0)
-    return errorman_throw_reg (scope, "divide by zero error");
+  if (mpz_cmp_si (arg2.v_point->data, 0) == 0)
+    return errorman_throw_reg (NULL, "divide by zero error");
 
   mpz_tdiv_q (return_value.v_point->data, arg1.v_point->data, arg2.v_point->data);
 
@@ -167,21 +152,15 @@ a_type
 mod (a_type arg1, a_type arg2)
 {
   a_type return_value;
-  func *scope;
-  mpz_t zero_check;
-
-  scope = NULL;
 
   return_value.type = VAR_TYPE;
   return_value.v_point = alloc_var ();
 
   if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
-    return errorman_throw_reg (scope, "both arguments to % need to be vars");
-  
-  mpz_init (zero_check);
+    return errorman_throw_reg (NULL, "both arguments to % need to be vars");
 
   if (mpz_cmp (zero_check, arg2.v_point->data) == 0)
-    return errorman_throw_reg (scope, "mod by zero error");
+    return errorman_throw_reg (NULL, "mod by zero error");
   
   mpz_mod (return_value.v_point->data, arg1.v_point->data, arg2.v_point->data);
 
@@ -242,8 +221,6 @@ mult_assignment (a_type arg1, a_type arg2)
 a_type
 div_assignment (a_type arg1, a_type arg2)
 {
-  mpz_t zero_check;
-
   if (arg1.type == ERROR_TYPE)
     return arg1;
   else if (arg2.type == ERROR_TYPE)
@@ -253,9 +230,7 @@ div_assignment (a_type arg1, a_type arg2)
       || arg2.type == FUNCTION_TYPE)
     return errorman_throw_reg (NULL, "both arguments to /= must be variables");
 
-  mpz_init (zero_check);
-
-  if (mpz_cmp (zero_check, arg2.v_point->data) == 0)
+  if (mpz_cmp_si (arg2.v_point->data, 0) == 0)
     return errorman_throw_reg (NULL, "divide by zero error");
 
   mpz_tdiv_q (arg1.v_point->data, arg1.v_point->data, arg2.v_point->data);
@@ -266,8 +241,6 @@ div_assignment (a_type arg1, a_type arg2)
 a_type
 mod_assignment (a_type arg1, a_type arg2)
 {
-  mpz_t zero_check;
-
   if (arg1.type == ERROR_TYPE)
     return arg1;
   else if (arg2.type == ERROR_TYPE)
@@ -277,9 +250,7 @@ mod_assignment (a_type arg1, a_type arg2)
       || arg2.type == FUNCTION_TYPE)
     return errorman_throw_reg (NULL, "both arguments to %= must be variables");
 
-  mpz_init (zero_check);
-
-  if (mpz_cmp (zero_check, arg2.v_point->data) == 0)
+  if (mpz_cmp_si (arg2.v_point->data, 0) == 0)
     return errorman_throw_reg (NULL, "mod by zero error");
 
   mpz_mod (arg1.v_point->data, arg1.v_point->data, arg2.v_point->data);
