@@ -1,8 +1,8 @@
 #include "common.h"
 
-#define OPEN_SUCCESS 0
+#define OPEN_SUCCESS 2
 #define OPEN_FAILED  1
-#define CLOSED       2
+#define CLOSED       0
 
 a_type 
 expression (func *scope, char **words)

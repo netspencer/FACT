@@ -128,7 +128,7 @@ prepare_function (func *scope, func *new_scope, char **words)
 	  temp = clone_var (passed.v_point, arg.v_point->name);
 	  passed.v_point->next = hold;
 	  arg.v_point->array_up = temp->array_up;
-	  mpz_set (arg.v_point->data, temp->data);
+	  mpc_set (&(arg.v_point->data), temp->data);
 	  arg.v_point->array_size = temp->array_size;
 	}
       else if (arg.type == FUNCTION_TYPE)

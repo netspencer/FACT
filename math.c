@@ -40,8 +40,9 @@ num_to_var (char *word)
 
   return_value.type = VAR_TYPE;
   return_value.v_point = alloc_var ();
-  
-  mpz_set_str (return_value.v_point->data, word, 10);
+
+  /* Need to fix this in order to support decimals */
+  mpc_set_str (&(return_value.v_point->data), word, 0);
   
   return_value.v_point->array_size = 1;
   return_value.v_point->array_up = NULL;
@@ -67,7 +68,7 @@ add (a_type arg1, a_type arg2)
   if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
     return errorman_throw_reg (NULL, "both arguments to + need to be vars");
   
-  mpz_add (return_value.v_point->data, arg1.v_point->data, arg2.v_point->data);
+  mpc_add (&(return_value.v_point->data), arg1.v_point->data, arg2.v_point->data);
   
   return return_value;
 }
@@ -90,7 +91,7 @@ sub (a_type arg1, a_type arg2)
   if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
     return errorman_throw_reg (NULL, "both arguments to - need to be vars");
   
-  mpz_sub (return_value.v_point->data, arg1.v_point->data, arg2.v_point->data);
+  mpc_sub (&(return_value.v_point->data), arg1.v_point->data, arg2.v_point->data);
 
   return return_value;
 }
@@ -112,7 +113,7 @@ mult (a_type arg1, a_type arg2)
   if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
     return errorman_throw_reg (NULL, "both arguments to * need to be vars");
 
-  mpz_mul (return_value.v_point->data, arg1.v_point->data, arg2.v_point->data);
+  mpc_mul (&(return_value.v_point->data), arg1.v_point->data, arg2.v_point->data);
 
   return return_value;
 }
@@ -135,10 +136,10 @@ divide (a_type arg1, a_type arg2)
   if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
     return errorman_throw_reg (NULL, "both arguments to / need to be vars");
   
-  if (mpz_cmp_si (arg2.v_point->data, 0) == 0)
+  if (mpc_cmp_si (arg2.v_point->data, 0) == 0)
     return errorman_throw_reg (NULL, "divide by zero error");
 
-  mpz_tdiv_q (return_value.v_point->data, arg1.v_point->data, arg2.v_point->data);
+  mpc_div (&(return_value.v_point->data), arg1.v_point->data, arg2.v_point->data);
 
   return return_value;
 }
@@ -159,10 +160,10 @@ mod (a_type arg1, a_type arg2)
   if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
     return errorman_throw_reg (NULL, "both arguments to % need to be vars");
 
-  if (mpz_cmp (zero_check, arg2.v_point->data) == 0)
+  if (mpc_cmp_si (arg2.v_point->data, 0) == 0)
     return errorman_throw_reg (NULL, "mod by zero error");
   
-  mpz_mod (return_value.v_point->data, arg1.v_point->data, arg2.v_point->data);
+  mpc_mod (&(return_value.v_point->data), arg1.v_point->data, arg2.v_point->data);
 
   return return_value;
 }
@@ -179,7 +180,7 @@ add_assignment (a_type arg1, a_type arg2)
       || arg2.type == FUNCTION_TYPE)
     return errorman_throw_reg (NULL, "both arguments to += must be variables");
 
-  mpz_add (arg1.v_point->data, arg1.v_point->data, arg2.v_point->data);
+  mpc_add (&(arg1.v_point->data), arg1.v_point->data, arg2.v_point->data);
 
   return arg1;
 }
@@ -196,7 +197,7 @@ sub_assignment (a_type arg1, a_type arg2)
       || arg2.type == FUNCTION_TYPE)
     return errorman_throw_reg (NULL, "both arguments to -= must be variables");
 
-  mpz_sub (arg1.v_point->data, arg1.v_point->data, arg2.v_point->data);
+  mpc_sub (&(arg1.v_point->data), arg1.v_point->data, arg2.v_point->data);
 
   return arg1;
 }
@@ -213,7 +214,7 @@ mult_assignment (a_type arg1, a_type arg2)
       || arg2.type == FUNCTION_TYPE)
     return errorman_throw_reg (NULL, "both arguments to *= must be variables");
 
-  mpz_mul (arg1.v_point->data, arg1.v_point->data, arg2.v_point->data);
+  mpc_mul (&(arg1.v_point->data), arg1.v_point->data, arg2.v_point->data);
 
   return arg1;
 }
@@ -230,10 +231,10 @@ div_assignment (a_type arg1, a_type arg2)
       || arg2.type == FUNCTION_TYPE)
     return errorman_throw_reg (NULL, "both arguments to /= must be variables");
 
-  if (mpz_cmp_si (arg2.v_point->data, 0) == 0)
+  if (mpc_cmp_si (arg2.v_point->data, 0) == 0)
     return errorman_throw_reg (NULL, "divide by zero error");
 
-  mpz_tdiv_q (arg1.v_point->data, arg1.v_point->data, arg2.v_point->data);
+  mpc_div (&(arg1.v_point->data), arg1.v_point->data, arg2.v_point->data);
 
   return arg1;
 }
@@ -250,10 +251,10 @@ mod_assignment (a_type arg1, a_type arg2)
       || arg2.type == FUNCTION_TYPE)
     return errorman_throw_reg (NULL, "both arguments to %= must be variables");
 
-  if (mpz_cmp_si (arg2.v_point->data, 0) == 0)
+  if (mpc_cmp_si (arg2.v_point->data, 0) == 0)
     return errorman_throw_reg (NULL, "mod by zero error");
 
-  mpz_mod (arg1.v_point->data, arg1.v_point->data, arg2.v_point->data);
+  mpc_mod (&(arg1.v_point->data), arg1.v_point->data, arg2.v_point->data);
 
   return arg1;
 }

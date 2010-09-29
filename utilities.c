@@ -57,10 +57,10 @@ array_to_string (var *convertable)
   if (convertable->array_size > 1)
     {
       for (scroller = convertable->array_up; scroller != NULL; scroller = scroller->next, setter++)
-	setter[0] = mpz_get_si (scroller->data);
+	setter[0] = mpc_get_si (scroller->data);
     }
   else
-    setter[0] = mpz_get_si (convertable->data);
+    setter[0] = mpc_get_si (convertable->data);
 
   return return_value;
 }
@@ -80,7 +80,7 @@ string_to_array (char *convertable, char *name)
   for (scroller = root, pos = 1; pos < length; pos++)
     {
       scroller->name = name;
-      mpz_set_si (scroller->data, (int) (convertable [pos - 1]));
+      mpc_set_si (&(scroller->data), (int) (convertable [pos - 1]));
       scroller->next = alloc_var ();
       scroller = scroller->next;
     }

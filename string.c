@@ -56,7 +56,7 @@ a_type new_string (func *scope, char **words)
                 }
 	      
             }
-	  mpz_set_si (scroller->data, character);
+	  mpc_set_si (&(scroller->data), character);
 	  scroller->next = alloc_var ();
 	}
       
@@ -97,7 +97,7 @@ a_type print_character (func *scope, char **words)
     return errorman_throw_reg (scope, "cannot print a function");
   
   if (evald.type == VAR_TYPE)
-    putchar (mpz_get_si (evald.v_point->data));
+    putchar (mpc_get_si (evald.v_point->data));
   
   for (pos = 0; words[pos] != NULL; pos++)
     words[pos] = words[pos + 1];    
@@ -114,7 +114,7 @@ input_character (func *scope, char **words)
 
   return_value.v_point = alloc_var ();
 
-  mpz_set_si (return_value.v_point->data, getchar ());
+  mpc_set_si (&(return_value.v_point->data), getchar ());
 
   for (pos = 0; words[pos] != NULL; pos++)
     words[pos] = words[pos + 1];
@@ -134,7 +134,7 @@ a_type print_var (func *scope, char **words)
     case ERROR_TYPE:
       break;
     case VAR_TYPE:
-      gmp_printf ("%Zd", evald.v_point->data);
+      gmp_printf ("%Zd", evald.v_point->data.object);
     case FUNCTION_TYPE:
       for (pos = 0; words[pos] != NULL; pos++)
 	words[pos] = words[pos + 1];

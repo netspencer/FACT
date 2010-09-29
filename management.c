@@ -67,7 +67,7 @@ var *alloc_var ()
   new->array_up = NULL;
   new->next = NULL;
   new->name = NULL;
-  mpz_init (new->data);
+  mpc_init (&(new->data));
 
   return new;
 }
@@ -100,8 +100,8 @@ void free_var (var *dead_man)
   hold_up = dead_man->array_up; /* get his contacts */
   hold_next = dead_man->next;
 
-  mpz_clear (dead_man->data); /* destroy his data */
-  GC_free (dead_man); /* and kill him */
+  mpz_clear (dead_man->data.object); /* destroy his data */
+  //GC_free (dead_man); /* and kill him */
 
   free_var (hold_up); /* now do the same for all his contacts */
   free_var (hold_next);

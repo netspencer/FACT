@@ -55,7 +55,7 @@ if_statement (func *scope, char **words, bool *success)
   if (conditional.type == FUNCTION_TYPE)
     return errorman_throw_reg (scope, "if statement conditional must return a var");
   
-  if (mpz_cmp_si (conditional.v_point->data, 0) == 0)
+  if (mpc_cmp_si (conditional.v_point->data, 0) == 0)
     {
       /*for (pos = 1, count = 0; words[pos] != NULL; pos++)
         {
@@ -196,7 +196,7 @@ while_loop (func *scope, char **words)
       if (conditional_evald.type == FUNCTION_TYPE)
 	return errorman_throw_reg (scope, "while loop conditional must return a var");
 
-      if (mpz_cmp_si (conditional_evald.v_point->data, 0) == 0)
+      if (mpc_cmp_si (conditional_evald.v_point->data, 0) == 0)
         break;
 
       block_temp = copy (block_saved);

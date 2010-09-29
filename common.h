@@ -30,7 +30,6 @@
 #include <unistd.h>
 #include <string.h>
 #include <ctype.h>
-#include <malloc.h>
 #include <stdbool.h>
 #include <assert.h>
 #include <gmp.h>

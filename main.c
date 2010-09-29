@@ -80,7 +80,7 @@ process_args (int argc, char **argv)
 	  
 	  /* parse remaining arguments into variables */
 	  inter_argc = add_var (scope, "argc");
-	  mpz_set_si (inter_argc->data, argc - 2);
+	  mpc_set_si (&(inter_argc->data), argc - 2);
 
 	  inter_argv = add_var (scope, "argv");
 

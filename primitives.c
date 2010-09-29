@@ -139,7 +139,7 @@ eval_math (func *scope, char **words)
   if ((words[2] == NULL || words[2][0] == ';')
       && ismathcall (words[0]) == 1 && arg1.type == VAR_TYPE)
     {
-      mpz_neg (arg1.v_point->data, arg1.v_point->data);
+      mpc_neg (&(arg1.v_point->data), arg1.v_point->data);
       return arg1;
     }
   

@@ -76,7 +76,7 @@ get_input (FILE *fp, unsigned int *line_number)
 	      if (*temp == '(')
 		paren_count++;
 	      else if (*temp == ')')
-		paren_count--;
+	paren_count--;
 	      else if (*temp == '[')
 		bracket_count++;
 	      else if (*temp == ']')
@@ -183,7 +183,8 @@ shell (func *main_scope)
         }
 
       if (returned.type == VAR_TYPE)
-        gmp_printf ("Returned value: %Zd\n", returned.v_point->data);
+	printf ("Returned value: %s\n", mpc_get_str (returned.v_point->data));
+        /*gmp_printf ("Returned value: %Zd\n", returned.v_point->data);*/
       else
         printf ("Returned object [%s]\n", returned.f_point->name);
 

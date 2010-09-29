@@ -35,7 +35,7 @@ defunc_array (func *base, func *scope, char **words)
       if (array_size.type != VAR_TYPE)
 	return errorman_throw_reg (scope, "array size needs to be a variable");
 
-      if (((size = (mpz_get_si (array_size.v_point->data))) > 1000 || size < 1))
+      if (((size = (mpc_get_si (array_size.v_point->data))) > 1000 || size < 1))
 	return errorman_throw_reg (scope, "array size give is invalid");
 
       base = resize_func (base, size);
@@ -136,7 +136,7 @@ def_array (var *base, func *scope, char **words)
       if (array_size.type != VAR_TYPE)
 	return errorman_throw_reg (scope, "array size needs to be a variable");
       
-      if ((size = (mpz_get_si (array_size.v_point->data))) > 1000 || size < 2)
+      if ((size = (mpc_get_si (array_size.v_point->data))) > 1000 || size < 2)
 	return errorman_throw_reg (scope, "invalid array size");
       
       base = resize_array (base, size);
@@ -211,7 +211,7 @@ clone_var (var *surrogate, char *name)
   clone->next = clone_var (surrogate->next, name);
   clone->array_up = clone_var (surrogate->array_up, name);
 
-  mpz_set (clone->data, surrogate->data);
+  mpc_set (&(clone->data), surrogate->data);
 
   return clone;
 }
@@ -243,7 +243,7 @@ set (func *scope, char **words)
       arg2.v_point->next = hold;
       free_var (arg1.v_point->array_up);
       arg1.v_point->array_up = copy->array_up;
-      mpz_set (arg1.v_point->data, copy->data);
+      mpc_set (&(arg1.v_point->data), copy->data);
       arg1.v_point->array_size = copy->array_size;
     }
   else if (arg1.type == FUNCTION_TYPE)
@@ -338,7 +338,7 @@ return_array (func *scope, char **words)
     var  *var_value;
     func *func_value;
   } values;
-
+ 
   hold_words = words;
 
   if (!strcmp (words[0], "]"))
@@ -523,7 +523,7 @@ size_of (func *scope, char **words)
   return_value.v_point = alloc_var ();
   return_value.type = VAR_TYPE;
 
-  mpz_set_si (return_value.v_point->data, evald.v_point->array_size);
+  mpc_set_si (&(return_value.v_point->data), evald.v_point->array_size);
 
   return return_value;
 }
@@ -602,7 +602,7 @@ get_array_var (var *root, func *scope, char **words)
   if (array_size.type != VAR_TYPE)
     return errorman_throw_reg (scope, "array position cannot be a function");
 
-  size = mpz_get_si (array_size.v_point->data);
+  size = mpc_get_si (array_size.v_point->data);
 
   if (size >= root->array_size || size < 0)
     return errorman_throw_reg (scope, "array out of bounds");
@@ -656,7 +656,7 @@ get_array_func (func *root, func *scope, char **words)
   if (array_size.type != VAR_TYPE)
     return errorman_throw_reg (scope, "array position cannot be a function");
 
-  size = mpz_get_si (array_size.v_point->data);
+  size = mpc_get_si (array_size.v_point->data);
 
   if (size >= root->array_size || size < 0)
     return errorman_throw_reg (scope, "array out of bounds");

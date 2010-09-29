@@ -44,11 +44,14 @@ void mpc_set_str (mpc_t *, char *, unsigned int);
 
 void mpc_add (mpc_t *, mpc_t, mpc_t);
 void mpc_sub (mpc_t *, mpc_t, mpc_t);
+void mpc_neg (mpc_t *, mpc_t);
 void mpc_mul (mpc_t *, mpc_t, mpc_t);
 void mpc_div (mpc_t *, mpc_t, mpc_t);
 void mpc_mod (mpc_t *, mpc_t, mpc_t);
 
 int mpc_cmp (mpc_t, mpc_t);
+int mpc_cmp_ui (mpc_t, unsigned long int);
+int mpc_cmp_si (mpc_t, signed long int);
 
 unsigned long int mpc_get_ui (mpc_t);
 signed long int mpc_get_si (mpc_t);
