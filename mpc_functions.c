@@ -2,16 +2,13 @@
 
 static unsigned int default_prec = 6;
 
-static inline unsigned int
-power_of_ten (unsigned int power)
+void
+power_of_ten (mpz_t rop, unsigned int op)
 {
-  unsigned int return_value;
   unsigned int counter;
 
-  for (return_value = 1, counter = 0; counter < power; counter++)
-    return_value *= 10;
-
-  return return_value;
+  for (counter = 0; counter < op; counter++)
+    mpz_mul_ui (rop, rop, 10);
 }
 
 void
@@ -75,13 +72,15 @@ mpc_add (mpc_t *rop, mpc_t op1, mpc_t op2)
   else if (op1.precision > op2.precision)
     {
       mpz_set (temp.object, op2.object);
-      mpz_mul_ui (temp.object, temp.object, power_of_ten (op1.precision - op2.precision));
+      power_of_ten (temp.object, op1.precision - op2.precision);
+      //mpz_mul (temp.object, temp.object, power_of_ten (op1.precision - op2.precision));
       mpz_add (temp.object, temp.object, op1.object);
     }
   else
     {
       mpz_set (temp.object, op1.object);
-      mpz_mul_ui (temp.object, temp.object, power_of_ten (op2.precision - op1.precision));
+      power_of_ten (temp.object, op2.precision - op1.precision);
+      //      mpz_mul (temp.object, temp.object, power_of_ten (op2.precision - op1.precision));
       mpz_add (temp.object, temp.object, op2.object);
     }
 
@@ -102,13 +101,15 @@ mpc_sub (mpc_t *rop, mpc_t op1, mpc_t op2)
   else if (op1.precision > op2.precision)
     {
       mpz_set (temp.object, op2.object);
-      mpz_mul_ui (temp.object, temp.object, power_of_ten (op1.precision - op2.precision));
+      power_of_ten (temp.object, op1.precision - op2.precision);
+      //      mpz_mul (temp.object, temp.object, power_of_ten (op1.precision - op2.precision));
       mpz_sub (temp.object, op1.object, temp.object);
     }
   else
     {
       mpz_set (temp.object, op1.object);
-      mpz_mul_ui (temp.object, temp.object, power_of_ten (op2.precision - op1.precision));
+      power_of_ten (temp.object, op2.precision - op1.precision);
+      //      mpz_mul (temp.object, temp.object, power_of_ten (op2.precision - op1.precision));
       mpz_sub (temp.object, temp.object, op2.object);
     }
 
@@ -140,7 +141,9 @@ mpc_div (mpc_t *rop, mpc_t op1, mpc_t op2)
   if (op1.precision == 0)
     {
       rop->precision = default_prec;
-      mpz_mul_ui (temp, op1.object, power_of_ten (rop->precision));
+      mpz_set (temp, op1.object);
+      power_of_ten (temp, rop->precision);
+      //      mpz_mul (temp, op1.object, power_of_ten (rop->precision));
     }
   else
     {
@@ -172,18 +175,20 @@ mpc_cmp (mpc_t op1, mpc_t op2)
   else if (op1.precision > op2.precision)
     {
       mpz_init_set (temp, op2.object);
-      mpz_mul_ui (temp, temp, power_of_ten (op1.precision - op2.precision));
+      power_of_ten (temp, op1.precision - op2.precision);
+      //      mpz_mul (temp, temp, power_of_ten (op1.precision - op2.precision));
 
-      gmp_printf ("op1 = %Zd, op2 = %Zd, temp = %Zd\n", op1.object, op2.object, temp);
+      //      gmp_printf ("op1 = %Zd, op2 = %Zd, temp = %Zd\n", op1.object, op2.object, temp);
 
       return mpz_cmp (op1.object, temp);
     }
   else
     {
       mpz_init_set (temp, op1.object);
-      mpz_mul_ui (temp, temp, power_of_ten (op2.precision - op1.precision));
+      power_of_ten (temp, op2.precision - op1.precision);
+      //   mpz_mul (temp, temp, power_of_ten (op2.precision - op1.precision));
 
-      gmp_printf ("op1 = %Zd, op2 = %Zd, temp = %Zd\n", op1.object, op2.object, temp);
+      //      gmp_printf ("op1 = %Zd, op2 = %Zd, temp = %Zd\n", op1.object, op2.object, temp);
 
       return mpz_cmp (temp, op2.object);
     }
@@ -192,7 +197,11 @@ mpc_cmp (mpc_t op1, mpc_t op2)
 int
 mpc_cmp_ui (mpc_t op1, unsigned long int op2)
 {
-  op2 *= power_of_ten (op1.precision);
+  unsigned int count;
+
+  for (count = 0; count < op1.precision; count++)
+    op2 *= 10;
+  //  op2 *= power_of_ten (op1.precision);
 
   return mpz_cmp_ui (op1.object, op2);
 }
@@ -200,7 +209,11 @@ mpc_cmp_ui (mpc_t op1, unsigned long int op2)
 int
 mpc_cmp_si (mpc_t op1, signed long int op2)
 {
-  op2 *= power_of_ten (op1.precision);
+  unsigned int count;
+  
+  for (count = 0; count < op1.precision; count++)
+    op2 *= 10;
+  //  op2 *= power_of_ten (op1.precision);
 
   return mpz_cmp_si (op1.object, op2);
 }
@@ -208,23 +221,34 @@ mpc_cmp_si (mpc_t op1, signed long int op2)
 unsigned long int
 mpc_get_ui (mpc_t rop)
 {
-  mpz_t temp;
+  mpz_t temp1;
+  mpz_t temp2;
 
-  mpz_init_set (temp, rop.object);
-  mpz_tdiv_q_ui (temp, temp, power_of_ten (rop.precision));
+  mpz_init_set (temp1, rop.object);
+  mpz_init_set_ui (temp2, 1);
+  power_of_ten (temp2, rop.precision);
+  mpz_tdiv_q (temp1, temp1, temp2);
 
-  return mpz_get_ui (temp);
+  return mpz_get_ui (temp1);
 }
 
 signed long int
 mpc_get_si (mpc_t rop)
 {
-  mpz_t temp;
+  mpz_t temp1;
+  mpz_t temp2;
 
+  mpz_init_set (temp1, rop.object);
+  mpz_init_set_ui (temp2, 1);
+  power_of_ten (temp2, rop.precision);
+  mpz_tdiv_q (temp1, temp1, temp2);
+
+  /*
   mpz_init_set (temp, rop.object);
   mpz_tdiv_q_ui (temp, temp, power_of_ten (rop.precision));
+  */
 
-  return mpz_get_si (temp);
+  return mpz_get_si (temp1);
 }
 
 char *
@@ -236,24 +260,28 @@ mpc_get_str (mpc_t op)
 
   extern char *combine_strs (char *, char *);
 
-  return_value = (char *) better_malloc ((mpz_sizeinbase (op.object, 10) + 2) * (sizeof (char))); 
-  mpz_get_str (return_value, 10, op.object);
+  return_value = mpz_get_str (NULL, 10, op.object);
 
   if (op.precision > 0)
     {
-      for (start = return_value; return_value[0] != '\0'; return_value++)
-	;
-      start = (char *) better_realloc (start, (return_value - start + 1) * (sizeof (char)));
-
-      for (prec = 0; prec <= op.precision; prec++)
-	return_value[(int)(1 - prec)] = return_value[(int)(-prec)];
-
-      if (return_value - start > op.precision)
-	return_value[(int)(1 - prec)] = '.';
+      if (strlen (return_value) == op.precision || (return_value[0] == '-'
+						    && strlen (return_value) == op.precision + 1))
+	return_value = combine_strs ("0.", return_value);
       else
-	start = combine_strs ("0.", start);
+	{
+	  for (start = return_value; return_value[0] != '\0'; return_value++)
+	    ;
+	  
+	  start = (char *) better_realloc (start, (strlen (start) + 2) * (sizeof (char)));
 
-      return_value = start;
+	  for (prec = 0; prec <= op.precision; prec++)
+	    return_value[(int)(1 - prec)] = return_value[(int)(-prec)];
+
+	  if (return_value - (int) prec > start)
+	    return_value[(int)(1 - prec)] = '.';
+
+	  return_value = start;
+	}
     }
 
   return return_value;

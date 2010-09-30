@@ -134,7 +134,7 @@ a_type print_var (func *scope, char **words)
     case ERROR_TYPE:
       break;
     case VAR_TYPE:
-      gmp_printf ("%Zd", evald.v_point->data.object);
+      printf ("%s", mpc_get_str (evald.v_point->data));
     case FUNCTION_TYPE:
       for (pos = 0; words[pos] != NULL; pos++)
 	words[pos] = words[pos + 1];

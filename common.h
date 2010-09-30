@@ -93,6 +93,8 @@ better_malloc (size_t alloc_size)
   if (mem_trackopt)
     printf("Heap size = %d\n", (int) GC_get_heap_size ());
 
+  if ((int) GC_get_heap_size () == 0)
+    GC_gcollect ();
   
   if (bytes_used >= MAX_BYTES)
     {
@@ -139,6 +141,9 @@ better_realloc (void *to_resize, size_t alloc_size)
   
   if (mem_trackopt)
     printf("Heap size = %d\n", (int) GC_get_heap_size());
+
+  if ((int) GC_get_heap_size () == 0)
+    GC_gcollect ();
 
   if (bytes_used >= MAX_BYTES)
     {

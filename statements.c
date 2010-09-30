@@ -183,6 +183,7 @@ while_loop (func *scope, char **words)
 
   block_evald.type = VAR_TYPE;
   block_evald.v_point = alloc_var ();
+  block_evald.break_signal = false;
 
   for (;;)
     {
@@ -203,17 +204,8 @@ while_loop (func *scope, char **words)
 
       block_evald = expression (scope, block_temp);
 
-      if (block_evald.type == ERROR_TYPE)
-	return block_evald;/*errorman_throw_reg (scope, combine_strs ("error in while loop block; ",
-		 block_evald.error.description));*/
-      if (block_evald.isret == true)
-        break;
-
-      if (block_evald.break_signal == true)
-	{
-	  block_evald.break_signal = false;
-	  break;
-	}
+      if (block_evald.type == ERROR_TYPE || block_evald.isret == true || block_evald.break_signal == true)
+	break;
     }
 
   return block_evald;

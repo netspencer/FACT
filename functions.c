@@ -192,6 +192,7 @@ new_scope (func *scope, char **words)
 
   return_value.f_point = new_scope;
   return_value.type = FUNCTION_TYPE;
+  
   return_value.isret = false;
   return_value.break_signal = false;
 

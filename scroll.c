@@ -7,7 +7,7 @@ void scroll_array (var *to_look)
   for (until = to_look->array_size, to_look = to_look->array_up; to_look != NULL && until > 0; until--)
     {
       printf ("->[%s:%d:", to_look->name, to_look->array_size);
-      gmp_printf ("%Zd][", to_look->data);
+      gmp_printf ("%Zd][", to_look->data.object);
       scroll_array (to_look);
       printf ("]");
       to_look = to_look->next;
@@ -28,7 +28,7 @@ void scroll (func *scope)
     {
       printf ("[%s:%d:", var_scroll->name, var_scroll->array_size);
       fflush (stdout);
-      gmp_printf ("%Zd]", var_scroll->data);
+      gmp_printf ("%Zd]", var_scroll->data.object);
       fflush (stdout);
       scroll_array (var_scroll);
       printf ("\n\t|\n\tV\n");
