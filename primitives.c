@@ -56,13 +56,11 @@ add_prim (const char *prim_name,
 void
 init_std_prims (void)
 {
+  /* All primitives that are symbols */
   add_prim ("=", set);
   add_prim ("(", paren);
   add_prim ("{", lambda_proc);
-  add_prim ("def", define);
-  add_prim ("defunc", defunc);
-  add_prim ("![", return_array); 
-  add_prim ("sizeof", size_of);
+  add_prim ("![", return_array);
   add_prim ("@", liven_func);
   add_prim ("$", run_func);
   add_prim ("&", new_scope);
@@ -70,23 +68,87 @@ init_std_prims (void)
   add_prim ("\"", new_string);
   add_prim ("?", errorman_throw_prim);
   add_prim ("&&", and);
-  add_prim ("if", invalid_if);
+  /* Start with 'd' */
+  add_prim ("def", define);
+  add_prim ("defunc", defunc);
+  /* start with 'e' */
   add_prim ("else", invalid_else);
-  add_prim ("while", invalid_while);
-  add_prim ("printc", print_character);
+  /* start with 'g' */
   add_prim ("getc", input_character);
+  /* start with 'i' */
+  add_prim ("if", invalid_if);
+  /* start with 'p' */
+  add_prim ("printc", print_character);
   add_prim ("printv", print_var);
+  /* start with 's' */
+  add_prim ("sizeof", size_of);
+  /* start with 'w' */
+  add_prim ("while", invalid_while);
 }
+
+enum {
+  SYMB = 0,
+  STARTD = 11,
+  STARTE = 13,
+  STARTG = 14,
+  STARTI = 15,
+  STARTP = 16,
+  STARTS = 18,
+  STARTW = 19,
+  STARTother = 20
+};
 
 int
 isprim (char *word)
 {
   int pos;
 
-  for (pos = 0; pos < num_of_prims; pos++)
+  if (ispunct ((int) word[0]))
+    pos = SYMB;
+  else switch (word[0])
+	 {
+	 case 'd':
+	   pos = STARTD;
+	   break;
+	   
+	 case 'e':
+	   pos = STARTE;
+	   break;
+
+	 case 'g':
+	   pos = STARTG;
+	   break;
+
+	 case 'i':
+	   pos = STARTI;
+	   break;
+	   
+	 case 'p':
+	   pos = STARTP;
+	   break;
+
+	 case 's':
+	   pos = STARTS;
+	   break;
+
+	 case 'w':
+	   pos = STARTW;
+	   break;
+
+	 default:
+	   pos = STARTother;
+	   break;
+	 }
+
+  while (pos < num_of_prims)
     {
+      if (pos >= STARTD && primitives[pos].name[0] != word[0])
+	return -1;
+      
       if (strcmp (primitives[pos].name, word) == 0)
 	return pos;
+
+      pos++;
     }
 
   return -1;
@@ -96,6 +158,9 @@ int
 ismathcall (char *word)
 {
   int pos;
+
+  if (!ispunct ((int) word[0]))
+    return -1;
 
   for (pos = 0; pos < NUM_MATH_PRIMS; pos++)
     {

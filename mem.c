@@ -523,7 +523,10 @@ size_of (func *scope, char **words)
   return_value.v_point = alloc_var ();
   return_value.type = VAR_TYPE;
 
-  mpc_set_si (&(return_value.v_point->data), evald.v_point->array_size);
+  if (evald.type == VAR_TYPE)
+    mpc_set_si (&(return_value.v_point->data), evald.v_point->array_size);
+  else
+    mpc_set_si (&(return_value.v_point->data), evald.f_point->array_size);
 
   return return_value;
 }

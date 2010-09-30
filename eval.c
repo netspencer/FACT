@@ -75,31 +75,23 @@ expression (func *scope, char **words)
 	  return errorman_throw_reg (scope, "unmatched 'else'");
 	}
     }
-  else if (strcmp (formatted_expression[0], "while") == 0)
-    {
-      ifopen[depth] = CLOSED;
-      return_value = while_loop (scope, formatted_expression + 1);
-    }
-  else if (strcmp (formatted_expression[0], "{") == 0)
-    {
-      ifopen[depth] = CLOSED;
-      return_value = lambda_proc (scope, formatted_expression + 1);
-    }
-  else if (strcmp (formatted_expression[0], "return") == 0)
-    {
-      ifopen[depth] = CLOSED;
-      return_value = eval (scope, formatted_expression + 1);
-      isreturn = true;
-    }
-  else if (strcmp (formatted_expression[0], "break") == 0)
-    {
-      ifopen[depth] = CLOSED;
-      isbreak = true;
-    }
   else
     {
       ifopen[depth] = CLOSED;
-      return_value = eval (scope, formatted_expression);
+       
+      if (strcmp (formatted_expression[0], "while") == 0)
+	return_value = while_loop (scope, formatted_expression + 1);
+      else if (strcmp (formatted_expression[0], "{") == 0)
+	return_value = lambda_proc (scope, formatted_expression + 1);
+      else if (strcmp (formatted_expression[0], "return") == 0)
+	{
+	  return_value = eval (scope, formatted_expression + 1);
+	  isreturn = true;
+	}
+      else if (strcmp (formatted_expression[0], "break") == 0)
+	isbreak = true;
+      else
+	return_value = eval (scope, formatted_expression);
     }
 
   if (!return_value.isret)
@@ -123,9 +115,6 @@ procedure (func *scope, char **words)
     {
       len_to_move = get_exp_length_first (words, ';');
       return_value = expression (scope, words);
-
-      if (return_value.break_signal)
-	printf ("WWWWWWWWWWHOOO\n");
 
       if (return_value.type == ERROR_TYPE
 	  || return_value.isret
@@ -162,11 +151,11 @@ lambda_proc (func *scope, char **words)
       NULL,
       NULL,
     }; /*
-       this is a temporary scope created to contain
-       lambda procedures. Note, these are different
-       from lambda functions. A lot.
-     */
-
+	 this is a temporary scope created to contain
+	 lambda procedures. Note, these are different
+	 from lambda functions. A lot.
+       */
+  
   return procedure (&temp_local, words);
 }
 

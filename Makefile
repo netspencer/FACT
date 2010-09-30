@@ -1,5 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -ggdb -m64
+PFLAGS = -pg
 PROG = FACT-GCC
 PARSERV = 3
 
@@ -18,3 +19,6 @@ $(PROG):	$(SRCS)
 
 clean:
 	rm -f $(PROG)
+
+profile:	$(SRCS)	
+	$(CC) $(CFLAGS) -D PARSING=$(PARSERV) -o $(PROG) $(SRCS) $(LIBS) $(PFLAGS)
