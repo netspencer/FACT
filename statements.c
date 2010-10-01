@@ -135,12 +135,12 @@ a_type
 while_loop (func *scope, char **words)
 {
   int pos_cond;
-  int pos_block;
+  //int pos_block;
   int pos;
   char **conditional_saved;
-  char **block_saved;
+  //char **block_saved;
   char **conditional_temp;
-  char **block_temp;
+  //char **block_temp;
   a_type conditional_evald;
   a_type block_evald;
 
@@ -164,6 +164,7 @@ while_loop (func *scope, char **words)
   if (words[pos_cond] == NULL)
     return errorman_throw_reg (scope, "syntax error in while loop");
 
+  /*
   pos_block = get_exp_length_first (words + pos_cond, ';');
   block_saved = (char **) better_malloc ((sizeof (char *)) * (pos_block + 2));
 
@@ -180,6 +181,7 @@ while_loop (func *scope, char **words)
     words[pos] = words[pos_block + pos_cond + pos];
 
   words[pos] = NULL;
+  */
 
   block_evald.type = VAR_TYPE;
   block_evald.v_point = alloc_var ();
@@ -193,19 +195,25 @@ while_loop (func *scope, char **words)
       
       if (conditional_evald.type == ERROR_TYPE)
 	return conditional_evald;/*errorman_throw_reg (scope, combine_strs ("error in while loop conditional; ",
-		 conditional_evald.error.description));*/
+				   conditional_evald.error.description));*/
       if (conditional_evald.type == FUNCTION_TYPE)
 	return errorman_throw_reg (scope, "while loop conditional must return a var");
 
       if (mpc_cmp_si (conditional_evald.v_point->data, 0) == 0)
         break;
 
-      block_temp = copy (block_saved);
+      //      block_temp = copy (block_saved);
 
-      block_evald = expression (scope, block_temp);
+      block_evald = expression (scope, words + pos_cond + 1);
 
       if (block_evald.type == ERROR_TYPE || block_evald.isret == true || block_evald.break_signal == true)
 	break;
+
+      /*
+      for (pos = 0; block_temp[pos] != NULL; pos++)
+	printf ("%s ", block_temp[pos]);
+      putchar ('\n');
+      */
     }
 
   return block_evald;

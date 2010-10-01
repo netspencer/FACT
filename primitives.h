@@ -19,7 +19,7 @@ extern int ismathcall (char *);
 extern void add_prim (const char *, a_type (*)(func *, char **));
 extern void init_std_prims ();
 
-extern a_type runprim (func *, char **);
-extern a_type eval_math (func *, char **);
+extern a_type runprim (func *, char **, int);
+extern a_type eval_math (func *, char **, int);
 
 #endif

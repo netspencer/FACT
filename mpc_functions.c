@@ -251,37 +251,64 @@ mpc_get_si (mpc_t rop)
   return mpz_get_si (temp1);
 }
 
+static char *
+concatinate_free (char *op1, char *op2, bool fop1, bool fop2)
+{
+  char *return_value;
+
+  extern char *combine_strs (char *, char *);
+  
+  return_value = combine_strs (op1, op2);
+
+  if (fop1)
+    GC_free (op1);
+  if (fop2)
+    GC_free (op2);
+
+  return return_value;
+}
+
 char *
 mpc_get_str (mpc_t op)
 {
-  unsigned int prec;
   char *return_value;
-  char *start;
+  mpz_t temp_op;
+  mpz_t temp1;
+  mpz_t temp2;
+
+  /* I'm guessing this will have some issues with negative numbers.
+     Will fix that in a bit, if it is the case. */
 
   extern char *combine_strs (char *, char *);
 
-  return_value = mpz_get_str (NULL, 10, op.object);
-
-  if (op.precision > 0)
+  if (op.precision == 0)
+    return_value = mpz_get_str (NULL, 10, op.object);
+  else
     {
-      if (strlen (return_value) == op.precision || (return_value[0] == '-'
-						    && strlen (return_value) == op.precision + 1))
-	return_value = combine_strs ("0.", return_value);
-      else
-	{
-	  for (start = return_value; return_value[0] != '\0'; return_value++)
-	    ;
-	  
-	  start = (char *) better_realloc (start, (strlen (start) + 2) * (sizeof (char)));
+      mpz_init (temp_op);
+      mpz_abs (temp_op, op.object);
+      
+      mpz_init_set (temp1, temp_op);
+      mpz_init_set_ui (temp2, 1);
 
-	  for (prec = 0; prec <= op.precision; prec++)
-	    return_value[(int)(1 - prec)] = return_value[(int)(-prec)];
+      power_of_ten (temp2, op.precision);
+      mpz_tdiv_q (temp1, temp1, temp2);
 
-	  if (return_value - (int) prec > start)
-	    return_value[(int)(1 - prec)] = '.';
+      return_value = concatinate_free (mpz_get_str (NULL, 10, temp1), ".", true, false);
 
-	  return_value = start;
-	}
+      mpz_mul (temp1, temp1, temp2);
+      mpz_sub (temp1, temp_op, temp1);
+
+      mpz_abs (temp1, temp1);
+
+      return_value = concatinate_free (return_value, mpz_get_str (NULL, 10, temp1), true, true);
+
+      if (mpz_sgn (op.object) < 0)
+	return_value = concatinate_free ("-", return_value, false, true);
+
+      mpz_clear (temp1);
+      mpz_clear (temp2);
+      mpz_clear (temp_op);
     }
 
   return return_value;

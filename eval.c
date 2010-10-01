@@ -162,6 +162,7 @@ lambda_proc (func *scope, char **words)
 a_type
 eval (func *scope, char **words)
 {
+  int call_num;
   a_type return_value;
 
   if (words[0] == NULL)
@@ -174,10 +175,10 @@ eval (func *scope, char **words)
     }
   else if (isnum (words[0]))
     return_value = num_to_var (words[0]);
-  else if (isprim (words[0]) > -1)
-    return runprim (scope, words);
-  else if (ismathcall (words[0]) > -1)
-    return eval_math (scope, words);
+  else if ((call_num = isprim (words[0])) > -1)
+    return runprim (scope, words, call_num);
+  else if ((call_num = ismathcall (words[0])) > -1)
+    return eval_math (scope, words, call_num);
   else if (get_var (scope, words[0]) != NULL)
     return_value = get_array_var (get_var (scope, words[0]),
 				  scope,

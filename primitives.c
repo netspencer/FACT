@@ -172,14 +172,11 @@ ismathcall (char *word)
 }
 
 a_type
-runprim (func *scope, char **words)
+runprim (func *scope, char **words, int prim_num)
 {
   a_type return_value;
-  int prim_num;
 
-  prim_num = isprim (words[0]);
-
-  return_value = primitives[prim_num].function(scope, words + 1);
+  return_value = primitives[prim_num].function (scope, words + 1);
 
   if (prim_num != 2)
     {
@@ -191,7 +188,7 @@ runprim (func *scope, char **words)
 }
 
 a_type
-eval_math (func *scope, char **words)
+eval_math (func *scope, char **words, int call_num)
 {
   a_type arg1;
   a_type arg2;
@@ -202,7 +199,7 @@ eval_math (func *scope, char **words)
   arg2 = eval (scope, words + 2);
 
   if ((words[2] == NULL || words[2][0] == ';')
-      && ismathcall (words[0]) == 1 && arg1.type == VAR_TYPE)
+      && call_num == 1 && arg1.type == VAR_TYPE)
     {
       mpc_neg (&(arg1.v_point->data), arg1.v_point->data);
       return arg1;
@@ -213,7 +210,7 @@ eval_math (func *scope, char **words)
   if (arg2.type == ERROR_TYPE)
     return arg2;
 
-  return_value = math_calls[ismathcall (words[0])].function (arg1, arg2);
+  return_value = math_calls[call_num].function (arg1, arg2);
 
   if (return_value.type == ERROR_TYPE)
     return_value.error.scope = scope;

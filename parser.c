@@ -117,7 +117,7 @@ get_words (char *start)
 	end++;
       else
 	{
-	  while (isalnum (*end) || *end == '_')
+	  while (isalnum (*end) || *end == '_' || *end == '.')
 	    end++;
 	}
       

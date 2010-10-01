@@ -16,15 +16,51 @@
 bool
 isnum (char *word)
 {
-  int pos;
+  unsigned int pos;
+  bool flp;
 
-  for (pos = 0; word[pos] != '\0'; pos++)
+  for (pos = 0, flp = false; word[pos] != '\0'; pos++)
     {
-      if (!isdigit ((int) word[pos]))
-	  return false;
+      if (word[pos] == '.')
+	{
+	  if (flp)
+	    return false;
+	  flp = true;
+	}
+      else if (!isdigit ((int) word[pos]))
+	return false;
     }
 
   return true;
+}
+
+/* * * * * * * * * * * * * * * * * * * * * * * *
+ * get_prec: This function takes a correctly   *
+ * formatted string, counts the number of      *
+ * digits after the decimal point, and         *
+ * replaces the decimal point with a '.'       *
+ * * * * * * * * * * * * * * * * * * * * * * * */
+
+unsigned int
+get_prec (char *word)
+{
+  unsigned int pos;
+  unsigned int precision;
+  bool is_decimal;
+
+  for (pos = precision = 0, is_decimal = false; word[pos] != '\0'; pos++)
+    {
+      if (is_decimal)
+	precision++;
+
+      if (word[pos] == '.')
+	{
+	  is_decimal = true;
+	  word[pos] = ' ';
+	}
+    }
+
+  return precision;
 }
 
 /* * * * * * * * * * * * * * * * * * * * * * * *
@@ -42,7 +78,7 @@ num_to_var (char *word)
   return_value.v_point = alloc_var ();
 
   /* Need to fix this in order to support decimals */
-  mpc_set_str (&(return_value.v_point->data), word, 0);
+  mpc_set_str (&(return_value.v_point->data), word, get_prec (word));
   
   return_value.v_point->array_size = 1;
   return_value.v_point->array_up = NULL;
