@@ -44,7 +44,7 @@ if_statement (func *scope, char **words, bool *success)
   if (strcmp (*words, "(") != 0)
     return errorman_throw_reg (scope, "expected '(' after if statement");
 
-  conditional = eval (scope, words);
+  conditional = eval (&temp_scope, words);
 
   if (conditional.type == ERROR_TYPE)
     {
@@ -135,14 +135,24 @@ a_type
 while_loop (func *scope, char **words)
 {
   int pos_cond;
-  //int pos_block;
   int pos;
   char **conditional_saved;
-  //char **block_saved;
   char **conditional_temp;
-  //char **block_temp;
   a_type conditional_evald;
   a_type block_evald;
+
+  func temp_scope =
+    {
+      "while_temp",
+      NULL,
+      NULL,
+      1,
+      NULL,
+      NULL,
+      scope,
+      NULL,
+      NULL
+    };
 
   extern int get_exp_length_first (char **, int);
 
@@ -164,25 +174,6 @@ while_loop (func *scope, char **words)
   if (words[pos_cond] == NULL)
     return errorman_throw_reg (scope, "syntax error in while loop");
 
-  /*
-  pos_block = get_exp_length_first (words + pos_cond, ';');
-  block_saved = (char **) better_malloc ((sizeof (char *)) * (pos_block + 2));
-
-  block_saved[pos_block + 1] = NULL;
-  pos = pos_block;
-
-  while (pos > 0)
-    {
-      pos--;
-      block_saved[pos] = words[pos + pos_cond + 1];
-    }
-
-  for (; words[pos_block + pos_cond + pos] != NULL; pos++)
-    words[pos] = words[pos_block + pos_cond + pos];
-
-  words[pos] = NULL;
-  */
-
   block_evald.type = VAR_TYPE;
   block_evald.v_point = alloc_var ();
   block_evald.break_signal = false;
@@ -191,29 +182,160 @@ while_loop (func *scope, char **words)
     {
       conditional_temp = copy (conditional_saved);
 
-      conditional_evald = eval (scope, conditional_temp);
+      conditional_evald = eval (&temp_scope, conditional_temp);
       
       if (conditional_evald.type == ERROR_TYPE)
-	return conditional_evald;/*errorman_throw_reg (scope, combine_strs ("error in while loop conditional; ",
-				   conditional_evald.error.description));*/
+	return conditional_evald;
+      
       if (conditional_evald.type == FUNCTION_TYPE)
 	return errorman_throw_reg (scope, "while loop conditional must return a var");
 
       if (mpc_cmp_si (conditional_evald.v_point->data, 0) == 0)
         break;
 
-      //      block_temp = copy (block_saved);
+      block_evald = expression (&temp_scope, words + pos_cond + 1);
 
-      block_evald = expression (scope, words + pos_cond + 1);
+      if (block_evald.type == ERROR_TYPE || block_evald.isret == true || block_evald.break_signal == true)
+	break;
+    }
+
+  return block_evald;
+}
+
+a_type
+for_loop (func *scope, char **words)
+{
+  int pos;
+  int arr_pos;
+  a_type index_value;
+  a_type limit_value;
+  a_type block_evald;
+  var *var_scroller;
+  func *func_scroller;
+  mpc_t one;
+
+  func temp_scope =
+    {
+      "for_temp",
+      NULL,
+      NULL,
+      1,
+      NULL,
+      NULL,
+      scope,
+      NULL,
+      NULL
+    };
+
+  index_value = eval (&temp_scope, words);
+
+  if (index_value.type == ERROR_TYPE)
+    return index_value;
+
+  if (strcmp (words[1], ","))
+    return errorman_throw_reg (scope, "syntax error in for loop; missing ','");
+
+  limit_value = eval (&temp_scope, words + 2);
+
+  if (limit_value.type == ERROR_TYPE)
+    return limit_value;
+
+  if (limit_value.type != index_value.type)
+    return errorman_throw_reg (scope, "error in for loop; index type does not match destination type");
+
+  if (strcmp (words[3], "then"))
+    return errorman_throw_reg (scope, "syntax error in for loop; missing 'then'");
+
+  mpc_init (&one);
+  mpc_set_ui (&one, 1);
+
+  arr_pos = 0;
+  /*
+  extern int get_exp_length_first (char **, int);
+
+  if (words[0] == NULL || words[0][0] != '(')
+    return errorman_throw_reg (scope, "expected '(' after while");
+
+  pos_cond = get_exp_length (words + 1, ')');
+  conditional_saved = (char **) better_malloc ((sizeof (char *)) * (pos_cond + 1));
+
+  conditional_saved[pos_cond] = NULL;
+  pos = pos_cond;
+
+  while (pos > 0)
+    {
+      pos--;
+      conditional_saved[pos] = words[pos + 1];
+    }
+
+  if (words[pos_cond] == NULL)
+    return errorman_throw_reg (scope, "syntax error in while loop");
+  */
+
+  block_evald.type = VAR_TYPE;
+  block_evald.v_point = alloc_var ();
+  block_evald.break_signal = false;
+
+  for (;;)
+    {
+      if (index_value.type == VAR_TYPE)
+	{
+	  if (limit_value.v_point->array_size > 1)
+	    {
+	      if (arr_pos >= limit_value.v_point->array_size)
+		break;
+
+	      for (var_scroller = limit_value.v_point->array_up, pos = 0;
+		   pos < arr_pos; pos++)
+		var_scroller = var_scroller->next;
+
+	      //	      printf ("%d\n", pos);
+
+	      index_value.v_point->array_size = var_scroller->array_size;
+	      mpc_set (&(index_value.v_point->data), var_scroller->data);
+	      index_value.v_point->array_up = clone_var (var_scroller->array_up, index_value.v_point->name);
+	    }
+	  else
+	    {
+	      if (mpc_cmp (index_value.v_point->data, limit_value.v_point->data) > 0)
+		mpc_sub (&(index_value.v_point->data), index_value.v_point->data, one);
+	      else if (mpc_cmp (index_value.v_point->data, limit_value.v_point->data) < 0)
+		mpc_add (&(index_value.v_point->data), index_value.v_point->data, one);
+	      else
+		break;
+	    }
+	}
+      else
+	{
+	  if (limit_value.f_point->array_size > 1)
+	    {
+	      if (arr_pos >= limit_value.f_point->array_size)
+		break;
+
+	      for (func_scroller = limit_value.f_point->array_up, pos = 1;
+		   pos < arr_pos; pos++)
+		func_scroller = func_scroller->next;
+
+	      index_value.f_point->args = limit_value.f_point->args;
+	      index_value.f_point->body = limit_value.f_point->body;
+	      index_value.f_point->array_size = limit_value.f_point->array_size;
+	      index_value.f_point->vars = limit_value.f_point->vars;
+	      index_value.f_point->funcs = limit_value.f_point->funcs;
+	      index_value.f_point->up = limit_value.f_point->up;
+	      index_value.f_point->array_up = limit_value.f_point->array_up;
+	      index_value.f_point->next = limit_value.f_point->next;
+	    }
+	  else
+	    return errorman_throw_reg (scope, "error in for loop; if the destination variable is a function, it must also be an array");
+	}
+
+      block_evald = expression (&temp_scope, words + 4);
 
       if (block_evald.type == ERROR_TYPE || block_evald.isret == true || block_evald.break_signal == true)
 	break;
 
-      /*
-      for (pos = 0; block_temp[pos] != NULL; pos++)
-	printf ("%s ", block_temp[pos]);
-      putchar ('\n');
-      */
+      arr_pos++;
+      //      printf ("%d -> %d\n", limit_value.v_point->array_size, arr_pos);
     }
 
   return block_evald;

@@ -16,9 +16,11 @@
 extern a_type invalid_if (func *, char **);
 extern a_type invalid_else (func *, char **);
 extern a_type invalid_while (func *, char **);
+/* add invalid for loop */
 
 extern a_type if_statement  (func *, char **, bool *);
 extern a_type else_clause  (func *, char **);
 extern a_type while_loop (func *, char **);
+extern a_type for_loop (func *, char **);
  
 #endif

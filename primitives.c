@@ -25,7 +25,7 @@ static struct _MATH_PRIMS math_calls[] =
     {/*"meq"*/ ">=", more_equal},
     {/*"leq"*/ "<=", less_equal},
     //    {/*"and"*/ "&&", and},
-    {/*"or"*/  "||",  or}
+    //   {/*"or"*/  "||",  or}
   };
 
 #define NUM_MATH_PRIMS ((sizeof math_calls) / (sizeof (struct _MATH_PRIMS)))
@@ -68,6 +68,7 @@ init_std_prims (void)
   add_prim ("\"", new_string);
   add_prim ("?", errorman_throw_prim);
   add_prim ("&&", and);
+  add_prim ("||", or);
   /* Start with 'd' */
   add_prim ("def", define);
   add_prim ("defunc", defunc);
@@ -88,14 +89,14 @@ init_std_prims (void)
 
 enum {
   SYMB = 0,
-  STARTD = 11,
-  STARTE = 13,
-  STARTG = 14,
-  STARTI = 15,
-  STARTP = 16,
-  STARTS = 18,
-  STARTW = 19,
-  STARTother = 20
+  STARTD = 12,
+  STARTE = 14,
+  STARTG = 15,
+  STARTI = 16,
+  STARTP = 17,
+  STARTS = 19,
+  STARTW = 20,
+  STARTother = 21
 };
 
 int

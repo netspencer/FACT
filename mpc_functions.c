@@ -301,6 +301,10 @@ mpc_get_str (mpc_t op)
 
       mpz_abs (temp1, temp1);
 
+      /*
+	Need to fix this up a bit to handle x.0..x;
+      */
+
       return_value = concatinate_free (return_value, mpz_get_str (NULL, 10, temp1), true, true);
 
       if (mpz_sgn (op.object) < 0)

@@ -81,6 +81,8 @@ expression (func *scope, char **words)
        
       if (strcmp (formatted_expression[0], "while") == 0)
 	return_value = while_loop (scope, formatted_expression + 1);
+      else if (strcmp (formatted_expression[0], "for") == 0)
+	return_value = for_loop (scope, formatted_expression + 1);
       else if (strcmp (formatted_expression[0], "{") == 0)
 	return_value = lambda_proc (scope, formatted_expression + 1);
       else if (strcmp (formatted_expression[0], "return") == 0)
