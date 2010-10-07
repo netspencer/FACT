@@ -63,12 +63,6 @@ isopt (int character)
       
       return true;
 
-      /*
-    case EOF:
-      times = 0;
-      return false;
-      */
-
     default:
       times = 0;
       return false;
@@ -222,6 +216,10 @@ get_block_code (char *block)
     return IF;
   else if (!strcmp (block, "while"))
     return WHILE;
+  else if (!strcmp (block, "for"))
+    return FOR;
+  else if (!strcmp (block, "then"))
+    return THEN;
   else if (!strcmp (block, "else"))
     return ELSE;
   else if (!strcmp (block, ";"))
@@ -480,6 +478,8 @@ precedence_level1 (linked_word *scan)
 	  find_end->previous = scan->hidden;
 	  break;
 
+	case FOR:
+	case THEN:
 	case ELSE:
 	case IN_SCOPE:
 	case COMMA:
@@ -511,18 +511,9 @@ precedence_level2 (linked_word *scan)
     {
       switch (scan->code)
 	{
-	  /*
-
-	case OP_BRACKET:
-	case OP_PAREN:
-	  */
 	case IF:
 	case WHILE:
 	case ELSE:
-	  /*
-	case FUNC_RET:
-	case FUNC_OBJ:
-	  */
 	case IN_SCOPE:
 	case COMMA:
 	case RETURN_STAT:
@@ -553,18 +544,11 @@ precedence_level3 (linked_word *scan)
     {
       switch (scan->code)
 	{
-	  /*
-	case OP_CURLY:
-	case OP_BRACKET:
-	case OP_PAREN:
-	  */
 	case IF:
 	case WHILE:
+	case FOR:
+	case THEN:
 	case ELSE:
-	  /*
-	case FUNC_RET:
-	case FUNC_OBJ:
-	  */
 	case IN_SCOPE:
 	case COMMA:
 	case RETURN_STAT:
@@ -609,18 +593,11 @@ precedence_level4 (linked_word *scan)
     {
       switch (scan->code)
 	{
-	  /*
-	case OP_CURLY:
-	case OP_BRACKET:
-	case OP_PAREN:
-	  */
 	case IF:
 	case WHILE:
+	case FOR:
+	case THEN:
 	case ELSE:
-	  /*
-	case FUNC_RET:
-	case FUNC_OBJ:
-	  */
 	case IN_SCOPE:
 	case COMMA:
 	case RETURN_STAT:
@@ -662,18 +639,11 @@ precedence_level5 (linked_word *scan)
     {
       switch (scan->code)
 	{
-	  /*
-	case OP_CURLY:
-	case OP_BRACKET:
-	case OP_PAREN:
-	  */
 	case IF:
 	case WHILE:
+	case FOR:
+	case THEN:
 	case ELSE:
-	  /*
-	case FUNC_RET:
-	case FUNC_OBJ:
-	  */
 	case IN_SCOPE:
 	case COMMA:
 	case RETURN_STAT:
@@ -713,18 +683,11 @@ precedence_level6 (linked_word *scan)
     {
       switch (scan->code)
 	{
-	  /*
-	case OP_CURLY:
-	case OP_BRACKET:
-	case OP_PAREN:
-	  */
 	case IF:
 	case WHILE:
+	case FOR:
+	case THEN:
 	case ELSE:
-	  /*
-	case FUNC_RET:
-	case FUNC_OBJ:
-	  */
 	case IN_SCOPE:
 	case COMMA:
 	case RETURN_STAT:
@@ -763,18 +726,11 @@ precedence_level7 (linked_word *scan)
     {
       switch (scan->code)
 	{
-	  /*
-	case OP_CURLY:
-	case OP_BRACKET:
-	case OP_PAREN:
-	  */
 	case IF:
 	case WHILE:
+	case FOR:
+	case THEN:
 	case ELSE:
-	  /*
-	case FUNC_RET:
-	case FUNC_OBJ:
-	  */
 	case IN_SCOPE:
 	case COMMA:
 	case RETURN_STAT:
@@ -812,18 +768,11 @@ precedence_level8 (linked_word *scan)
     {
       switch (scan->code)
 	{
-	  /*
-	case OP_CURLY:
-	case OP_BRACKET:
-	case OP_PAREN:
-	  */
 	case IF:
 	case WHILE:
+	case FOR:
+	case THEN:
 	case ELSE:
-	  /*
-	case FUNC_RET:
-	case FUNC_OBJ:
-	  */
 	case IN_SCOPE:
 	case COMMA:
 	case RETURN_STAT:
@@ -871,156 +820,6 @@ rev_shunting_yard (linked_word *scan)
 
 #endif
   
-#if PARSING == 2
-
-void
-rev_shunting_yard (linked_word *scan)
-{
-  linked_word *find_end;
-  linked_word *hold;
-
-  while (scan->next != NULL)
-    {
-      switch (scan->code)
-	{
-	case OP_CURLY:
-	case OP_BRACKET:
-	case OP_PAREN:
-	  rev_shunting_yard (scan->hidden);
-	  break;
-	  
-	case PLUS:
-	case MINUS:
-	  hold = scan->next;
-	  while (scan->previous != NULL
-		 && scan->previous->code != PLUS
-		 && scan->previous->code != MINUS
-		 && (scan->previous->code < AND
-		     || scan->previous->code > MORE_EQ))
-	    swap (scan);
-
-	  if (hold->code == MINUS)
-	    hold = hold->next;
-
-	  scan = hold;
-	  break;
-	  
-	case MULTIPLY:
-	case DIVIDE:
-	case MOD:
-	  swap (scan);
-	  break;
-
-	case SET:
-	  hold = scan->next;
-	  while (scan->previous != NULL
-		 && scan->previous->code != SET)
-	    swap (scan);
-	  
-	  if (hold->code == MINUS)
-	    hold = hold->next;
-	  
-	  scan = hold;
-	  break;
-	  
-	case AND:
-	  hold = scan->next;
-	  while (scan->previous != NULL
-		 && scan->previous->code != SET
-		 && scan->previous->code != AND)
-	    swap (scan);
-	  
-	  if (hold->code == MINUS)
-	    hold = hold->next;
-	  
-	  scan = hold;
-	  break;
-	  
-	case OR:
-	  hold = scan->next;
-	  while (scan->previous != NULL
-		 && scan->previous->code != SET
-		 && (scan->previous->code < AND
-		     || scan->previous->code > OR))
-	    swap (scan);
-	  
-	  if (hold->code == MINUS)
-	    hold = hold->next;
-	  
-	  scan = hold;
-	  break;
-	  
-	case EQ:
-	case NEQ:
-	  hold = scan->next;
-	  while (scan->previous != NULL
-		 && scan->previous->code != SET
-		 && (scan->previous->code < AND
-		     || scan->previous->code > NEQ))
-	    swap (scan);
-	  
-	  if (hold->code == MINUS)
-	    hold = hold->next;
-	  
-	  scan = hold;
-	  break;
-	  
-	case LESS:
-	case MORE:
-	case LESS_EQ:
-	case MORE_EQ:
-	  hold = scan->next;
-	  while (scan->previous != NULL
-		 && scan->previous->code != SET
-		 && (scan->previous->code < AND
-		     || scan->previous->code > MORE_EQ))
-	    swap (scan);
-	  
-	  if (hold->code == MINUS)
-	    hold = hold->next;
-	  
-	  scan = hold;
-	  break;
-	  
-	case FUNC_RET:
-	case FUNC_OBJ:
-	  scan->next->next->previous = NULL;
-	  rev_shunting_yard (scan->next->next);
-
-	  for (find_end = scan->next->next;
-	       find_end->previous != NULL;
-	       find_end = find_end->previous);
-	  
-	  scan->next->next = find_end;
-	  find_end->previous = scan;
-	  return;
-
-	case IN_SCOPE:
-	case COMMA:
-	case RETURN_STAT:
-	case CL_CURLY:
-	case SEMI:
-	  scan->next->previous = NULL;
-	  rev_shunting_yard (scan->next);
-
-	  for (find_end = scan->next;
-	       find_end->previous != NULL;
-	       find_end = find_end->previous);
-
-	  scan->next = find_end;
-	  find_end->previous = scan;
-	  return;
-	  
-	default:
-	  break;
-	}
-
-      scan = scan->next;
-    }
-}
-
-#endif
-
 void
 set_end (linked_word *start,
 	 linked_word *end)
@@ -1217,6 +1016,14 @@ convert_link (linked_word *list)
 	  result[position] = "while";
 	  break;
 
+	case FOR:
+	  result[position] = "for";
+	  break;
+	  
+	case THEN:
+	  result[position] = "then";
+	  break;
+
 	case ELSE:
 	  result[position] = "else";
 	  break;
@@ -1241,115 +1048,6 @@ convert_link (linked_word *list)
     }
 
   return result;
-}
-
-#endif
-
-#if PARSING < 2     
-
-void swap (char **words)
-{
-  char *temp = *(words - 1);
-  *(words - 1) = *words;
-  *words = temp;
-}
-
-int rev_shunting_yard (char **words, int block)
-{
-  int pos;
-  int count;
-  int incomplete;
-
-  // printf ("new iteration, words[0] = %s:\n", words[0]);
-
-  for (pos = 0; words[pos] != NULL
-	 && words[pos][0] != block; pos++)
-    {
-      //      printf ("pos = %d, words = %s\n", pos, words[pos]);
-      switch ((int) words[pos][0])
-	{
-	case ';':
- 	  pos += rev_shunting_yard (words + pos + 1, ';');
-	  break;
-	case '{':
- 	  pos += rev_shunting_yard (words + pos + 1, '}');
-	  break;
-	case '(':
-	  pos += rev_shunting_yard (words + pos + 1, ')');
-	  break;
-	case '[':
-	  pos += rev_shunting_yard (words + pos + 1, ']');
-	  break;
-	case '+':
-	case '-':
-	  //  printf ("pos = %d\n", pos);
-	  for (count = 0; count < pos; count++)
-	    swap (words + pos - count);
-	  break;
-	case 'm':
-	case 'n':
-	case 'l':
-	case 'a':
-	case 'o':
-	case 'e':
-	  if (strcmp (words[pos], "eq")
-	      && strcmp (words[pos], "nq")
-	      && strcmp (words[pos], "and")
-	      && strcmp (words[pos], "or")
-	      && strcmp (words[pos], "meq")
-	      && strcmp (words[pos], "leq")) 
-	    break;
-	case '>':
-	case '<':
-	case '=':
-	  count = pos;
-	  incomplete = 0;
-	  do
-	    {
-	      //printf ("words = %s\nwords + 1 = %s\ncount = %d\nincomplete = %d\n", words[count], words[count + 1], count, incomplete);
-              swap (words + count);
-              if (words[count][0] == ')') // This is to help out the parser a bit. It's not exactly accurate, but whatever
-                incomplete++;
-              else if (words[count][0] == '(')
-                incomplete--;
-              else if (words[count][0] == '}')
-                incomplete++;
-              else if (words[count][0] == '{')
-                incomplete--;
-              else if (words[count][0] == ']')
-                incomplete++;
-              else if (words[count][0] == '[')
-                incomplete--;
-              count--;
-	    } while (incomplete > 0);
-	  return pos + rev_shunting_yard (words + pos + 1, block);
-	case '%':
-	case '/':
-	case '*':
-	  count = pos;
-	  incomplete = 0;
-	  do 
-	    {
-	      swap (words + count);
-	      if (words[count][0] == ')')
-		incomplete++;
-	      else if (words[count][0] == '(')
-		incomplete--;
-	      count--;
-	    } while (incomplete > 0);
-	  break;
-	default:
-	  if (strcmp (words[pos], "return") == 0 || words[pos][0] == ',')
-	    {
-              pos += rev_shunting_yard (words + pos + 1, block);
-              //if (words[pos][0] == ';') pos++;
-              return pos;
-	    }
-	  break;
-	}
-    }
-
-  return (words[pos] == NULL) ? pos : pos + 1;
 }
 
 #endif

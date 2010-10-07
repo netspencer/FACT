@@ -265,6 +265,8 @@ typedef enum _word_codes
     SIZE,
     IF,
     WHILE,
+    FOR,
+    THEN,
     ELSE,
     SEMI,
     RETURN_STAT,
@@ -290,7 +292,6 @@ typedef struct _LINKED_WORD
 
 #include "utilities.h"
 #include "gmp_mallocs.h"
-//#include "garbage.h"
 #include "errorman.h"
 #include "management.h"
 #include "shell.h"

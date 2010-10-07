@@ -19,6 +19,12 @@ invalid_while (func *scope, char **words)
 }
 
 a_type
+invalid_for (func *scope, char **words)
+{
+  return errorman_throw_reg (scope, "invalid syntax, for loops must start at the beginning of the expression");
+}
+
+a_type
 if_statement (func *scope, char **words, bool *success)
 {
   a_type return_value;
@@ -250,27 +256,6 @@ for_loop (func *scope, char **words)
   mpc_set_ui (&one, 1);
 
   arr_pos = 0;
-  /*
-  extern int get_exp_length_first (char **, int);
-
-  if (words[0] == NULL || words[0][0] != '(')
-    return errorman_throw_reg (scope, "expected '(' after while");
-
-  pos_cond = get_exp_length (words + 1, ')');
-  conditional_saved = (char **) better_malloc ((sizeof (char *)) * (pos_cond + 1));
-
-  conditional_saved[pos_cond] = NULL;
-  pos = pos_cond;
-
-  while (pos > 0)
-    {
-      pos--;
-      conditional_saved[pos] = words[pos + 1];
-    }
-
-  if (words[pos_cond] == NULL)
-    return errorman_throw_reg (scope, "syntax error in while loop");
-  */
 
   block_evald.type = VAR_TYPE;
   block_evald.v_point = alloc_var ();
@@ -289,13 +274,11 @@ for_loop (func *scope, char **words)
 		   pos < arr_pos; pos++)
 		var_scroller = var_scroller->next;
 
-	      //	      printf ("%d\n", pos);
-
 	      index_value.v_point->array_size = var_scroller->array_size;
 	      mpc_set (&(index_value.v_point->data), var_scroller->data);
 	      index_value.v_point->array_up = clone_var (var_scroller->array_up, index_value.v_point->name);
 	    }
-	  else
+	  else if (arr_pos != 0)
 	    {
 	      if (mpc_cmp (index_value.v_point->data, limit_value.v_point->data) > 0)
 		mpc_sub (&(index_value.v_point->data), index_value.v_point->data, one);
@@ -329,13 +312,13 @@ for_loop (func *scope, char **words)
 	    return errorman_throw_reg (scope, "error in for loop; if the destination variable is a function, it must also be an array");
 	}
 
-      block_evald = expression (&temp_scope, words + 4);
+      if (strcmp (words[4], ";"))
+	block_evald = expression (&temp_scope, words + 4);
 
       if (block_evald.type == ERROR_TYPE || block_evald.isret == true || block_evald.break_signal == true)
 	break;
 
       arr_pos++;
-      //      printf ("%d -> %d\n", limit_value.v_point->array_size, arr_pos);
     }
 
   return block_evald;

@@ -74,6 +74,8 @@ init_std_prims (void)
   add_prim ("defunc", defunc);
   /* start with 'e' */
   add_prim ("else", invalid_else);
+  /* start with 'f' */
+  add_prim ("for", invalid_for);
   /* start with 'g' */
   add_prim ("getc", input_character);
   /* start with 'i' */
@@ -91,12 +93,13 @@ enum {
   SYMB = 0,
   STARTD = 12,
   STARTE = 14,
-  STARTG = 15,
-  STARTI = 16,
-  STARTP = 17,
-  STARTS = 19,
-  STARTW = 20,
-  STARTother = 21
+  STARTF = 15,
+  STARTG = 16,
+  STARTI = 17,
+  STARTP = 18,
+  STARTS = 20,
+  STARTW = 21,
+  STARTother = 22
 };
 
 int
@@ -114,6 +117,10 @@ isprim (char *word)
 	   
 	 case 'e':
 	   pos = STARTE;
+	   break;
+
+	 case 'f':
+	   pos = STARTF;
 	   break;
 
 	 case 'g':
