@@ -1,36 +1,34 @@
 #include "common.h"
 
 a_type
-invalid_if (func *scope, char **words)
+invalid_if (func *scope, word_list expression)
 {
   return errorman_throw_reg (scope, "invalid syntax, if statements must start at the beginning of the expression");
 }
 
 a_type
-invalid_else (func *scope, char **words)
+invalid_else (func *scope, word_list expression)
 {
   return errorman_throw_reg (scope, "invalid syntax, else statements must follow if statements at the beginning of the expression");
 }
 
 a_type
-invalid_while (func *scope, char **words)
+invalid_while (func *scope, word_list expression)
 {
   return errorman_throw_reg (scope, "invalid syntax, while loops must start at the beginning of the expression");
 }
 
 a_type
-invalid_for (func *scope, char **words)
+invalid_for (func *scope, word_list expression)
 {
   return errorman_throw_reg (scope, "invalid syntax, for loops must start at the beginning of the expression");
 }
 
 a_type
-if_statement (func *scope, char **words, bool *success)
+if_statement (func *scope, word_list expression_list, bool *success)
 {
   a_type return_value;
   a_type conditional;
-  /*int pos;
-    int count;*/
 
   func temp_scope =
     {
@@ -47,15 +45,15 @@ if_statement (func *scope, char **words, bool *success)
   
   (*success) = true;
   
-  if (strcmp (*words, "(") != 0)
+  if (strcmp (expression_list.syntax[0], "(") != 0)
     return errorman_throw_reg (scope, "expected '(' after if statement");
 
-  conditional = eval (&temp_scope, words);
+  conditional = eval (&temp_scope, expression_list);
 
   if (conditional.type == ERROR_TYPE)
     {
       conditional.error.scope = scope;
-      return conditional; //errorman_throw_reg (scope, conditional.error.description);
+      return conditional;
     }
 
   if (conditional.type == FUNCTION_TYPE)
@@ -63,50 +61,26 @@ if_statement (func *scope, char **words, bool *success)
   
   if (mpc_cmp_si (conditional.v_point->data, 0) == 0)
     {
-      /*for (pos = 1, count = 0; words[pos] != NULL; pos++)
-        {
-          if (words[pos][0] == '{'
-	      || words[pos][0] == '('
-	      || words[pos][0] == '[')
-            count++;
-          else if (words[pos][0] == '}'
-		   || words[pos][0] == ')'
-		   || words[pos][0] == ']')
-            count--;
-          else if (strcmp (words[pos], "else") == 0 && count == 0)
-            break;
-        }
+      return_value.v_point = alloc_var ();
+      return_value.type = VAR_TYPE;
+      return_value.isret = false;
+      return_value.break_signal = false;
+      
+      (*success) = false;  
+      
+      return return_value;
+    }
 
-      if (count > 0)
-	return errorman_throw_reg (scope, "syntax error in if statement");
-
-      if (words[pos] == NULL || strcmp (words[pos], "else") != 0)
-      { */
-          return_value.v_point = alloc_var ();
-	  return_value.type = VAR_TYPE;
-	  return_value.isret = false;
-	  return_value.break_signal = false;
-
-	  (*success) = false;  
-	  
-          return return_value;
-	  /*  }
-      else
-	{
-	  return_value = expression (&temp_scope, (words + pos + 1));
-
-	  if (return_value.type == ERROR_TYPE)
-	    return errorman_throw_reg (scope, combine_strs ("error in if statement block; ",
-							    return_value.error.description));
-
-	  return return_value;
-	  } */
+  while (expression_list.move_forward[0])
+    {
+      expression_list.syntax++;
+      expression_list.move_forward++;
     }
   
-  return_value = expression (&temp_scope, (words + 1));
+  return_value = expression (&temp_scope, expression_list.syntax);
 
   if (return_value.type == ERROR_TYPE)
-    return_value.error.scope = scope;//errorman_throw_reg (scope, return_value.error.description);
+    return_value.error.scope = scope;
     
   return return_value;
 }
@@ -142,10 +116,11 @@ while_loop (func *scope, char **words)
 {
   int pos_cond;
   int pos;
-  char **conditional_saved;
-  char **conditional_temp;
+
   a_type conditional_evald;
   a_type block_evald;
+
+  word_list conditional_exp;
 
   func temp_scope =
     {
@@ -160,22 +135,17 @@ while_loop (func *scope, char **words)
       NULL
     };
 
-  extern int get_exp_length_first (char **, int);
+  extern void set_array (bool *, int);
 
   if (words[0] == NULL || words[0][0] != '(')
     return errorman_throw_reg (scope, "expected '(' after while");
 
   pos_cond = get_exp_length (words + 1, ')');
-  conditional_saved = (char **) better_malloc ((sizeof (char *)) * (pos_cond + 1));
 
-  conditional_saved[pos_cond] = NULL;
+  conditional_exp.syntax = words;
+  conditional_exp.move_forward = better_malloc (sizeof (int) * (pos_cond));
+
   pos = pos_cond;
-
-  while (pos > 0)
-    {
-      pos--;
-      conditional_saved[pos] = words[pos + 1];
-    }
 
   if (words[pos_cond] == NULL)
     return errorman_throw_reg (scope, "syntax error in while loop");
@@ -186,9 +156,9 @@ while_loop (func *scope, char **words)
 
   for (;;)
     {
-      conditional_temp = copy (conditional_saved);
+      set_array (conditional_exp.move_forward, pos_cond + 1);
 
-      conditional_evald = eval (&temp_scope, conditional_temp);
+      conditional_evald = eval (&temp_scope, conditional_exp);
       
       if (conditional_evald.type == ERROR_TYPE)
 	return conditional_evald;
@@ -212,12 +182,19 @@ a_type
 for_loop (func *scope, char **words)
 {
   int pos;
+  int count;
   int arr_pos;
+  
   a_type index_value;
   a_type limit_value;
   a_type block_evald;
+
   var *var_scroller;
+
   func *func_scroller;
+
+  word_list index_dest_exp;
+
   mpc_t one;
 
   func temp_scope =
@@ -233,15 +210,31 @@ for_loop (func *scope, char **words)
       NULL
     };
 
-  index_value = eval (&temp_scope, words);
+  extern int count_until_NULL (char **);
+  extern void set_array (bool *, int);
+
+  index_dest_exp.syntax = words;
+  index_dest_exp.move_forward = better_malloc (sizeof (int) *
+					       ((count = count_until_NULL (words)) + 1));
+  set_array (index_dest_exp.move_forward, count + 1);
+  
+  index_value = eval (&temp_scope, index_dest_exp);
 
   if (index_value.type == ERROR_TYPE)
     return index_value;
 
-  if (strcmp (words[1], ","))
+  while (index_dest_exp.move_forward[0])
+    {
+      index_dest_exp.syntax++;
+      index_dest_exp.move_forward++;
+    }
+
+  if (strcmp (index_dest_exp.syntax[0], ","))
     return errorman_throw_reg (scope, "syntax error in for loop; missing ','");
 
-  limit_value = eval (&temp_scope, words + 2);
+  index_dest_exp.move_forward[0] = true;
+
+  limit_value = eval (&temp_scope, index_dest_exp);
 
   if (limit_value.type == ERROR_TYPE)
     return limit_value;
@@ -249,7 +242,13 @@ for_loop (func *scope, char **words)
   if (limit_value.type != index_value.type)
     return errorman_throw_reg (scope, "error in for loop; index type does not match destination type");
 
-  if (strcmp (words[3], "then"))
+  while (index_dest_exp.move_forward[0])
+    {
+      index_dest_exp.syntax++;
+      index_dest_exp.move_forward++;
+    }
+
+  if (strcmp (index_dest_exp.syntax[0], "then"))
     return errorman_throw_reg (scope, "syntax error in for loop; missing 'then'");
 
   mpc_init (&one);
@@ -312,8 +311,8 @@ for_loop (func *scope, char **words)
 	    return errorman_throw_reg (scope, "error in for loop; if the destination variable is a function, it must also be an array");
 	}
 
-      if (strcmp (words[4], ";"))
-	block_evald = expression (&temp_scope, words + 4);
+      if (strcmp (index_dest_exp.syntax[1], ";"))
+	block_evald = expression (&temp_scope, index_dest_exp.syntax + 1);
 
       if (block_evald.type == ERROR_TYPE || block_evald.isret == true || block_evald.break_signal == true)
 	break;

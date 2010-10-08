@@ -33,7 +33,7 @@ static struct _MATH_PRIMS math_calls[] =
 struct _prims
 { 
   const char *name;
-  a_type (*function)(func *, char **);
+  a_type (*function)(func *, word_list);
 };
 
 static int num_of_prims = 0; 
@@ -42,7 +42,7 @@ static struct _prims *primitives = NULL;
 
 void
 add_prim (const char *prim_name,
-	  a_type (*new_function)(func *, char **))
+	  a_type (*new_function)(func *, word_list))
 {
   num_of_prims++;
 
@@ -80,6 +80,8 @@ init_std_prims (void)
   add_prim ("getc", input_character);
   /* start with 'i' */
   add_prim ("if", invalid_if);
+  /* start with 'l' */
+  add_prim ("lambda", lambda);
   /* start with 'p' */
   add_prim ("printc", print_character);
   add_prim ("printv", print_var);
@@ -96,10 +98,11 @@ enum {
   STARTF = 15,
   STARTG = 16,
   STARTI = 17,
-  STARTP = 18,
-  STARTS = 20,
-  STARTW = 21,
-  STARTother = 22
+  STARTL = 18,
+  STARTP = 19,
+  STARTS = 21,
+  STARTW = 22,
+  STARTother = 23
 };
 
 int
@@ -129,6 +132,10 @@ isprim (char *word)
 
 	 case 'i':
 	   pos = STARTI;
+	   break;
+
+	 case 'l':
+	   pos = STARTL;
 	   break;
 	   
 	 case 'p':
@@ -180,11 +187,11 @@ ismathcall (char *word)
 }
 
 a_type
-runprim (func *scope, char **words, int prim_num)
+runprim (func *scope, word_list expression, int prim_num)
 {
   a_type return_value;
 
-  return_value = primitives[prim_num].function (scope, words + 1);
+  return_value = primitives[prim_num].function (scope, expression);
 
   if (prim_num != 2)
     {
@@ -196,17 +203,16 @@ runprim (func *scope, char **words, int prim_num)
 }
 
 a_type
-eval_math (func *scope, char **words, int call_num)
+eval_math (func *scope, word_list expression, int call_num)
 {
   a_type arg1;
   a_type arg2;
   a_type return_value;
-  int pos;
 
-  arg1 = eval (scope, words + 1);
-  arg2 = eval (scope, words + 2);
+  arg1 = eval (scope, expression);
+  arg2 = eval (scope, expression);
 
-  if ((words[2] == NULL || words[2][0] == ';')
+  if ((expression.syntax[0] == NULL || expression.syntax[0][0] == ';')
       && call_num == 1 && arg1.type == VAR_TYPE)
     {
       mpc_neg (&(arg1.v_point->data), arg1.v_point->data);
@@ -223,9 +229,8 @@ eval_math (func *scope, char **words, int call_num)
   if (return_value.type == ERROR_TYPE)
     return_value.error.scope = scope;
 
-  for (pos = 1; words[pos] != NULL; pos++)
-    words[pos] = words[pos + 2];
-
+  /* expression.move_forward[0] = 2; */
+  
   return_value.isret = false;
   return_value.break_signal = false;
 

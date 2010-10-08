@@ -13,12 +13,12 @@
  * (c) 2010 Matthew Plant - sorry for the bloat.
  */
 
-extern a_type invalid_if (func *, char **);
-extern a_type invalid_else (func *, char **);
-extern a_type invalid_while (func *, char **);
-extern a_type invalid_for (func *, char **);
+extern a_type invalid_if (func *, word_list);
+extern a_type invalid_else (func *, word_list);
+extern a_type invalid_while (func *, word_list);
+extern a_type invalid_for (func *, word_list);
 
-extern a_type if_statement  (func *, char **, bool *);
+extern a_type if_statement  (func *, word_list, bool *);
 extern a_type else_clause  (func *, char **);
 extern a_type while_loop (func *, char **);
 extern a_type for_loop (func *, char **);

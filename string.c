@@ -1,55 +1,62 @@
 #include "common.h"
 
-a_type new_string (func *scope, char **words)
+a_type
+new_string (func *scope, word_list expression)
 {
-  a_type return_value;
-  var *string;
-  var *scroller;
   int length;
   int count;
   int character;
-  int pos;
-  int increase;
 
-  increase = 1;
+  a_type return_value;
+
+  var *string;
+  var *scroller;
 
   string = alloc_var ();
 
   return_value.type = VAR_TYPE;
 
-  if (strcmp (words[0], "\"") == 0)
-    {
-      string->array_size = 1;
-      return_value.v_point = string;
-    }
+  if (strcmp (expression.syntax[0], "\"") == 0)
+    return_value.v_point = string;
   else
     {
       scroller = string;
 
-      for (length = 1, count = 0; words[0][count] != '\0'; length++, count++, scroller = scroller->next)
+      expression.move_forward[0] = true;
+
+      for (length = 1, count = 0; expression.syntax[0][count] != '\0'; length++, count++, scroller = scroller->next)
 	{
 	stringer:
-	  character = words[0][count];
+	  character = expression.syntax[0][count];
 
 	  if (character == '\\')
             {
-              switch (words[0][++count])
+              switch (expression.syntax[0][++count])
                 {
 		case 'n':
 		  character = '\n';
 		  break;
+		  
 		case 't':
 		  character = '\t';
 		  break;
+		  
 		case 'v':
 		  character = '\v';
 		  break;
+		  
 		case 'r':
 		  character = '\r';
 		  break;
+
+		case '0':
+		  character = '\0';
+		  break;
+		  
 		case '"':
 		  character = '"';
 		  break;
+		  
 		default:
 		  character = '\\';
 		  break;
@@ -60,10 +67,13 @@ a_type new_string (func *scope, char **words)
 	  scroller->next = alloc_var ();
 	}
       
-      if (words[2] != NULL && !strcmp (words[2], "\""))
+      if (expression.syntax[2] != NULL && !strcmp (expression.syntax[2], "\""))
 	{
-	  increase++;
-	  words += 3;
+	  expression.move_forward[1] = true;
+	  expression.move_forward[2] = true;
+	  expression.move_forward += 3;
+	  expression.syntax += 3;
+
 	  count = 0;
 	  goto stringer;
 	}
@@ -73,25 +83,17 @@ a_type new_string (func *scope, char **words)
       return_value.v_point->array_up = string;
     }
 
-  /*
-  printf ("words[0] = %s, words[increase] = %s, increase = %d\n", words[0], words[increase], increase);
-
-  for (pos = 0; words[pos] != NULL; pos++)
-    words[pos] = words[pos + increase];
-  */
-
-  for (pos = 0; words[pos] != NULL; pos++)
-    words[pos] = words[pos + 2];
+  expression.move_forward[0] = true;
 
   return return_value;
 }
 
-a_type print_character (func *scope, char **words)
+a_type
+print_character (func *scope, word_list expression)
 {
   a_type evald;
-  int pos;
 
-  evald = eval (scope, words);
+  evald = eval (scope, expression);
 
   if (evald.type == FUNCTION_TYPE)
     return errorman_throw_reg (scope, "cannot print a function");
@@ -99,16 +101,13 @@ a_type print_character (func *scope, char **words)
   if (evald.type == VAR_TYPE)
     putchar (mpc_get_si (evald.v_point->data));
   
-  for (pos = 0; words[pos] != NULL; pos++)
-    words[pos] = words[pos + 1];    
-
   return evald;
 }
+
 a_type
-input_character (func *scope, char **words)
+input_character (func *scope, word_list expression)
 {
   a_type return_value;
-  int pos;
 
   return_value.type = VAR_TYPE;
 
@@ -116,32 +115,17 @@ input_character (func *scope, char **words)
 
   mpc_set_si (&(return_value.v_point->data), getchar ());
 
-  for (pos = 0; words[pos] != NULL; pos++)
-    words[pos] = words[pos + 1];
-
   return return_value;
 }
 
-a_type print_var (func *scope, char **words)
+a_type print_var (func *scope, word_list expression)
 {
   a_type evald;
-  int pos;
 
-  evald = eval (scope, words);
+  evald = eval (scope, expression);
 
-  switch (evald.type)
-    {
-    case ERROR_TYPE:
-      break;
-    case VAR_TYPE:
-      printf ("%s", mpc_get_str (evald.v_point->data));
-    case FUNCTION_TYPE:
-      for (pos = 0; words[pos] != NULL; pos++)
-	words[pos] = words[pos + 1];
-      break;
-    default:
-      break;
-    }
+  if (evald.type == VAR_TYPE)
+    printf ("%s", mpc_get_str (evald.v_point->data));
 
   return evald;
 }

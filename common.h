@@ -221,6 +221,12 @@ typedef struct
   bool break_signal;
 } a_type;
 
+typedef struct
+{
+  bool *move_forward;
+  char **syntax;
+} word_list;
+
 #if PARSING >= 2
 typedef enum _word_codes
   {

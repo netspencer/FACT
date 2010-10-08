@@ -303,54 +303,25 @@ mod_assignment (a_type arg1, a_type arg2)
  * * * * * * * * * * * * * * * * * * * * * * * */
 
 a_type
-paren (func *scope, char **words)
+paren (func *scope, word_list expression)
 {
   int pos;
-  int count;
-  a_type return_value;
-  //char **formatted;
 
-  pos = get_exp_length (words, ')');
+  a_type return_value;
+  
+  pos = get_exp_length (expression.syntax, ')');
 
   if (pos == 0)
     return errorman_throw_reg (scope, "parenthesis has no body");
-  else if (words[pos - 1][0] != ')')
+  else if (expression.syntax[pos - 1][0] != ')')
     return errorman_throw_reg (scope, "syntax error; expected closing ')'");
 
-  words[pos - 1] = NULL;
+  expression.syntax[pos - 1] = NULL;
 
-  return_value = eval (scope, words);
+  return_value = eval (scope, expression);
 
-  /*
-  if (return_value.type == ERROR_TYPE)
-    return return_value;
-  */
-
-  for (count = pos; words[pos] != NULL; pos++)
-    words[pos - count] = words[pos];
+  expression.syntax[pos - 1] = ")";
+  expression.move_forward[pos - 1] = true;
 
   return return_value;
-  
-  
-  /*
-
-  formatted = (char **) better_malloc ((sizeof (char *)) * pos);
-
-  count = pos;
-
-  formatted[--pos] = NULL;
-
-  while (pos > 0)
-    {
-      pos--;
-      formatted[pos] = words[pos];
-    }
-
-  for (pos = 0; words[count] != NULL; pos++, count++)
-    words[pos] = words[count];
-
-  words[pos] = NULL;
-
-  return eval (scope, formatted);
-  */
 }

@@ -16,14 +16,14 @@
  */
 
 //extern a_type get_array (var *, func *, char **);
-extern a_type get_array_size (func *, char **);
-extern a_type define (func *, char **);
-extern a_type defunc (func *, char **);
-extern a_type set (func *, char **);
-extern a_type return_array (func *, char **); 
-extern a_type size_of (func *, char **);
-extern a_type get_array_var (var *, func *, char **);
-extern a_type get_array_func (func *, func *, char **);
+extern a_type get_array_size (func *, word_list);
+extern a_type define (func *, word_list);
+extern a_type defunc (func *, word_list);
+extern a_type set (func *, word_list);
+extern a_type return_array (func *, word_list); 
+extern a_type size_of (func *, word_list);
+extern a_type get_array_var (var *, func *, word_list);
+extern a_type get_array_func (func *, func *, word_list);
 
 extern var *clone_var (var *, char *);
 

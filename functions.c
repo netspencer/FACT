@@ -21,16 +21,18 @@
 			
  
 a_type
-liven_func (func *scope, char **words)
+liven_func (func *scope, word_list expression)
 {
-  a_type func;
-  char **args_formatted;
-  char **block_formatted;
   int pos_args;
   int pos_block;
   int position;
 
-  func = eval (scope, words);
+  char **args_formatted;
+  char **block_formatted;
+
+  a_type func;
+  
+  func = eval (scope, expression);
 
   if (func.type == ERROR_TYPE)
     return func;
@@ -38,10 +40,16 @@ liven_func (func *scope, char **words)
   if (func.type != FUNCTION_TYPE)
     return errorman_throw_reg (scope, "cannot give body to non-function");
 
-  if (words[1] == NULL || strcmp (words[1], "("))
+  while (expression.move_forward[0])
+    {
+      expression.syntax++;
+      expression.move_forward++;
+    }
+
+  if (expression.syntax[0] == NULL || strcmp (expression.syntax[0], "("))
     return errorman_throw_reg (scope, "expected '(' after function");
 
-  pos_args = get_exp_length (words + 2, ')');
+  pos_args = get_exp_length (expression.syntax + 1, ')');
   
   args_formatted = (char **) better_malloc ((sizeof (char *)) * pos_args);
   
@@ -51,14 +59,15 @@ liven_func (func *scope, char **words)
   while (position > 0)
     {
       position--;
-      args_formatted[position] = words[position + 2];
+      args_formatted[position] = expression.syntax[position + 1];
+      expression.move_forward[position + 1] = true;
     }
     
-  if (words[pos_args] == NULL)
+  if (expression.syntax[pos_args] == NULL)
     return errorman_throw_reg (scope, "no body given");
 
-  pos_block = get_exp_length (words + pos_args + 1, ';');
-  block_formatted = (char **) better_malloc ((sizeof (char *)) * pos_block);
+  pos_block = get_exp_length_first (expression.syntax + pos_args, ';');
+  block_formatted = better_malloc ((sizeof (char *)) * pos_block);
 
   block_formatted[--pos_block] = NULL;
   position = pos_block;
@@ -66,7 +75,8 @@ liven_func (func *scope, char **words)
   while (position > 0)
     {
       position--;
-      block_formatted[position] = words[position + pos_args + 2];
+      block_formatted[position] = expression.syntax[position + pos_args + 1];
+      expression.move_forward[position + pos_args + 1] = true;
     }
   
   func.f_point->args = args_formatted;
@@ -76,19 +86,35 @@ liven_func (func *scope, char **words)
   return func;
 }
 
-a_type
-prepare_function (func *scope, func *new_scope, char **words)
+int
+count_until_NULL (char **words)
 {
+  int pos;
+
+  for (pos = 0; words[pos] != NULL; pos++)
+    ;
+
+  return pos;
+}
+
+a_type
+prepare_function (func *scope, func *new_scope, word_list expression)
+{
+  int pos;
+  int count;
+
   a_type evald;
   a_type arg;
   a_type passed;
+
   var *hold;
   var *temp;
-  int pos;
-  int count;
-  char **args_stored;
 
-  evald = eval (scope, words);
+  word_list arg_list;
+
+  extern void set_array (bool *, int);
+
+  evald = eval (scope, expression);
 
   if (evald.type == ERROR_TYPE)
     return evald;
@@ -99,19 +125,28 @@ prepare_function (func *scope, func *new_scope, char **words)
   if (evald.f_point->args == NULL)
     return errorman_throw_reg (scope, "given function has no body");
 
-  words++;
-  args_stored = copy (evald.f_point->args);
+  while (expression.move_forward[0])
+    {
+      expression.syntax++;
+      expression.move_forward++;
+    }
+  
+  arg_list.syntax = copy (evald.f_point->args);
+  arg_list.move_forward = better_malloc (sizeof (int) *
+					 ((count = count_until_NULL (arg_list.syntax)) + 1));
+  set_array (arg_list.move_forward, count);
+
   new_scope->up = evald.f_point->up;
   new_scope->name = evald.f_point->name;
 
-  for (pos = 0; args_stored[pos] != NULL; pos++)
+  for (pos = 0; arg_list.syntax[0] != NULL; pos++)
     {
-      arg = eval (new_scope, args_stored + pos);
+      arg = eval (new_scope, arg_list);
 
-      if (!strcmp (words[pos], "<-"))
+      if (!strcmp (expression.syntax[0], "<-"))
 	return errorman_throw_reg (scope, "expected more arguments");
 
-      passed = eval (scope, words + pos);
+      passed = eval (scope, expression);
 
       if (arg.type == ERROR_TYPE)
 	return arg;
@@ -142,44 +177,63 @@ prepare_function (func *scope, func *new_scope, char **words)
 	  arg.f_point->up = passed.f_point->up;
 	}
 
-      if (args_stored[++pos] == NULL)
+      while (arg_list.move_forward[0])
+	{
+	  arg_list.syntax++;
+	  arg_list.move_forward++;
+	}
+
+      while (expression.move_forward[0])
+	{
+	  expression.syntax++;
+	  expression.move_forward++;
+	}
+	
+      if (arg_list.syntax[0] == NULL)
         {
-          if (strcmp (words[pos], "<-") && strcmp (words[pos], ",") == 0)
+          if (strcmp (expression.syntax[0], "<-") && strcmp (expression.syntax[0], ",") == 0)
 	    return errorman_throw_reg (scope, "expected fewer arguments");
 	  
 	  break;
         }
-      else if (strcmp (args_stored[pos], ",") == 0)
+      else if (strcmp (arg_list.syntax[0], ",") == 0)
 	{
-	  if (strcmp (words[pos],",") != 0)
+	  if (strcmp (expression.syntax[0],",") != 0)
 	    return errorman_throw_reg (scope, "expected more arguments");
+
+	  arg_list.move_forward[0] = true; 
+	  expression.move_forward[0] = true;
 	}
       else
 	return errorman_throw_reg (scope, "syntax error in argument declarations");
     }
 
-  //printf ("name = %s, pos = %d, words[pos] = %s\n", new_scope->name, pos, words[pos]);
+  expression.move_forward[0] = true;
+
+  /*
   for (count = pos + 2, pos = -1; words[pos + count] != NULL; pos++)
     words[pos] = words[pos + count];
-  //printf ("pos = %d, count = %d\n", pos, count);
+
   for (pos++; pos < count; pos++)
     words[pos] = NULL;
+  */
   
   return evald;
 }
 
 a_type
-new_scope (func *scope, char **words)
+new_scope (func *scope, word_list expression)
 {
+  char **copy_body;
+  
   a_type prepared;
   a_type return_value;
+
   func *new_scope;
-  char **copy_body;
 
   new_scope = alloc_func ();
-  //  new_scope->name = scope->name;
   
-  prepared = prepare_function (scope, new_scope, words);
+  prepared = prepare_function (scope, new_scope, expression);
 
   if (prepared.type == ERROR_TYPE) 
     return prepared; /* ha ha, that makes me chortle */
@@ -200,17 +254,18 @@ new_scope (func *scope, char **words)
 }
 
 a_type
-run_func (func *scope, char **words)
+run_func (func *scope, word_list expression_list)
 {
-  a_type return_value;
-  a_type prepared;
-  func *new_scope;
   char **copied_body;
 
-  new_scope = alloc_func ();
-  //  new_scope->name = scope->name;
+  a_type return_value;
+  a_type prepared;
 
-  prepared = prepare_function (scope, new_scope, words);
+  func *new_scope;
+
+  new_scope = alloc_func ();
+
+  prepared = prepare_function (scope, new_scope, expression_list);
 
   if (prepared.type == ERROR_TYPE)
     return prepared; 
@@ -225,48 +280,31 @@ run_func (func *scope, char **words)
   return return_value;
 }
 
-
 a_type
-in_scope (func *scope, char **words)
+in_scope (func *scope, word_list expression)
 {
   a_type new_scope;
   a_type to_return;
-  int pos;
 
-  new_scope = eval (scope, words);
+  new_scope = eval (scope, expression);
 
   if (new_scope.type != FUNCTION_TYPE)
     return errorman_throw_reg (scope, "the argument to : must be a function");
   
-  to_return = eval (new_scope.f_point, words + 1);
-
-  for (pos = 0; words[pos] != NULL; pos++)
-    words[pos] = words[pos + 2];
+  to_return = eval (new_scope.f_point, expression);
 
   return to_return;
 }
 
-/*
-static char **copy_to_paren (char **to_copy)
+a_type
+lambda (func *scope, word_list expression)
 {
-  int length;
-  char **return_value;
+  a_type return_value;
 
-  length = get_exp_length (to_copy + 1);
+  return_value.type = FUNCTION_TYPE;
 
-  if (to_copy[length] == NULL)
-    return NULL;
-    
-  return_value = (char **) better_malloc (sizeof (char *) length);
-
-  return_value[length] = NULL;
-
-  while (length > 0)
-    {
-      length--;
-      return_value[length] = to_copy;
-    }
+  return_value.f_point = alloc_func ();
+  return_value.f_point->name = "lambda";
 
   return return_value;
 }
-*/

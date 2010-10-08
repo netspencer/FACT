@@ -4,23 +4,38 @@
 #define OPEN_FAILED  1
 #define CLOSED       0
 
+void
+set_array (bool *rop, int op)
+{
+  int pos;
+
+  for (pos = 0; pos < op; pos++)
+    rop[pos] = false;
+}
+
 a_type 
 expression (func *scope, char **words)
 {
-  a_type return_value; /* value to be eventually returned if nothing fails */
   int position; /* current position in "words" */
-  char **formatted_expression; /* the block to be evaluated */
+  
   bool isreturn; /* if the block starts with a return or not */
   bool isbreak;
   bool getif;
+  
+  char **formatted_expression; /* the block to be evaluated */
+
+  a_type return_value; /* value to be eventually returned if nothing fails */
+
+  word_list expression;
 
   static int depth = -1;
   static int ifopen[100];
 
-  extern int get_exp_length_first (char **, int);
+  /*extern int get_exp_length_first (char **, int);*/
 
   isreturn = false;
   isbreak = false;
+
   return_value.type = VAR_TYPE;
 
   depth++;
@@ -41,14 +56,19 @@ expression (func *scope, char **words)
       return errorman_throw_reg (scope, "syntax error; expected closing ';' or '}'");
     }
 
-  formatted_expression = (char **) better_malloc (sizeof (char *) * (position + 2)); /* allocate space for expression */
+  formatted_expression = better_malloc (sizeof (char *) * (position + 2)); /* allocate space for expression */
+  /* probably would be a good idea to move these two to be called only when they're
+     needed. */
+  expression.move_forward = better_malloc (sizeof (bool) * (position + 2));
+  set_array (expression.move_forward, position + 2);
 
   for (formatted_expression[position + 1] = NULL; position >= 0; position--)
     formatted_expression[position] = words[position];
 
   if (strcmp (formatted_expression[0], "if") == 0)
     {
-      return_value = if_statement (scope, formatted_expression + 1, &getif);
+      expression.syntax = formatted_expression + 1;
+      return_value = if_statement (scope, expression, &getif);
 
       if (getif)
 	ifopen[depth] = OPEN_SUCCESS;
@@ -62,7 +82,6 @@ expression (func *scope, char **words)
 	  depth--;
 	  return_value = else_clause (scope, formatted_expression + 1);
 	  depth++;
-	  //	  ifopen[depth] = CLOSED;
 	}
       else if (ifopen[depth] == OPEN_SUCCESS)
 	{
@@ -84,16 +103,23 @@ expression (func *scope, char **words)
       else if (strcmp (formatted_expression[0], "for") == 0)
 	return_value = for_loop (scope, formatted_expression + 1);
       else if (strcmp (formatted_expression[0], "{") == 0)
-	return_value = lambda_proc (scope, formatted_expression + 1);
+	{
+	  expression.syntax = formatted_expression + 1;
+	  return_value = lambda_proc (scope, expression);
+	}
       else if (strcmp (formatted_expression[0], "return") == 0)
 	{
-	  return_value = eval (scope, formatted_expression + 1);
+	  expression.syntax = formatted_expression + 1;
+	  return_value = eval (scope, expression);
 	  isreturn = true;
 	}
       else if (strcmp (formatted_expression[0], "break") == 0)
 	isbreak = true;
       else
-	return_value = eval (scope, formatted_expression);
+	{
+	  expression.syntax = formatted_expression;
+	  return_value = eval (scope, expression);
+	}
     }
 
   if (!return_value.isret)
@@ -108,10 +134,9 @@ expression (func *scope, char **words)
 a_type
 procedure (func *scope, char **words)
 {
-  a_type return_value; /* value returned */
   int len_to_move; /* length moved each time */
-
-  extern int get_exp_length_first (char **, int);
+  
+  a_type return_value; /* value returned */
 
   while (*words != NULL && strcmp (*words, "}"))
     {
@@ -132,6 +157,7 @@ procedure (func *scope, char **words)
       return_value.break_signal = false;
       return_value.v_point = alloc_var ();
       return_value.type = VAR_TYPE;
+      
       return return_value;
     }
     
@@ -139,7 +165,7 @@ procedure (func *scope, char **words)
 }
 
 a_type
-lambda_proc (func *scope, char **words)
+lambda_proc (func *scope, word_list expression)
 {
   func temp_local = 
     {
@@ -158,40 +184,56 @@ lambda_proc (func *scope, char **words)
 	 from lambda functions. A lot.
        */
   
-  return procedure (&temp_local, words);
+  return procedure (&temp_local, expression.syntax);
 }
 
 a_type
-eval (func *scope, char **words)
+eval (func *scope, word_list expression)
 {
   int call_num;
+
+  char *word;
+  
   a_type return_value;
 
-  if (words[0] == NULL)
+  while (expression.move_forward[0])
+    {
+      expression.syntax++;
+      expression.move_forward++;
+    }
+
+  word = expression.syntax[0];
+
+  expression.move_forward[0] = true;
+
+  if (word == NULL)
     return errorman_throw_reg (scope, "cannot evaluate empty expression");
   
-  if (strcmp (words[0], "list") == 0)
+  if (strcmp (word, "list") == 0)
     {
       scroll (scope);
       return_value = num_to_var ("1");
     }
-  else if (isnum (words[0]))
-    return_value = num_to_var (words[0]);
-  else if ((call_num = isprim (words[0])) > -1)
-    return runprim (scope, words, call_num);
-  else if ((call_num = ismathcall (words[0])) > -1)
-    return eval_math (scope, words, call_num);
-  else if (get_var (scope, words[0]) != NULL)
-    return_value = get_array_var (get_var (scope, words[0]),
-				  scope,
-				  words + 1);
-  else if (get_func (scope, words[0]) != NULL)
-    return_value = get_array_func (get_func (scope, words[0]),
-				   scope,
-				   words + 1);
+  else if (isnum (word))
+    return_value = num_to_var (word);
   else
-    return errorman_throw_reg (scope, combine_strs ("cannot evaluate ",
-						    words[0]));
+    {
+      expression.syntax++;
+      expression.move_forward++;
+
+      //      expression.move_forward[0] = true;
+      
+      if ((call_num = isprim (word)) > -1)
+	return runprim (scope, expression, call_num);
+      else if ((call_num = ismathcall (word)) > -1)
+	return eval_math (scope, expression, call_num);
+      else if (get_var (scope, word) != NULL)
+	return_value = get_array_var (get_var (scope, word), scope, expression);
+      else if (get_func (scope, word) != NULL)
+	return_value = get_array_func (get_func (scope, word), scope, expression);
+      else
+	return errorman_throw_reg (scope, combine_strs ("cannot evaluate ", word));
+    }
   
   return_value.isret = false;
   return_value.break_signal = false;

@@ -28,10 +28,11 @@ extern a_type mult (a_type, a_type);   /* multiplies two numbers */
 extern a_type divide (a_type, a_type); /* divides two numbers */
 extern a_type mod (a_type, a_type);    /* modulos two numbers */
 
-extern a_type paren (func *, char **); /* isolates all the characters between
-					  two parenthesis and then evaluates
-					  them.
-				       */
+extern a_type paren (func *, word_list); /*
+					   isolates all the characters between
+					   two parenthesis and then evaluates
+					   them.
+					 */
 extern a_type add_assignment (a_type, a_type);
 extern a_type sub_assignment (a_type, a_type);
 extern a_type mult_assignment (a_type, a_type);

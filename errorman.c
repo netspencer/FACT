@@ -16,13 +16,14 @@ errorman_throw_reg (func *scope, char *description)
 }
 
 a_type
-errorman_throw_prim (func *scope, char **words)
+errorman_throw_prim (func *scope, word_list expression)
 {
+  char *description;
+  
   a_type return_value;
   a_type evald;
-  char *description;
 
-  evald = eval (scope, words);
+  evald = eval (scope, expression);
 
   if (evald.type == ERROR_TYPE)
     return evald;

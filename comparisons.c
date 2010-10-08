@@ -295,15 +295,16 @@ statement_length (char **words)
  * * * * * * * * * * * * * * * * * * * * * * */
 
 a_type
-and (func *scope, char **words)
+and (func *scope, word_list expression)
 {
   int pos;
   int len;
+
   a_type arg1;
   a_type arg2;
   a_type return_value;
 
-  arg1 = eval (scope, words);
+  arg1 = eval (scope, expression);
 
   if (arg1.type == ERROR_TYPE)
     return arg1;
@@ -313,27 +314,28 @@ and (func *scope, char **words)
   return_value.type = VAR_TYPE;
   return_value.v_point = alloc_var ();
 
-  len = statement_length (words + 1) + 1;
+  while (expression.move_forward[0])
+    {
+      expression.syntax++;
+      expression.move_forward++;
+    }
+
+  len = statement_length (expression.syntax) + 1;
 
   if (mpc_cmp_si (arg1.v_point->data, 0) == 0)
     {
-      for (pos = 0; words[pos + len] != NULL; pos++)
-	words[pos] = words[pos + len];
-
-      words[pos] = NULL;
+      for (pos = 0; pos < len; pos++)
+	expression.move_forward[pos] = true;
 
       return return_value;
     }
 
-  arg2 = eval (scope, words + 1);
+  arg2 = eval (scope, expression);
   
   if (arg2.type == ERROR_TYPE)
     return arg1;
   else if (arg2.type == FUNCTION_TYPE)
     return errorman_throw_reg (scope, "arguments to && must be variables");
-
-  for (pos = 0; words[pos + 1] != NULL; pos++)
-    words[pos] = words[pos + 1];
 
   if (mpc_cmp_si (arg2.v_point->data, 0) == 0)
     return return_value;
@@ -350,15 +352,16 @@ and (func *scope, char **words)
 
 a_type
 or
-(func *scope, char **words)
+(func *scope, word_list expression)
 {
   int pos;
   int len;
+
   a_type arg1;
   a_type arg2;
   a_type return_value;
 
-  arg1 = eval (scope, words);
+  arg1 = eval (scope, expression);
 
   if (arg1.type == ERROR_TYPE)
     return arg1;
@@ -370,27 +373,28 @@ or
 
   mpc_set_ui (&(return_value.v_point->data), 1);
 
-  len = statement_length (words + 1) + 1;
+  while (expression.move_forward[0])
+    {
+      expression.syntax++;
+      expression.move_forward++;
+    }
+
+  len = statement_length (expression.syntax) + 1;
 
   if (mpc_cmp_si (arg1.v_point->data, 0) != 0)
     {
-      for (pos = 0; words[pos + len] != NULL; pos++)
-	words[pos] = words[pos + len];
-
-      words[pos] = NULL;
+      for (pos = 0; pos < len; pos++)
+	expression.move_forward[pos] = true;
 
       return return_value;
     }
 
-  arg2 = eval (scope, words + 1);
+  arg2 = eval (scope, expression);
   
   if (arg2.type == ERROR_TYPE)
     return arg1;
   else if (arg2.type == FUNCTION_TYPE)
     return errorman_throw_reg (scope, "arguments to || must be variables");
-
-  for (pos = 0; words[pos + 1] != NULL; pos++)
-    words[pos] = words[pos + 1];
 
   if (mpc_cmp_si (arg2.v_point->data, 0) != 0)
     return return_value;
