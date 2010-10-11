@@ -83,7 +83,7 @@ new_string (func *scope, word_list expression)
       return_value.v_point->array_up = string;
     }
 
-  expression.move_forward[0] = true;
+  expression.move_forward[0] = expression.move_forward[1] = true;
 
   return return_value;
 }
@@ -113,7 +113,7 @@ input_character (func *scope, word_list expression)
 
   return_value.v_point = alloc_var ();
 
-  mpc_set_si (&(return_value.v_point->data), getchar ());
+  mpc_set_si (&(return_value.v_point->data), fgetc (stdin));
 
   return return_value;
 }

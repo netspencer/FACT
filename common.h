@@ -227,7 +227,6 @@ typedef struct
   char **syntax;
 } word_list;
 
-#if PARSING >= 2
 typedef enum _word_codes
   {
     PARSING_ERROR = -1,
@@ -287,8 +286,6 @@ typedef struct _LINKED_WORD
   struct _LINKED_WORD *next;
   struct _LINKED_WORD *previous;
 } linked_word;
-#endif
-
 
 /*---------------------------------------------*
  * Local includes: headers that provide        *

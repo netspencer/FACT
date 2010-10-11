@@ -247,7 +247,7 @@ for_loop (func *scope, char **words)
       index_dest_exp.syntax++;
       index_dest_exp.move_forward++;
     }
-
+  
   if (strcmp (index_dest_exp.syntax[0], "then"))
     return errorman_throw_reg (scope, "syntax error in for loop; missing 'then'");
 

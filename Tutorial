@@ -59,10 +59,7 @@ But what about arrays? Simple!
 > 0
 % var [9][9][9][9][9][9];
 > 
-% (var [9][9][9][9][9][9]) = 1243;
-# the parenthesis are necessary in this version
-# of the interpreter, as I haven't bothered to
-# fix the parser to allow for it.
+% var [9][9][9][9][9][9] = 1243;
 Well, now you get how that works.
 
 Control:

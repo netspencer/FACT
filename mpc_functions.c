@@ -141,9 +141,7 @@ mpc_div (mpc_t *rop, mpc_t op1, mpc_t op2)
   if (op1.precision == 0)
     {
       rop->precision = default_prec;
-      mpz_set (temp, op1.object);
-      power_of_ten (temp, rop->precision);
-      //      mpz_mul (temp, op1.object, power_of_ten (rop->precision));
+      mpz_set (temp, op1.object);      
     }
   else
     {
@@ -151,6 +149,7 @@ mpc_div (mpc_t *rop, mpc_t op1, mpc_t op2)
       mpz_set (temp, op1.object);
     }
   
+  power_of_ten (temp, rop->precision);  
   mpz_tdiv_q (temp, temp, op2.object);
 
   mpz_set (rop->object, temp);
@@ -176,9 +175,6 @@ mpc_cmp (mpc_t op1, mpc_t op2)
     {
       mpz_init_set (temp, op2.object);
       power_of_ten (temp, op1.precision - op2.precision);
-      //      mpz_mul (temp, temp, power_of_ten (op1.precision - op2.precision));
-
-      //      gmp_printf ("op1 = %Zd, op2 = %Zd, temp = %Zd\n", op1.object, op2.object, temp);
 
       return mpz_cmp (op1.object, temp);
     }
@@ -186,9 +182,6 @@ mpc_cmp (mpc_t op1, mpc_t op2)
     {
       mpz_init_set (temp, op1.object);
       power_of_ten (temp, op2.precision - op1.precision);
-      //   mpz_mul (temp, temp, power_of_ten (op2.precision - op1.precision));
-
-      //      gmp_printf ("op1 = %Zd, op2 = %Zd, temp = %Zd\n", op1.object, op2.object, temp);
 
       return mpz_cmp (temp, op2.object);
     }
@@ -201,7 +194,6 @@ mpc_cmp_ui (mpc_t op1, unsigned long int op2)
 
   for (count = 0; count < op1.precision; count++)
     op2 *= 10;
-  //  op2 *= power_of_ten (op1.precision);
 
   return mpz_cmp_ui (op1.object, op2);
 }
@@ -213,7 +205,6 @@ mpc_cmp_si (mpc_t op1, signed long int op2)
   
   for (count = 0; count < op1.precision; count++)
     op2 *= 10;
-  //  op2 *= power_of_ten (op1.precision);
 
   return mpz_cmp_si (op1.object, op2);
 }
@@ -243,11 +234,6 @@ mpc_get_si (mpc_t rop)
   power_of_ten (temp2, rop.precision);
   mpz_tdiv_q (temp1, temp1, temp2);
 
-  /*
-  mpz_init_set (temp, rop.object);
-  mpz_tdiv_q_ui (temp, temp, power_of_ten (rop.precision));
-  */
-
   return mpz_get_si (temp1);
 }
 
@@ -276,11 +262,6 @@ mpc_get_str (mpc_t op)
   mpz_t temp1;
   mpz_t temp2;
 
-  /* I'm guessing this will have some issues with negative numbers.
-     Will fix that in a bit, if it is the case. */
-
-  extern char *combine_strs (char *, char *);
-
   if (op.precision == 0)
     return_value = mpz_get_str (NULL, 10, op.object);
   else
@@ -300,6 +281,14 @@ mpc_get_str (mpc_t op)
       mpz_sub (temp1, temp_op, temp1);
 
       mpz_abs (temp1, temp1);
+
+      mpz_tdiv_q_ui (temp2, temp2, 10);
+
+      while (mpz_cmp (temp2, temp1) > 0)
+	{
+	  return_value = concatinate_free (return_value, "0", true, false);
+	  mpz_tdiv_q_ui (temp2, temp2, 10);
+	}
 
       /*
 	Need to fix this up a bit to handle x.0..x;

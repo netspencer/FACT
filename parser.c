@@ -14,21 +14,23 @@ is_in_quotes (int character)
   static bool prev_slash;
   static bool is_quote;
   
-  if (character == -2)
-    is_quote = false;
-  
   switch (character)
     {
     case '"':
       if (!prev_slash)
 	is_quote = !is_quote;
       return !is_quote;
+      
     case '\0':
       return false;
+      
     case '\\':
       prev_slash = true;
+      break;
+
     default:
       prev_slash = false;
+      break;
     }
   
   return is_quote;
@@ -53,14 +55,11 @@ isopt (int character)
     case '<':
     case '!':
     case '[':
-      times++;
-
-      if (times > 3)
+      if (++times > 3)
 	{
 	  times = 0;
 	  return false;
 	}
-      
       return true;
 
     default:
@@ -74,11 +73,11 @@ get_words (char *start)
 {
   int count;
   int count2;
-  char *end;
-  char **return_string;
+
   bool isstring;
 
-  is_in_quotes (-2);
+  char *end;
+  char **return_string;
 
   return_string = (char **) better_malloc (sizeof (char *));
   
@@ -131,9 +130,6 @@ get_words (char *start)
   
   return (count > 0) ? return_string : NULL;
 }
-
-/* These are expiremental functions that are not yet completed */
-#if PARSING >= 2
 
 word_code
 get_block_code (char *block)
@@ -272,6 +268,7 @@ create_list (char **words)
   return base;
 }
 
+/* Got to add a way to check for parsing errors */
 linked_word *
 set_list (linked_word *start, word_code stopper) /* Sets a list of linked words to the correct format */
 {
@@ -414,8 +411,6 @@ swap (linked_word *swapping)
   if (temp_prev != NULL)
     temp_prev->next = swapping;
 }
-
-#if PARSING >= 3
 
 static void
 precedence_level1 (linked_word *scan)
@@ -817,8 +812,6 @@ rev_shunting_yard (linked_word *scan)
   precedence_level7 (scan);
   precedence_level8 (scan);
 }
-
-#endif
   
 void
 set_end (linked_word *start,
@@ -1049,8 +1042,6 @@ convert_link (linked_word *list)
 
   return result;
 }
-
-#endif
 
 int
 get_exp_length (char **words, int block)

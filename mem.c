@@ -381,11 +381,13 @@ return_array (func *scope, word_list expression)
 	break;
       else if (strcmp (expression.syntax[0], ","))
 	return errorman_throw_reg (scope, "expected ',' or closing ']'");
-      else while (expression.move_forward[0])
-	     {
-	       expression.syntax++;
-	       expression.move_forward++;
-	     }
+      else
+	expression.move_forward[0] = true;
+      /*while (expression.move_forward[0])
+	{
+	expression.syntax++;
+	expression.move_forward++;
+	}*/
 
       hold = eval (scope, expression);
 

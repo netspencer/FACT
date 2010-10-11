@@ -83,6 +83,9 @@ liven_func (func *scope, word_list expression)
   func.f_point->body = block_formatted;
   func.f_point->up = scope;
 
+  for (position = 0; position < pos_args + pos_block; position++)
+    expression.move_forward[position] = true;
+  
   return func;
 }
 

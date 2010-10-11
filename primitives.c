@@ -212,8 +212,11 @@ eval_math (func *scope, word_list expression, int call_num)
   arg1 = eval (scope, expression);
   arg2 = eval (scope, expression);
 
-  if ((expression.syntax[0] == NULL || expression.syntax[0][0] == ';')
-      && call_num == 1 && arg1.type == VAR_TYPE)
+  /* There has to be a better way to do this and I will implement it eventually. */
+  if (call_num == 1 && arg1.type == VAR_TYPE
+      && arg2.type == ERROR_TYPE && (!strcmp (arg2.error.description, "cannot evaluate ;")
+				  || !strcmp (arg2.error.description, "cannot evaluate <-")
+				     || !strcmp (arg2.error.description, "cannot evaluate empty expression")))
     {
       mpc_neg (&(arg1.v_point->data), arg1.v_point->data);
       return arg1;
