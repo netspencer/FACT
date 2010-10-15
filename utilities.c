@@ -45,9 +45,10 @@ copy (char **words)
 }
 
 char *
-array_to_string (var *convertable)
+array_to_string (var_t *convertable)
 {
-  var *scroller;
+  var_t *scroller;
+
   char *return_value;
   char *setter;
 
@@ -65,13 +66,13 @@ array_to_string (var *convertable)
   return return_value;
 }
 
-var *
+var_t *
 string_to_array (char *convertable, char *name)
 {
   int length;
   int pos;
-  var *root;
-  var *scroller;
+  var_t *root;
+  var_t *scroller;
 
   length = strlen (convertable) + 1;
 
@@ -90,15 +91,15 @@ string_to_array (char *convertable, char *name)
   return root;
 }
 
-var *
-string_array_to_var (char **strings, char *var_name, int array_size)
+var_t *
+string_array_to_var_t (char **strings, char *var_t_name, int array_size)
 {
   int pos;
-  var *root;
-  var *scroller;
+  var_t *root;
+  var_t *scroller;
   
   root = alloc_var ();
-  root->name = var_name;
+  root->name = var_t_name;
 
   for (scroller = root, pos = 0; pos < array_size; pos++)
     {
@@ -108,10 +109,35 @@ string_array_to_var (char **strings, char *var_name, int array_size)
 	  scroller = scroller->next;
 	}
 
-      scroller->name = var_name;
-      scroller->array_up = string_to_array (strings[pos], var_name);
+      scroller->name = var_t_name;
+      scroller->array_up = string_to_array (strings[pos], var_t_name);
       scroller->array_size = strlen (strings[pos]) + 1;
     }
 
   return root;
 }
+
+FACT_t
+FACT_get_ui (unsigned int op)
+{
+  FACT_t ret;
+
+  ret.type = VAR_TYPE;
+  ret.v_point = alloc_var ();
+  mpc_set_ui (&(ret.v_point->data), op);
+
+  return ret;
+}
+
+FACT_t
+FACT_get_si (signed int op)
+{
+  FACT_t ret;
+
+  ret.type = VAR_TYPE;
+  ret.v_point = alloc_var ();
+  mpc_set_si (&(ret.v_point->data), op);
+
+  return ret;
+}
+  

@@ -35,26 +35,27 @@
 #include <gmp.h>
 #include <gc/gc.h>
 #include <getopt.h>
+#include <dlfcn.h>
 
 /* The following include is an exception,
    as it is need for the typedefs below. */
 #include "mpc_functions.h"
 
-/* global variables: */
+/* global var_tiables: */
 
 /*
   bytes_used is sort of a ticker that tracks
   the amount of bytes in use. When it exceeds
   a certain limit, garbage collections is
   forced. I implemented it unaware of the
-  various methods GC has to circumvent it,
+  var_tious methods GC has to circumvent it,
   but it is still used.
 */
 
 extern unsigned int bytes_used;
 
 /*
-  mem_trackopt is a boolean variable used to
+  mem_trackopt is a boolean var_tiable used to
   track the heap size each time something is
   allocated.
 */
@@ -189,7 +190,7 @@ typedef struct _VAR
   mpc_t data;
   struct _VAR *array_up;
   struct _VAR *next; 
-} var;
+} var_t;
 
 typedef struct _FUNC
 {
@@ -197,16 +198,16 @@ typedef struct _FUNC
   char **args;
   char **body;
   int array_size;
-  var *vars; 
+  var_t *vars; 
   struct _FUNC *funcs; 
   struct _FUNC *up;
   struct _FUNC *array_up;
   struct _FUNC *next;
-} func;
+} func_t;
 
 typedef struct 
 {
-  func *scope;
+  func_t *scope;
   char *description;
   bool thrown;
 } _ERROR;
@@ -215,11 +216,11 @@ typedef struct
 {
   type_define type;
   bool isret;
-  var *v_point;
-  func *f_point;
+  var_t *v_point;
+  func_t *f_point;
   _ERROR error;
   bool break_signal;
-} a_type;
+} FACT_t;
 
 typedef struct
 {
@@ -294,6 +295,7 @@ typedef struct _LINKED_WORD
  *---------------------------------------------*/
 
 #include "utilities.h"
+#include "modules.h"
 #include "gmp_mallocs.h"
 #include "errorman.h"
 #include "management.h"

@@ -1,7 +1,7 @@
 #include "execfile.h"
 
-a_type
-run_file (func *scope, const char *filename, bool silent)
+FACT_t
+run_file (func_t *scope, const char *filename, bool silent)
 {
   unsigned int line_num;
   //  int read;
@@ -13,7 +13,7 @@ run_file (func *scope, const char *filename, bool silent)
 
   linked_word *formatted;
 
-  a_type returned;
+  FACT_t returned;
 
   if (!silent)
     printf ("Opening file <%s>\n", filename);

@@ -17,9 +17,9 @@
  * (c) 2010 Matthew Plant. Sorry for the bloat.
  */
 
-extern a_type new_string (func *, word_list);
-extern a_type print_character (func *, word_list);
-extern a_type input_character (func *, word_list);
-extern a_type print_var (func *, word_list);
+extern FACT_t new_string (func_t *, word_list);
+extern FACT_t print_character (func_t *, word_list);
+extern FACT_t input_character (func_t *, word_list);
+extern FACT_t print_var (func_t *, word_list);
 
 #endif

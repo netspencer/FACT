@@ -1,18 +1,18 @@
 #include "common.h"
 
-a_type
-defunc_array (func *base, func *scope, word_list expression)
+FACT_t
+defunc_array (func_t *base, func_t *scope, word_list expression)
 {
   int size;
   int pos;
 
   /* char **temp; */
 
-  a_type return_value;
-  a_type array_size;
-  a_type checker;
+  FACT_t return_value;
+  FACT_t array_size;
+  FACT_t checker;
 
-  func *scroller;
+  func_t *scroller;
 
   extern void set_array (bool *, int);
   extern int count_until_NULL (char **);
@@ -49,7 +49,7 @@ defunc_array (func *base, func *scope, word_list expression)
 	return array_size;
       
       if (array_size.type != VAR_TYPE)
-	return errorman_throw_reg (scope, "array size needs to be a variable");
+	return errorman_throw_reg (scope, "array size needs to be a var_tiable");
 
       if (((size = (mpc_get_si (array_size.v_point->data))) > 1000 || size < 1))
 	return errorman_throw_reg (scope, "array size give is invalid");
@@ -73,11 +73,11 @@ defunc_array (func *base, func *scope, word_list expression)
   return return_value;
 }     
 
-a_type
-defunc (func *scope, word_list expression)
+FACT_t
+defunc (func_t *scope, word_list expression)
 {
-  a_type return_value;
-  a_type temp;
+  FACT_t return_value;
+  FACT_t temp;
 
   return_value.f_point = alloc_func ();
 
@@ -118,17 +118,17 @@ defunc (func *scope, word_list expression)
   return return_value;
 }
 
-a_type
-def_array (var *base, func *scope, word_list expression)
+FACT_t
+def_array (var_t *base, func_t *scope, word_list expression)
 {
   int size;
   int pos;
 
-  a_type return_value;
-  a_type array_size;
-  a_type checker;
+  FACT_t return_value;
+  FACT_t array_size;
+  FACT_t checker;
 
-  var *scroller;
+  var_t *scroller;
 
   extern void set_array (bool *, int);
   extern int count_until_NULL (char **);
@@ -165,7 +165,7 @@ def_array (var *base, func *scope, word_list expression)
 	return array_size;
 
       if (array_size.type != VAR_TYPE)
-	return errorman_throw_reg (scope, "array size needs to be a variable");
+	return errorman_throw_reg (scope, "array size needs to be a var_tiable");
       
       if ((size = (mpc_get_si (array_size.v_point->data))) > 1000 || size < 2)
 	return errorman_throw_reg (scope, "invalid array size");
@@ -189,16 +189,16 @@ def_array (var *base, func *scope, word_list expression)
   return return_value;
 }     
 
-a_type
-define (func *scope, word_list expression)
+FACT_t
+define (func_t *scope, word_list expression)
 {
-  a_type return_value;
-  a_type temp;
+  FACT_t return_value;
+  FACT_t temp;
 
   return_value.v_point = alloc_var ();
 
   if (expression.syntax[0] == NULL)
-    return errorman_throw_reg (scope, "cannot define anonymous var");
+    return errorman_throw_reg (scope, "cannot define anonymous var_t");
     
   return_value.type = VAR_TYPE;
 
@@ -225,10 +225,10 @@ define (func *scope, word_list expression)
   return return_value;
 }
 
-var *
-clone_var (var *surrogate, char *name)
+var_t *
+clone_var_t (var_t *surrogate, char *name)
 {
-  var *clone;
+  var_t *clone;
 
   if (surrogate == NULL)
     return NULL;
@@ -237,22 +237,22 @@ clone_var (var *surrogate, char *name)
   clone->name = name;
   clone->array_size = surrogate->array_size;
 
-  clone->next = clone_var (surrogate->next, name);
-  clone->array_up = clone_var (surrogate->array_up, name);
+  clone->next = clone_var_t (surrogate->next, name);
+  clone->array_up = clone_var_t (surrogate->array_up, name);
 
   mpc_set (&(clone->data), surrogate->data);
 
   return clone;
 }
 
-a_type
-set (func *scope, word_list expression)
+FACT_t
+set (func_t *scope, word_list expression)
 {
-  a_type arg1;
-  a_type arg2;
+  FACT_t arg1;
+  FACT_t arg2;
 
-  var *hold;
-  var *copy;
+  var_t *hold;
+  var_t *copy;
 
   arg1 = eval (scope, expression);
   arg2 = eval (scope, expression);
@@ -263,11 +263,11 @@ set (func *scope, word_list expression)
   if (arg1.type == VAR_TYPE)
     {
       if (arg2.type == FUNCTION_TYPE)
-	return errorman_throw_reg (scope, "cannot set a var to a function");
+	return errorman_throw_reg (scope, "cannot set a var_t to a function");
       
       hold = arg2.v_point->next;
       arg2.v_point->next = NULL;
-      copy = clone_var (arg2.v_point, arg1.v_point->name);
+      copy = clone_var_t (arg2.v_point, arg1.v_point->name);
       arg2.v_point->next = hold;
       free_var (arg1.v_point->array_up);
       arg1.v_point->array_up = copy->array_up;
@@ -277,7 +277,7 @@ set (func *scope, word_list expression)
   else if (arg1.type == FUNCTION_TYPE)
     {
       if (arg2.type == VAR_TYPE)
-	return errorman_throw_reg (scope, "cannot set a function to a var");
+	return errorman_throw_reg (scope, "cannot set a function to a var_t");
 
       arg1.f_point->array_size = arg2.f_point->array_size;
       arg1.f_point->args = arg2.f_point->args;
@@ -298,12 +298,12 @@ set (func *scope, word_list expression)
   return arg1;
 }
 
-a_type
-get_array_size (func *scope, word_list expression)
+FACT_t
+get_array_size (func_t *scope, word_list expression)
 {
   int pos;
   
-  a_type return_value;
+  FACT_t return_value;
 
   pos = get_exp_length (expression.syntax, ']');
 
@@ -322,26 +322,26 @@ get_array_size (func *scope, word_list expression)
   return return_value;
 }
 
-a_type
-return_array (func *scope, word_list expression)
+FACT_t
+return_array (func_t *scope, word_list expression)
 {
   int size;
 
-  a_type return_value;
-  a_type hold;
+  FACT_t return_value;
+  FACT_t hold;
 
   type_define type;
 
   union
   {
-    var  *var_root;
-    func *func_root;
+    var_t  *var_t_root;
+    func_t *func_t_root;
   } roots;
 
   union
   {
-    var  *var_value;
-    func *func_value;
+    var_t  *var_t_value;
+    func_t *func_t_value;
   } values;
  
   if (!strcmp (expression.syntax[0], "]"))
@@ -354,19 +354,19 @@ return_array (func *scope, word_list expression)
 
   if (type == VAR_TYPE)
     {
-      values.var_value = hold.v_point;
+      values.var_t_value = hold.v_point;
      
-      roots.var_root = alloc_var ();
-      roots.var_root->name = "result";
-      roots.var_root->array_up = values.var_value;
+      roots.var_t_root = alloc_var ();
+      roots.var_t_root->name = "result";
+      roots.var_t_root->array_up = values.var_t_value;
     }
   else if (type == FUNCTION_TYPE)    
     {
-      values.func_value = hold.f_point;
+      values.func_t_value = hold.f_point;
      
-      roots.func_root = alloc_func ();
-      roots.func_root->name = "result";
-      roots.func_root->array_up = values.func_value;
+      roots.func_t_root = alloc_func ();
+      roots.func_t_root->name = "result";
+      roots.func_t_root->array_up = values.func_t_value;
     }
   
   for (size = 1; size <= 1000; size++)
@@ -397,20 +397,20 @@ return_array (func *scope, word_list expression)
       if (type != hold.type)
 	{
 	  if (type == VAR_TYPE)
-	    return errorman_throw_reg (scope, "unexpected function returned in a variable array");
+	    return errorman_throw_reg (scope, "unexpected function returned in a var_tiable array");
 	  else
-	    return errorman_throw_reg (scope, "unexpected variable returned in a function array");
+	    return errorman_throw_reg (scope, "unexpected var_tiable returned in a function array");
 	}
 
       if (type == VAR_TYPE)
 	{
-	  values.var_value->next = hold.v_point;
-	  values.var_value = values.var_value->next;
+	  values.var_t_value->next = hold.v_point;
+	  values.var_t_value = values.var_t_value->next;
 	}
       else if (type == FUNCTION_TYPE)
 	{
-	  values.func_value->next = hold.f_point;
-	  values.func_value = values.func_value->next;
+	  values.func_t_value->next = hold.f_point;
+	  values.func_t_value = values.func_t_value->next;
 	}
     }
 
@@ -419,18 +419,18 @@ return_array (func *scope, word_list expression)
   if (type == VAR_TYPE)
     {
       if (size == 1)
-	return_value.v_point = roots.var_root->array_up;
+	return_value.v_point = roots.var_t_root->array_up;
       else
-	return_value.v_point = roots.var_root;
+	return_value.v_point = roots.var_t_root;
 
       return_value.v_point->array_size = size;
     }
   else if (type == FUNCTION_TYPE)
     {
       if (size == 1)
-	return_value.f_point = roots.func_root->array_up;
+	return_value.f_point = roots.func_t_root->array_up;
       else
-	return_value.f_point = roots.func_root;
+	return_value.f_point = roots.func_t_root;
 
       return_value.f_point->array_size = size;
     }
@@ -439,11 +439,11 @@ return_array (func *scope, word_list expression)
   return return_value;
 }
 
-a_type
-size_of (func *scope, word_list expression)
+FACT_t
+size_of (func_t *scope, word_list expression)
 {
-  a_type return_value;
-  a_type evald;
+  FACT_t return_value;
+  FACT_t evald;
   
   if (expression.syntax[0] == NULL)
     return errorman_throw_reg (scope, "cannot find the sizeof nothing");
@@ -464,14 +464,14 @@ size_of (func *scope, word_list expression)
   return return_value;
 }
 
-a_type
-get_array_var (var *root, func *scope, word_list expression)
+FACT_t
+get_array_var_t (var_t *root, func_t *scope, word_list expression)
 {
   int size;
   int position;
 
-  a_type return_value;
-  a_type array_size;
+  FACT_t return_value;
+  FACT_t array_size;
 
   return_value.type = VAR_TYPE;
 
@@ -525,19 +525,19 @@ get_array_var (var *root, func *scope, word_list expression)
   for (root = root->array_up, position = 0; position < size; position++)
     root = root->next;
 
-  return_value = get_array_var (root, scope, expression);
+  return_value = get_array_var_t (root, scope, expression);
 
   return return_value;
 }
 
-a_type
-get_array_func (func *root, func *scope, word_list expression)
+FACT_t
+get_array_func_t (func_t *root, func_t *scope, word_list expression)
 {
   int size;
   int position;
 
-  a_type return_value;
-  a_type array_size;
+  FACT_t return_value;
+  FACT_t array_size;
 
   return_value.type = FUNCTION_TYPE;
 
@@ -591,7 +591,7 @@ get_array_func (func *root, func *scope, word_list expression)
 	 position = 0; position < size; position++)
     root = root->next;
 
-  return_value = get_array_func (root, scope, expression);
+  return_value = get_array_func_t (root, scope, expression);
 
   return return_value;
 }

@@ -1,16 +1,16 @@
 #include "common.h"
 
-a_type
-new_string (func *scope, word_list expression)
+FACT_t
+new_string (func_t *scope, word_list expression)
 {
   int length;
   int count;
   int character;
 
-  a_type return_value;
+  FACT_t return_value;
 
-  var *string;
-  var *scroller;
+  var_t *string;
+  var_t *scroller;
 
   string = alloc_var ();
 
@@ -88,10 +88,10 @@ new_string (func *scope, word_list expression)
   return return_value;
 }
 
-a_type
-print_character (func *scope, word_list expression)
+FACT_t
+print_character (func_t *scope, word_list expression)
 {
-  a_type evald;
+  FACT_t evald;
 
   evald = eval (scope, expression);
 
@@ -104,10 +104,10 @@ print_character (func *scope, word_list expression)
   return evald;
 }
 
-a_type
-input_character (func *scope, word_list expression)
+FACT_t
+input_character (func_t *scope, word_list expression)
 {
-  a_type return_value;
+  FACT_t return_value;
 
   return_value.type = VAR_TYPE;
 
@@ -118,9 +118,9 @@ input_character (func *scope, word_list expression)
   return return_value;
 }
 
-a_type print_var (func *scope, word_list expression)
+FACT_t print_var (func_t *scope, word_list expression)
 {
-  a_type evald;
+  FACT_t evald;
 
   evald = eval (scope, expression);
 

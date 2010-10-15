@@ -7,12 +7,12 @@ void
 process_args (int argc, char **argv)
 {
   int arg;
-  a_type file_open;
+  FACT_t file_open;
   static int memt = false;
   static int cmdln = true;
-  func *scope;
-  var *inter_argc;
-  var *inter_argv;
+  func_t *scope;
+  var_t *inter_argc;
+  var_t *inter_argv;
  
   scope = alloc_func ();
   scope->name = "main";
@@ -78,7 +78,7 @@ process_args (int argc, char **argv)
 	case 'i':
 	  mem_trackopt = memt;
 	  
-	  /* parse remaining arguments into variables */
+	  /* parse remaining arguments into var_tiables */
 	  inter_argc = add_var (scope, "argc");
 	  mpc_set_si (&(inter_argc->data), argc - 2);
 
@@ -89,7 +89,7 @@ process_args (int argc, char **argv)
 	  else
 	    {
 	      inter_argv->array_size = argc - 2;
-	      inter_argv->array_up = string_array_to_var (argv + 2, "argv", argc - 2);
+	      inter_argv->array_up = string_array_to_var_t (argv + 2, "argv", argc - 2);
 	    }
 
 	  file_open = run_file (scope, optarg, true);
@@ -116,6 +116,9 @@ process_args (int argc, char **argv)
 int
 main (int argc, char **argv)
 {
+  atexit (GC_gcollect);
+  atexit (close_libs);
+
   GC_INIT ();
   init_std_prims ();
   
@@ -123,6 +126,5 @@ main (int argc, char **argv)
 			   &gmp_realloc,
 			   &gmp_free);
   process_args (argc, argv);
-  GC_gcollect ();
   exit (0);
 }

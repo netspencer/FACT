@@ -268,22 +268,18 @@ create_list (char **words)
   return base;
 }
 
-/* Got to add a way to check for parsing errors */
 linked_word *
-set_list (linked_word *start, word_code stopper) /* Sets a list of linked words to the correct format */
+set_list (linked_word *start, word_code stopper) 
 {
   word_code w_code;
   linked_word *temp_link;
   
-  while ((w_code = start->code) != stopper && w_code != END) /* While the current node is not the last node and it's not the desired node, */
+  while ((w_code = start->code) != stopper && w_code != END)
     {
-      if (w_code == OP_CURLY) /* If the node is a opening curly bracket */
+      if (w_code == OP_CURLY)
 	{
- 	  /* Set the first hidden node to the next node in the list */ 
 	  start->hidden = start->next;
-	  /* Set the previous node in first hidden node to NULL */
 	  start->next->previous = NULL;
-	  /* Set temp link to a list that ends with '}' */
       	  temp_link = set_list (start->next, CL_CURLY);
 
 	  if (temp_link->code == END)
@@ -412,6 +408,13 @@ swap (linked_word *swapping)
     temp_prev->next = swapping;
 }
 
+#define isnotMDM(op) (op != MULTIPLY && op != DIVIDE && op != MOD)
+#define isnotAS(op) (op != PLUS && op != MINUS)
+#define isnotSE(op) (op != SET)
+#define isnotOPC(op) (op != OP_CURLY)
+#define isnotASN(op) (op < ADD_ASSIGN || op > MOD_ASSIGN)
+#define isnotCMP(op) (op < AND || op > MORE_EQ)
+
 static void
 precedence_level1 (linked_word *scan)
 {
@@ -476,7 +479,6 @@ precedence_level1 (linked_word *scan)
 	case FOR:
 	case THEN:
 	case ELSE:
-	case IN_SCOPE:
 	case COMMA:
 	case RETURN_STAT:
 	case CL_CURLY:
@@ -502,6 +504,49 @@ precedence_level1 (linked_word *scan)
 void
 precedence_level2 (linked_word *scan)
 {
+  linked_word *hold;
+
+  while (scan->next != NULL)
+    {
+      switch (scan->code)
+	{
+	case IF:
+	case WHILE:
+	case FOR:
+	case THEN:
+	case ELSE:
+	case COMMA:
+	case RETURN_STAT:
+	case CL_CURLY:
+	case SEMI:
+	  return;
+
+	case IN_SCOPE:	 
+	  hold = scan->next;
+	  while (scan->previous != NULL
+		 && scan->previous->code != IN_SCOPE
+		 && isnotMDM (scan->previous->code)
+		 && isnotAS (scan->previous->code)
+		 && isnotSE (scan->previous->code)
+		 && isnotOPC (scan->previous->code)
+		 && isnotASN (scan->previous->code)
+		 && isnotCMP (scan->previous->code))
+	    swap (scan);
+	  
+	  scan = hold;
+	  break;
+
+	default:
+	  break;
+	}
+
+      scan = scan->next;
+    }
+}
+
+void
+precedence_level3 (linked_word *scan)
+{
   while (scan->next != NULL)
     {
       switch (scan->code)
@@ -520,55 +565,6 @@ precedence_level2 (linked_word *scan)
 	case DIVIDE:
 	case MOD:
 	  swap (scan);
-	  break;
-
-	default:
-	  break;
-	}
-
-      scan = scan->next;
-    }
-}
-
-void
-precedence_level3 (linked_word *scan)
-{
-  linked_word *hold;
-
-  while (scan->next != NULL)
-    {
-      switch (scan->code)
-	{
-	case IF:
-	case WHILE:
-	case FOR:
-	case THEN:
-	case ELSE:
-	case IN_SCOPE:
-	case COMMA:
-	case RETURN_STAT:
-	case CL_CURLY:
-	case SEMI:
-	  return;
-	  
-	case PLUS:
-	case MINUS:
-	  hold = scan->next;
-	  while (scan->previous != NULL
-		 && scan->previous->code != PLUS
-		 && scan->previous->code != MINUS
-		 && scan->previous->code != SET
-		 && scan->previous->code != OP_CURLY
-		 && (scan->previous->code < ADD_ASSIGN
-		     || scan->previous->code > MOD_ASSIGN)
-		 && (scan->previous->code < AND
-		     || scan->previous->code > MORE_EQ))
-	    swap (scan);
-
-	  if (hold->code == MINUS)
-	    hold = hold->next;
-	  
-	  scan = hold;
 	  break;
 
 	default:
@@ -600,20 +596,20 @@ precedence_level4 (linked_word *scan)
 	case SEMI:
 	  return;
 	  
-	case LESS:
-	case MORE:
-	case LESS_EQ:
-	case MORE_EQ:
+	case PLUS:
+	case MINUS:
 	  hold = scan->next;
 	  while (scan->previous != NULL
-		 && scan->previous->code != SET
-		 && scan->previous->code != OP_CURLY
-		 && (scan->previous->code < ADD_ASSIGN
-		     || scan->previous->code > MOD_ASSIGN)
-		 && (scan->previous->code < AND
-		     || scan->previous->code > MORE_EQ))
+		 && isnotAS (scan->previous->code)
+		 && isnotSE (scan->previous->code)
+		 && isnotOPC (scan->previous->code)
+		 && isnotASN (scan->previous->code)
+		 && isnotCMP (scan->previous->code))
 	    swap (scan);
 
+	  if (hold->code == MINUS)
+	    hold = hold->next;
+	  
 	  scan = hold;
 	  break;
 
@@ -646,18 +642,18 @@ precedence_level5 (linked_word *scan)
 	case SEMI:
 	  return;
 	  
-	case EQ:
-	case NEQ:
+	case LESS:
+	case MORE:
+	case LESS_EQ:
+	case MORE_EQ:
 	  hold = scan->next;
 	  while (scan->previous != NULL
-		 && scan->previous->code != SET
-		 && scan->previous->code != OP_CURLY
-		 && (scan->previous->code < ADD_ASSIGN
-		     || scan->previous->code > MOD_ASSIGN)
-		 && (scan->previous->code < AND
-		     || scan->previous->code > NEQ))
+		 && isnotSE (scan->previous->code)
+		 && isnotOPC (scan->previous->code)
+		 && isnotASN (scan->previous->code)
+		 && isnotCMP (scan->previous->code))
 	    swap (scan);
-	  
+
 	  scan = hold;
 	  break;
 
@@ -690,15 +686,15 @@ precedence_level6 (linked_word *scan)
 	case SEMI:
 	  return;
 	  
-	case AND:
+	case EQ:
+	case NEQ:
 	  hold = scan->next;
 	  while (scan->previous != NULL
-		 && scan->previous->code != SET
-		 && scan->previous->code != OP_CURLY
-		 && (scan->previous->code < ADD_ASSIGN
-		     || scan->previous->code > MOD_ASSIGN)
-		 && scan->previous->code != AND
-		 && scan->previous->code != OR)
+		 && isnotSE (scan->previous->code)
+		 && isnotOPC (scan->previous->code)
+		 && isnotASN (scan->previous->code)
+		 && (scan->previous->code < AND
+		     || scan->previous->code > NEQ))
 	    swap (scan);
 	  
 	  scan = hold;
@@ -733,13 +729,13 @@ precedence_level7 (linked_word *scan)
 	case SEMI:
 	  return;
 	  
-	case OR:
+	case AND:
 	  hold = scan->next;
 	  while (scan->previous != NULL
-		 && scan->previous->code != SET
-		 && scan->previous->code != OP_CURLY
-		 && (scan->previous->code < ADD_ASSIGN
-		     || scan->previous->code > MOD_ASSIGN)
+		 && isnotSE (scan->previous->code) 
+		 && isnotOPC (scan->previous->code)
+		 && isnotASN (scan->previous->code)
+		 && scan->previous->code != AND
 		 && scan->previous->code != OR)
 	    swap (scan);
 	  
@@ -775,6 +771,47 @@ precedence_level8 (linked_word *scan)
 	case SEMI:
 	  return;
 	  
+	case OR:
+	  hold = scan->next;
+	  while (scan->previous != NULL
+		 && isnotSE (scan->previous->code)
+		 && isnotOPC (scan->previous->code)
+		 && isnotASN (scan->previous->code)
+		 && scan->previous->code != OR)
+	    swap (scan);
+	  
+	  scan = hold;
+	  break;
+
+	default:
+	  break;
+	}
+
+      scan = scan->next;
+    }
+}
+
+void
+precedence_level9 (linked_word *scan)
+{
+  linked_word *hold;
+
+  while (scan->next != NULL)
+    {
+      switch (scan->code)
+	{
+	case IF:
+	case WHILE:
+	case FOR:
+	case THEN:
+	case ELSE:
+	case IN_SCOPE:
+	case COMMA:
+	case RETURN_STAT:
+	case CL_CURLY:
+	case SEMI:
+	  return;
+	  
 	case SET:
 	case ADD_ASSIGN:
 	case SUB_ASSIGN:
@@ -783,10 +820,9 @@ precedence_level8 (linked_word *scan)
 	case MOD_ASSIGN:
 	  hold = scan->next;
 	  while (scan->previous != NULL
-		 && scan->previous->code != SET
-		 && scan->previous->code != OP_CURLY
-		 && (scan->previous->code < ADD_ASSIGN
-		     || scan->previous->code > MOD_ASSIGN))
+		 && isnotSE (scan->previous->code)
+		 && isnotOPC (scan->previous->code)
+		 && isnotASN (scan->previous->code))
 	    swap (scan);
 	  
 	  scan = hold;
@@ -811,6 +847,7 @@ rev_shunting_yard (linked_word *scan)
   precedence_level6 (scan);
   precedence_level7 (scan);
   precedence_level8 (scan);
+  precedence_level9 (scan);
 }
   
 void

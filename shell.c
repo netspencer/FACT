@@ -89,13 +89,13 @@ get_input (FILE *fp, unsigned int *line_number)
 }
 
 void
-shell (func *main_scope)
+shell (func_t *main_scope)
 {
   char *input;
   char **parsed_input;
   unsigned int line_num;
 
-  a_type returned;
+  FACT_t returned;
 
   linked_word *formatted;
 

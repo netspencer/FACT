@@ -8,9 +8,9 @@ SRCS = main.c gmp_mallocs.c functions.c string.c \
 	management.c scroll.c math.c mem.c shell.c \
 	comparisons.c parser.c primitives.c eval.c \
 	errorman.c statements.c utilities.c execfile.c \
-	mpc_functions.c
+	mpc_functions.c modules.c
 
-LIBS = -lgc -lgmp
+LIBS = -lgc -lgmp -ldl
 
 all: $(PROG)
 

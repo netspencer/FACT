@@ -1,9 +1,9 @@
 #include "errorman.h"
 
-a_type
-errorman_throw_reg (func *scope, char *description)
+FACT_t
+errorman_throw_reg (func_t *scope, char *description)
 {
-  a_type return_value;
+  FACT_t return_value;
 
   return_value.type = ERROR_TYPE;
 
@@ -15,13 +15,13 @@ errorman_throw_reg (func *scope, char *description)
   return return_value;
 }
 
-a_type
-errorman_throw_prim (func *scope, word_list expression)
+FACT_t
+errorman_throw_prim (func_t *scope, word_list expression)
 {
   char *description;
   
-  a_type return_value;
-  a_type evald;
+  FACT_t return_value;
+  FACT_t evald;
 
   evald = eval (scope, expression);
 

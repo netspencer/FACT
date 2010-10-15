@@ -73,14 +73,12 @@ mpc_add (mpc_t *rop, mpc_t op1, mpc_t op2)
     {
       mpz_set (temp.object, op2.object);
       power_of_ten (temp.object, op1.precision - op2.precision);
-      //mpz_mul (temp.object, temp.object, power_of_ten (op1.precision - op2.precision));
       mpz_add (temp.object, temp.object, op1.object);
     }
   else
     {
       mpz_set (temp.object, op1.object);
       power_of_ten (temp.object, op2.precision - op1.precision);
-      //      mpz_mul (temp.object, temp.object, power_of_ten (op2.precision - op1.precision));
       mpz_add (temp.object, temp.object, op2.object);
     }
 
@@ -102,14 +100,12 @@ mpc_sub (mpc_t *rop, mpc_t op1, mpc_t op2)
     {
       mpz_set (temp.object, op2.object);
       power_of_ten (temp.object, op1.precision - op2.precision);
-      //      mpz_mul (temp.object, temp.object, power_of_ten (op1.precision - op2.precision));
       mpz_sub (temp.object, op1.object, temp.object);
     }
   else
     {
       mpz_set (temp.object, op1.object);
       power_of_ten (temp.object, op2.precision - op1.precision);
-      //      mpz_mul (temp.object, temp.object, power_of_ten (op2.precision - op1.precision));
       mpz_sub (temp.object, temp.object, op2.object);
     }
 
@@ -127,8 +123,13 @@ mpc_neg (mpc_t *rop, mpc_t op)
 void
 mpc_mul (mpc_t *rop, mpc_t op1, mpc_t op2)
 {
+  mpz_t temp;
+
+  mpz_init (temp);
+  mpz_mul (temp, op1.object, op2.object);
+  mpz_set (rop->object, temp);
+
   rop->precision = op2.precision + op1.precision;
-  mpz_mul (rop->object, op1.object, op2.object);
 }
 
 void
@@ -289,10 +290,6 @@ mpc_get_str (mpc_t op)
 	  return_value = concatinate_free (return_value, "0", true, false);
 	  mpz_tdiv_q_ui (temp2, temp2, 10);
 	}
-
-      /*
-	Need to fix this up a bit to handle x.0..x;
-      */
 
       return_value = concatinate_free (return_value, mpz_get_str (NULL, 10, temp1), true, true);
 

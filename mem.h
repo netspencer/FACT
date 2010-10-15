@@ -4,7 +4,7 @@
 /**
  * mem:
  * Functions for the creation
- * and handeling of variables
+ * and handeling of var_tiables
  * and objects.
  *
  * TODO:
@@ -15,16 +15,16 @@
  * (c) 2010 Matthew Plant. Sorry for the bloat.
  */
 
-//extern a_type get_array (var *, func *, char **);
-extern a_type get_array_size (func *, word_list);
-extern a_type define (func *, word_list);
-extern a_type defunc (func *, word_list);
-extern a_type set (func *, word_list);
-extern a_type return_array (func *, word_list); 
-extern a_type size_of (func *, word_list);
-extern a_type get_array_var (var *, func *, word_list);
-extern a_type get_array_func (func *, func *, word_list);
+//extern FACT_t get_array (var_t *, func_t *, char **);
+extern FACT_t get_array_size (func_t *, word_list);
+extern FACT_t define (func_t *, word_list);
+extern FACT_t defunc (func_t *, word_list);
+extern FACT_t set (func_t *, word_list);
+extern FACT_t return_array (func_t *, word_list); 
+extern FACT_t size_of (func_t *, word_list);
+extern FACT_t get_array_var_t (var_t *, func_t *, word_list);
+extern FACT_t get_array_func_t (func_t *, func_t *, word_list);
 
-extern var *clone_var (var *, char *);
+extern var_t *clone_var_t (var_t *, char *);
 
 #endif

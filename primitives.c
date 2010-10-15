@@ -3,7 +3,7 @@
 struct _MATH_PRIMS
 { 
   const char *name;
-  a_type (*function)(a_type, a_type);
+  FACT_t (*function)(FACT_t, FACT_t);
 };
 
 static struct _MATH_PRIMS math_calls[] =
@@ -33,7 +33,7 @@ static struct _MATH_PRIMS math_calls[] =
 struct _prims
 { 
   const char *name;
-  a_type (*function)(func *, word_list);
+  FACT_t (*function)(func_t *, word_list);
 };
 
 static int num_of_prims = 0; 
@@ -42,7 +42,7 @@ static struct _prims *primitives = NULL;
 
 void
 add_prim (const char *prim_name,
-	  a_type (*new_function)(func *, word_list))
+	  FACT_t (*new_function)(func_t *, word_list))
 {
   num_of_prims++;
 
@@ -76,19 +76,20 @@ init_std_prims (void)
   add_prim ("else", invalid_else);
   /* start with 'f' */
   add_prim ("for", invalid_for);
-  /* start with 'g' */
-  add_prim ("getc", input_character);
   /* start with 'i' */
   add_prim ("if", invalid_if);
-  /* start with 'l' */
-  add_prim ("lambda", lambda);
-  /* start with 'p' */
-  add_prim ("printc", print_character);
-  add_prim ("printv", print_var);
   /* start with 's' */
   add_prim ("sizeof", size_of);
   /* start with 'w' */
   add_prim ("while", invalid_while);
+  /* start with 'l' */
+  add_prim ("lambda", lambda);
+  /* std lib stuff */
+  add_prim ("lib.std.getchar", input_character); 
+  add_prim ("lib.std.putchar", print_character);
+  add_prim ("lib.std.putvar", print_var);
+  add_prim ("lib.load", load_lib);
+  add_prim ("lib.call", call_lib);
 }
 
 enum {
@@ -96,13 +97,10 @@ enum {
   STARTD = 12,
   STARTE = 14,
   STARTF = 15,
-  STARTG = 16,
-  STARTI = 17,
-  STARTL = 18,
-  STARTP = 19,
-  STARTS = 21,
-  STARTW = 22,
-  STARTother = 23
+  STARTI = 16,
+  STARTS = 17,
+  STARTW = 18,
+  STARTother = 19
 };
 
 int
@@ -126,20 +124,8 @@ isprim (char *word)
 	   pos = STARTF;
 	   break;
 
-	 case 'g':
-	   pos = STARTG;
-	   break;
-
 	 case 'i':
 	   pos = STARTI;
-	   break;
-
-	 case 'l':
-	   pos = STARTL;
-	   break;
-	   
-	 case 'p':
-	   pos = STARTP;
 	   break;
 
 	 case 's':
@@ -150,9 +136,12 @@ isprim (char *word)
 	   pos = STARTW;
 	   break;
 
-	 default:
+	 case 'l':
 	   pos = STARTother;
 	   break;
+	   
+	 default:
+	   return -1;
 	 }
 
   while (pos < num_of_prims)
@@ -186,10 +175,10 @@ ismathcall (char *word)
   return -1;
 }
 
-a_type
-runprim (func *scope, word_list expression, int prim_num)
+FACT_t
+runprim (func_t *scope, word_list expression, int prim_num)
 {
-  a_type return_value;
+  FACT_t return_value;
 
   return_value = primitives[prim_num].function (scope, expression);
 
@@ -202,12 +191,12 @@ runprim (func *scope, word_list expression, int prim_num)
   return return_value;
 }
 
-a_type
-eval_math (func *scope, word_list expression, int call_num)
+FACT_t
+eval_math (func_t *scope, word_list expression, int call_num)
 {
-  a_type arg1;
-  a_type arg2;
-  a_type return_value;
+  FACT_t arg1;
+  FACT_t arg2;
+  FACT_t return_value;
 
   arg1 = eval (scope, expression);
   arg2 = eval (scope, expression);

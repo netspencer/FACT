@@ -20,8 +20,8 @@
  * * * * * * * * * * * * * * * * * * * * */
 			
  
-a_type
-liven_func (func *scope, word_list expression)
+FACT_t
+liven_func (func_t *scope, word_list expression)
 {
   int pos_args;
   int pos_block;
@@ -30,7 +30,7 @@ liven_func (func *scope, word_list expression)
   char **args_formatted;
   char **block_formatted;
 
-  a_type func;
+  FACT_t func;
   
   func = eval (scope, expression);
 
@@ -100,18 +100,18 @@ count_until_NULL (char **words)
   return pos;
 }
 
-a_type
-prepare_function (func *scope, func *new_scope, word_list expression)
+FACT_t
+prepare_function (func_t *scope, func_t *new_scope, word_list expression)
 {
   int pos;
   int count;
 
-  a_type evald;
-  a_type arg;
-  a_type passed;
+  FACT_t evald;
+  FACT_t arg;
+  FACT_t passed;
 
-  var *hold;
-  var *temp;
+  var_t *hold;
+  var_t *temp;
 
   word_list arg_list;
 
@@ -137,7 +137,7 @@ prepare_function (func *scope, func *new_scope, word_list expression)
   arg_list.syntax = copy (evald.f_point->args);
   arg_list.move_forward = better_malloc (sizeof (int) *
 					 ((count = count_until_NULL (arg_list.syntax)) + 1));
-  set_array (arg_list.move_forward, count);
+  //set_array (arg_list.move_forward, count);
 
   new_scope->up = evald.f_point->up;
   new_scope->name = evald.f_point->name;
@@ -163,7 +163,7 @@ prepare_function (func *scope, func *new_scope, word_list expression)
 	{
 	  hold = passed.v_point->next;
 	  passed.v_point->next = NULL;
-	  temp = clone_var (passed.v_point, arg.v_point->name);
+	  temp = clone_var_t (passed.v_point, arg.v_point->name);
 	  passed.v_point->next = hold;
 	  arg.v_point->array_up = temp->array_up;
 	  mpc_set (&(arg.v_point->data), temp->data);
@@ -224,15 +224,15 @@ prepare_function (func *scope, func *new_scope, word_list expression)
   return evald;
 }
 
-a_type
-new_scope (func *scope, word_list expression)
+FACT_t
+new_scope (func_t *scope, word_list expression)
 {
   char **copy_body;
   
-  a_type prepared;
-  a_type return_value;
+  FACT_t prepared;
+  FACT_t return_value;
 
-  func *new_scope;
+  func_t *new_scope;
 
   new_scope = alloc_func ();
   
@@ -256,15 +256,15 @@ new_scope (func *scope, word_list expression)
   return return_value;
 }
 
-a_type
-run_func (func *scope, word_list expression_list)
+FACT_t
+run_func (func_t *scope, word_list expression_list)
 {
   char **copied_body;
 
-  a_type return_value;
-  a_type prepared;
+  FACT_t return_value;
+  FACT_t prepared;
 
-  func *new_scope;
+  func_t *new_scope;
 
   new_scope = alloc_func ();
 
@@ -283,11 +283,11 @@ run_func (func *scope, word_list expression_list)
   return return_value;
 }
 
-a_type
-in_scope (func *scope, word_list expression)
+FACT_t
+in_scope (func_t *scope, word_list expression)
 {
-  a_type new_scope;
-  a_type to_return;
+  FACT_t new_scope;
+  FACT_t to_return;
 
   new_scope = eval (scope, expression);
 
@@ -299,10 +299,10 @@ in_scope (func *scope, word_list expression)
   return to_return;
 }
 
-a_type
-lambda (func *scope, word_list expression)
+FACT_t
+lambda (func_t *scope, word_list expression)
 {
-  a_type return_value;
+  FACT_t return_value;
 
   return_value.type = FUNCTION_TYPE;
 

@@ -3,7 +3,7 @@
 
 /**
  * math:
- * provides various math operations, such as
+ * provides var_tious math operations, such as
  * addition, subtraction, etc.
  *
  * Linked from Math.c
@@ -18,25 +18,25 @@ extern bool isnum (char *);             /* returns true if a string of character
 					   is a valid base 10 number, and returns
 					   false otherwise.
 					*/
-extern a_type num_to_var (char *);      /* converts a string to an amigious
+extern FACT_t num_to_var (char *);      /* converts a string to an amigious
 					   type.
 					*/
 
-extern a_type add (a_type, a_type);    /* adds two numbers together */
-extern a_type sub (a_type, a_type);    /* subtracts two numbers */
-extern a_type mult (a_type, a_type);   /* multiplies two numbers */
-extern a_type divide (a_type, a_type); /* divides two numbers */
-extern a_type mod (a_type, a_type);    /* modulos two numbers */
+extern FACT_t add (FACT_t, FACT_t);    /* adds two numbers together */
+extern FACT_t sub (FACT_t, FACT_t);    /* subtracts two numbers */
+extern FACT_t mult (FACT_t, FACT_t);   /* multiplies two numbers */
+extern FACT_t divide (FACT_t, FACT_t); /* divides two numbers */
+extern FACT_t mod (FACT_t, FACT_t);    /* modulos two numbers */
 
-extern a_type paren (func *, word_list); /*
+extern FACT_t paren (func_t *, word_list); /*
 					   isolates all the characters between
 					   two parenthesis and then evaluates
 					   them.
 					 */
-extern a_type add_assignment (a_type, a_type);
-extern a_type sub_assignment (a_type, a_type);
-extern a_type mult_assignment (a_type, a_type);
-extern a_type div_assignment (a_type, a_type);
-extern a_type mod_assignment (a_type, a_type);
+extern FACT_t add_assignment (FACT_t, FACT_t);
+extern FACT_t sub_assignment (FACT_t, FACT_t);
+extern FACT_t mult_assignment (FACT_t, FACT_t);
+extern FACT_t div_assignment (FACT_t, FACT_t);
+extern FACT_t mod_assignment (FACT_t, FACT_t);
 
 #endif

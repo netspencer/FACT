@@ -4,6 +4,6 @@
 #include "common.h"
 
 extern char *get_input (FILE *, unsigned int *);
-extern void shell (func *);
+extern void shell (func_t *);
 
 #endif

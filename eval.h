@@ -16,9 +16,9 @@
  * (c) 2010 Matthew Plant. Sorry for the bloat.
  */
 
-extern a_type eval (func *, word_list);
-extern a_type expression (func *, char **);
-extern a_type procedure (func *, char **);
-extern a_type lambda_proc (func *, word_list);
+extern FACT_t eval (func_t *, word_list);
+extern FACT_t expression (func_t *, char **);
+extern FACT_t procedure (func_t *, char **);
+extern FACT_t lambda_proc (func_t *, word_list);
 
 #endif

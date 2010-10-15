@@ -11,8 +11,8 @@
  * (c) 2010 Matthew Plant
  */
 
-extern a_type errorman_throw_reg (func *, char *);
-extern a_type errorman_throw_prim (func *, word_list);
+extern FACT_t errorman_throw_reg (func_t *, char *);
+extern FACT_t errorman_throw_prim (func_t *, word_list);
 
 extern void errorman_dump (_ERROR, int, const char *);
 

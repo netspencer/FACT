@@ -1,36 +1,36 @@
 #include "common.h"
 
-a_type
-invalid_if (func *scope, word_list expression)
+FACT_t
+invalid_if (func_t *scope, word_list expression)
 {
   return errorman_throw_reg (scope, "invalid syntax, if statements must start at the beginning of the expression");
 }
 
-a_type
-invalid_else (func *scope, word_list expression)
+FACT_t
+invalid_else (func_t *scope, word_list expression)
 {
   return errorman_throw_reg (scope, "invalid syntax, else statements must follow if statements at the beginning of the expression");
 }
 
-a_type
-invalid_while (func *scope, word_list expression)
+FACT_t
+invalid_while (func_t *scope, word_list expression)
 {
   return errorman_throw_reg (scope, "invalid syntax, while loops must start at the beginning of the expression");
 }
 
-a_type
-invalid_for (func *scope, word_list expression)
+FACT_t
+invalid_for (func_t *scope, word_list expression)
 {
   return errorman_throw_reg (scope, "invalid syntax, for loops must start at the beginning of the expression");
 }
 
-a_type
-if_statement (func *scope, word_list expression_list, bool *success)
+FACT_t
+if_statement (func_t *scope, word_list expression_list, bool *success)
 {
-  a_type return_value;
-  a_type conditional;
+  FACT_t return_value;
+  FACT_t conditional;
 
-  func temp_scope =
+  func_t temp_scope =
     {
       "if_temp",
       NULL,
@@ -57,7 +57,7 @@ if_statement (func *scope, word_list expression_list, bool *success)
     }
 
   if (conditional.type == FUNCTION_TYPE)
-    return errorman_throw_reg (scope, "if statement conditional must return a var");
+    return errorman_throw_reg (scope, "if statement conditional must return a var_t");
   
   if (mpc_cmp_si (conditional.v_point->data, 0) == 0)
     {
@@ -85,12 +85,12 @@ if_statement (func *scope, word_list expression_list, bool *success)
   return return_value;
 }
 
-a_type
-else_clause (func *scope, char **words)
+FACT_t
+else_clause (func_t *scope, char **words)
 {
-  a_type return_value;
+  FACT_t return_value;
   
-  func temp_scope =
+  func_t temp_scope =
     {
       "if_temp",
       NULL,
@@ -111,18 +111,18 @@ else_clause (func *scope, char **words)
   return return_value;
 }
 
-a_type
-while_loop (func *scope, char **words)
+FACT_t
+while_loop (func_t *scope, char **words)
 {
   int pos_cond;
   int pos;
 
-  a_type conditional_evald;
-  a_type block_evald;
+  FACT_t conditional_evald;
+  FACT_t block_evald;
 
   word_list conditional_exp;
 
-  func temp_scope =
+  func_t temp_scope =
     {
       "while_temp",
       NULL,
@@ -156,15 +156,13 @@ while_loop (func *scope, char **words)
 
   for (;;)
     {
-      set_array (conditional_exp.move_forward, pos_cond + 1);
-
       conditional_evald = eval (&temp_scope, conditional_exp);
       
       if (conditional_evald.type == ERROR_TYPE)
 	return conditional_evald;
       
       if (conditional_evald.type == FUNCTION_TYPE)
-	return errorman_throw_reg (scope, "while loop conditional must return a var");
+	return errorman_throw_reg (scope, "while loop conditional must return a var_t");
 
       if (mpc_cmp_si (conditional_evald.v_point->data, 0) == 0)
         break;
@@ -173,31 +171,33 @@ while_loop (func *scope, char **words)
 
       if (block_evald.type == ERROR_TYPE || block_evald.isret == true || block_evald.break_signal == true)
 	break;
+
+      set_array (conditional_exp.move_forward, pos_cond + 1);
     }
 
   return block_evald;
 }
 
-a_type
-for_loop (func *scope, char **words)
+FACT_t
+for_loop (func_t *scope, char **words)
 {
   int pos;
   int count;
   int arr_pos;
   
-  a_type index_value;
-  a_type limit_value;
-  a_type block_evald;
+  FACT_t index_value;
+  FACT_t limit_value;
+  FACT_t block_evald;
 
-  var *var_scroller;
+  var_t *var_t_scroller;
 
-  func *func_scroller;
+  func_t *func_t_scroller;
 
   word_list index_dest_exp;
 
   mpc_t one;
 
-  func temp_scope =
+  func_t temp_scope =
     {
       "for_temp",
       NULL,
@@ -216,7 +216,7 @@ for_loop (func *scope, char **words)
   index_dest_exp.syntax = words;
   index_dest_exp.move_forward = better_malloc (sizeof (int) *
 					       ((count = count_until_NULL (words)) + 1));
-  set_array (index_dest_exp.move_forward, count + 1);
+  //set_array (index_dest_exp.move_forward, count + 1);
   
   index_value = eval (&temp_scope, index_dest_exp);
 
@@ -269,13 +269,13 @@ for_loop (func *scope, char **words)
 	      if (arr_pos >= limit_value.v_point->array_size)
 		break;
 
-	      for (var_scroller = limit_value.v_point->array_up, pos = 0;
+	      for (var_t_scroller = limit_value.v_point->array_up, pos = 0;
 		   pos < arr_pos; pos++)
-		var_scroller = var_scroller->next;
+		var_t_scroller = var_t_scroller->next;
 
-	      index_value.v_point->array_size = var_scroller->array_size;
-	      mpc_set (&(index_value.v_point->data), var_scroller->data);
-	      index_value.v_point->array_up = clone_var (var_scroller->array_up, index_value.v_point->name);
+	      index_value.v_point->array_size = var_t_scroller->array_size;
+	      mpc_set (&(index_value.v_point->data), var_t_scroller->data);
+	      index_value.v_point->array_up = clone_var_t (var_t_scroller->array_up, index_value.v_point->name);
 	    }
 	  else if (arr_pos != 0)
 	    {
@@ -294,9 +294,9 @@ for_loop (func *scope, char **words)
 	      if (arr_pos >= limit_value.f_point->array_size)
 		break;
 
-	      for (func_scroller = limit_value.f_point->array_up, pos = 1;
+	      for (func_t_scroller = limit_value.f_point->array_up, pos = 1;
 		   pos < arr_pos; pos++)
-		func_scroller = func_scroller->next;
+		func_t_scroller = func_t_scroller->next;
 
 	      index_value.f_point->args = limit_value.f_point->args;
 	      index_value.f_point->body = limit_value.f_point->body;
@@ -308,7 +308,7 @@ for_loop (func *scope, char **words)
 	      index_value.f_point->next = limit_value.f_point->next;
 	    }
 	  else
-	    return errorman_throw_reg (scope, "error in for loop; if the destination variable is a function, it must also be an array");
+	    return errorman_throw_reg (scope, "error in for loop; if the destination var_tiable is a function, it must also be an array");
 	}
 
       if (strcmp (index_dest_exp.syntax[1], ";"))

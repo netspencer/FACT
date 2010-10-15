@@ -18,13 +18,13 @@
   the idea from math.h.
 */
 
-extern a_type equal (a_type, a_type);
-extern a_type not_equal (a_type, a_type);
-extern a_type more (a_type, a_type);
-extern a_type more_equal (a_type, a_type);
-extern a_type less (a_type, a_type);
-extern a_type less_equal (a_type, a_type);
-extern a_type and (func *, word_list);
-extern a_type or (func *, word_list);
+extern FACT_t equal (FACT_t, FACT_t);
+extern FACT_t not_equal (FACT_t, FACT_t);
+extern FACT_t more (FACT_t, FACT_t);
+extern FACT_t more_equal (FACT_t, FACT_t);
+extern FACT_t less (FACT_t, FACT_t);
+extern FACT_t less_equal (FACT_t, FACT_t);
+extern FACT_t and (func_t *, word_list);
+extern FACT_t or (func_t *, word_list);
 
 #endif

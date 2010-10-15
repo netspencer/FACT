@@ -13,8 +13,8 @@ set_array (bool *rop, int op)
     rop[pos] = false;
 }
 
-a_type 
-expression (func *scope, char **words)
+FACT_t
+expression (func_t *scope, char **words)
 {
   int position; /* current position in "words" */
   
@@ -24,7 +24,7 @@ expression (func *scope, char **words)
   
   char **formatted_expression; /* the block to be evaluated */
 
-  a_type return_value; /* value to be eventually returned if nothing fails */
+  FACT_t return_value; /* value to be eventually returned if nothing fails */
 
   word_list expression;
 
@@ -57,10 +57,7 @@ expression (func *scope, char **words)
     }
 
   formatted_expression = better_malloc (sizeof (char *) * (position + 2)); /* allocate space for expression */
-  /* probably would be a good idea to move these two to be called only when they're
-     needed. */
   expression.move_forward = better_malloc (sizeof (bool) * (position + 2));
-  set_array (expression.move_forward, position + 2);
 
   for (formatted_expression[position + 1] = NULL; position >= 0; position--)
     formatted_expression[position] = words[position];
@@ -131,12 +128,12 @@ expression (func *scope, char **words)
   return return_value;
 }
 
-a_type
-procedure (func *scope, char **words)
+FACT_t
+procedure (func_t *scope, char **words)
 {
   int len_to_move; /* length moved each time */
   
-  a_type return_value; /* value returned */
+  FACT_t return_value; /* value returned */
 
   while (*words != NULL && strcmp (*words, "}"))
     {
@@ -164,10 +161,10 @@ procedure (func *scope, char **words)
   return (expression (scope, ++words));
 }
 
-a_type
-lambda_proc (func *scope, word_list expression)
+FACT_t
+lambda_proc (func_t *scope, word_list expression)
 {
-  func temp_local = 
+  func_t temp_local = 
     {
       scope->name,
       NULL,
@@ -187,14 +184,14 @@ lambda_proc (func *scope, word_list expression)
   return procedure (&temp_local, expression.syntax);
 }
 
-a_type
-eval (func *scope, word_list expression)
+FACT_t
+eval (func_t *scope, word_list expression)
 {
   int call_num;
 
   char *word;
   
-  a_type return_value;
+  FACT_t return_value;
 
   while (expression.move_forward[0])
     {
@@ -220,17 +217,15 @@ eval (func *scope, word_list expression)
     {
       expression.syntax++;
       expression.move_forward++;
-
-      //      expression.move_forward[0] = true;
       
       if ((call_num = isprim (word)) > -1)
 	return runprim (scope, expression, call_num);
       else if ((call_num = ismathcall (word)) > -1)
 	return eval_math (scope, expression, call_num);
       else if (get_var (scope, word) != NULL)
-	return_value = get_array_var (get_var (scope, word), scope, expression);
+	return_value = get_array_var_t (get_var (scope, word), scope, expression);
       else if (get_func (scope, word) != NULL)
-	return_value = get_array_func (get_func (scope, word), scope, expression);
+	return_value = get_array_func_t (get_func (scope, word), scope, expression);
       else
 	return errorman_throw_reg (scope, combine_strs ("cannot evaluate ", word));
     }

@@ -19,10 +19,10 @@
  * each other.                                 *
  * * * * * * * * * * * * * * * * * * * * * * * */
 
-a_type
-equal (a_type arg1, a_type arg2)
+FACT_t
+equal (FACT_t arg1, FACT_t arg2)
 {
-  a_type return_value;
+  FACT_t return_value;
 
   return_value.type = VAR_TYPE;
   return_value.v_point = alloc_var ();
@@ -49,10 +49,10 @@ equal (a_type arg1, a_type arg2)
  * not equal to each other.                  *
  * * * * * * * * * * * * * * * * * * * * * * */
 
-a_type
-not_equal (a_type arg1, a_type arg2)
+FACT_t
+not_equal (FACT_t arg1, FACT_t arg2)
 {
-  a_type return_value;
+  FACT_t return_value;
 
   return_value.type = VAR_TYPE;
   return_value.v_point = alloc_var ();
@@ -77,14 +77,14 @@ not_equal (a_type arg1, a_type arg2)
 /* * * * * * * * * * * * * * * * * * * * * * *
  * more: checks if the first argument is     *
  * greater in value than the other arguemnt. *
- * If either argument is not a variable, it  *
+ * If either argument is not a var_tiable, it  *
  * throws an error.                          *
  * * * * * * * * * * * * * * * * * * * * * * */
 
-a_type
-more (a_type arg1, a_type arg2)
+FACT_t
+more (FACT_t arg1, FACT_t arg2)
 {
-  a_type return_value;
+  FACT_t return_value;
 
   return_value.type = VAR_TYPE;
   return_value.v_point = alloc_var ();
@@ -102,13 +102,13 @@ more (a_type arg1, a_type arg2)
  * more_equal: checks if the first argument  *
  * is greater or equal in value to the other *
  * arguemnt. If either argument is not a     *
- * variable, it throws an error.             *
+ * var_tiable, it throws an error.             *
  * * * * * * * * * * * * * * * * * * * * * * */
 
-a_type
-more_equal (a_type arg1, a_type arg2)
+FACT_t
+more_equal (FACT_t arg1, FACT_t arg2)
 {
-  a_type return_value;
+  FACT_t return_value;
 
   return_value.type = VAR_TYPE;
   return_value.v_point = alloc_var ();
@@ -125,14 +125,14 @@ more_equal (a_type arg1, a_type arg2)
 /* * * * * * * * * * * * * * * * * * * * * * *
  * less: checks if the first argument is     *
  * smaller in value than the other arguemnt. *
- * If either argument is not a variable, it  *
+ * If either argument is not a var_tiable, it  *
  * throws an error.                          *
  * * * * * * * * * * * * * * * * * * * * * * */
 
-a_type
-less (a_type arg1, a_type arg2)
+FACT_t
+less (FACT_t arg1, FACT_t arg2)
 {
-  a_type return_value;
+  FACT_t return_value;
   
   return_value.type = VAR_TYPE;
   return_value.v_point = alloc_var ();
@@ -150,13 +150,13 @@ less (a_type arg1, a_type arg2)
  * less_equal: checks if the first argument  *
  * is smaller or equal in value to the other *
  * arguemnt. If either argument is not a     *
- * variable, it throws an error.             *
+ * var_tiable, it throws an error.             *
  * * * * * * * * * * * * * * * * * * * * * * */
 
-a_type
-less_equal (a_type arg1, a_type arg2)
+FACT_t
+less_equal (FACT_t arg1, FACT_t arg2)
 {
-  a_type return_value;
+  FACT_t return_value;
 
   return_value.type = VAR_TYPE;
   return_value.v_point = alloc_var ();
@@ -294,22 +294,22 @@ statement_length (char **words)
  * evaluates to false.                       *
  * * * * * * * * * * * * * * * * * * * * * * */
 
-a_type
-and (func *scope, word_list expression)
+FACT_t
+and (func_t *scope, word_list expression)
 {
   int pos;
   int len;
 
-  a_type arg1;
-  a_type arg2;
-  a_type return_value;
+  FACT_t arg1;
+  FACT_t arg2;
+  FACT_t return_value;
 
   arg1 = eval (scope, expression);
 
   if (arg1.type == ERROR_TYPE)
     return arg1;
   else if (arg1.type == FUNCTION_TYPE)
-    return errorman_throw_reg (scope, "arguments to && must be variables");
+    return errorman_throw_reg (scope, "arguments to && must be var_tiables");
 
   return_value.type = VAR_TYPE;
   return_value.v_point = alloc_var ();
@@ -335,7 +335,7 @@ and (func *scope, word_list expression)
   if (arg2.type == ERROR_TYPE)
     return arg1;
   else if (arg2.type == FUNCTION_TYPE)
-    return errorman_throw_reg (scope, "arguments to && must be variables");
+    return errorman_throw_reg (scope, "arguments to && must be var_tiables");
 
   if (mpc_cmp_si (arg2.v_point->data, 0) == 0)
     return return_value;
@@ -350,23 +350,23 @@ and (func *scope, word_list expression)
  * passed arguments evaluate to true.      *
  * * * * * * * * * * * * * * * * * * * * * */
 
-a_type
+FACT_t
 or
-(func *scope, word_list expression)
+(func_t *scope, word_list expression)
 {
   int pos;
   int len;
 
-  a_type arg1;
-  a_type arg2;
-  a_type return_value;
+  FACT_t arg1;
+  FACT_t arg2;
+  FACT_t return_value;
 
   arg1 = eval (scope, expression);
 
   if (arg1.type == ERROR_TYPE)
     return arg1;
   else if (arg1.type == FUNCTION_TYPE)
-    return errorman_throw_reg (scope, "arguments to || must be variables");
+    return errorman_throw_reg (scope, "arguments to || must be var_tiables");
 
   return_value.type = VAR_TYPE;
   return_value.v_point = alloc_var ();
@@ -394,7 +394,7 @@ or
   if (arg2.type == ERROR_TYPE)
     return arg1;
   else if (arg2.type == FUNCTION_TYPE)
-    return errorman_throw_reg (scope, "arguments to || must be variables");
+    return errorman_throw_reg (scope, "arguments to || must be var_tiables");
 
   if (mpc_cmp_si (arg2.v_point->data, 0) != 0)
     return return_value;

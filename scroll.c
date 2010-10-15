@@ -1,6 +1,6 @@
 #include "management.h"
 
-void scroll_array (var *to_look)
+void scroll_array (var_t *to_look)
 {
   int until;
 
@@ -14,10 +14,10 @@ void scroll_array (var *to_look)
     }
 }
 
-void scroll (func *scope)
+void scroll (func_t *scope)
 {
-  var *var_scroll;
-  func *func_scroll;
+  var_t *var_scroll;
+  func_t *func_scroll;
   int pos;
 
   printf (".____________.\n"
