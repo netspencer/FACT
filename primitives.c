@@ -8,24 +8,22 @@ struct _MATH_PRIMS
 
 static struct _MATH_PRIMS math_calls[] =
   {
-    {"+",   add},
-    {"-",   sub},
-    {"*",   mult},
-    {"/",   divide},
-    {"%",   mod},
+    {"+",    add},
+    {"-",    sub},
+    {"*",    mult},
+    {"/",    divide},
+    {"%",    mod},
     {"+=",   add_assignment},
     {"-=",   sub_assignment},
     {"*=",   mult_assignment},
     {"/=",   div_assignment},
     {"%=",   mod_assignment},
-    {/*"eq"*/ "==",  equal},
-    {/*"nq"*/ "!=",  not_equal},
-    {">",   more},
-    {"<",   less},
-    {/*"meq"*/ ">=", more_equal},
-    {/*"leq"*/ "<=", less_equal},
-    //    {/*"and"*/ "&&", and},
-    //   {/*"or"*/  "||",  or}
+    {"==",   equal},
+    {"!=",   not_equal},
+    {">",    more},
+    {"<",    less},
+    {">=",   more_equal},
+    {"<=",   less_equal},
   };
 
 #define NUM_MATH_PRIMS ((sizeof math_calls) / (sizeof (struct _MATH_PRIMS)))
@@ -33,12 +31,25 @@ static struct _MATH_PRIMS math_calls[] =
 struct _prims
 { 
   const char *name;
+  int prim_num;
   FACT_t (*function)(func_t *, word_list);
 };
 
-static int num_of_prims = 0; 
+static int num_of_prims = 0;
 
 static struct _prims *primitives = NULL;
+
+static int
+comp_prims (const void *op1, const void *op2)
+{
+  struct _prims *p1;
+  struct _prims *p2;
+
+  p1 = (struct _prims *) op1;
+  p2 = (struct _prims *) op2;
+
+  return strcmp (p1->name, p2->name);
+}
 
 void
 add_prim (const char *prim_name,
@@ -92,6 +103,7 @@ init_std_prims (void)
   add_prim ("lib.call", call_lib);
 }
 
+/*
 enum {
   SYMB = 0,
   STARTD = 12,
@@ -102,12 +114,18 @@ enum {
   STARTW = 18,
   STARTother = 19
 };
+*/
 
 int
 isprim (char *word)
 {
+  static int last_prim_count = 0;
   int pos;
 
+  struct _prims key;
+  struct _prims *result;
+
+  /*
   if (ispunct ((int) word[0]))
     pos = SYMB;
   else switch (word[0])
@@ -154,8 +172,28 @@ isprim (char *word)
 
       pos++;
     }
+  */
+  if (last_prim_count != num_of_prims)
+    {
+      qsort (primitives, num_of_prims, sizeof (struct _prims), comp_prims);
 
+      for (pos = 0; pos < num_of_prims; pos++)
+	primitives[pos].prim_num = pos;
+
+      last_prim_count = num_of_prims;
+    }
+
+  key.name = word; 
+  result = bsearch (&key, primitives, num_of_prims, sizeof (struct _prims), comp_prims);
+
+  if (result == NULL)
+    return -1;
+  else
+    return result->prim_num;
+
+  /*
   return -1;
+  */
 }
 
 int

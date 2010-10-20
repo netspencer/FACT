@@ -134,7 +134,11 @@ get_words (char *start)
 word_code
 get_block_code (char *block)
 {
-  if (block == NULL)
+  static bool quotes;
+
+  if (quotes == true && strcmp (block, "\""))
+    return UNKNOWN;
+  else if (block == NULL)
     return END;
   else if (!strcmp (block, "+"))
     return PLUS;
@@ -189,7 +193,10 @@ get_block_code (char *block)
   else if (!strcmp (block, ")"))
     return CL_PAREN;
   else if (!strcmp (block, "\""))
-    return QUOTE;
+    {
+      quotes = !quotes;
+      return QUOTE;
+    }
   else if (!strcmp (block, /*"and"*/ "&&"))
     return AND;
   else if (!strcmp (block, /*"or"*/ "||"))

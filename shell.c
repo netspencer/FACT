@@ -47,19 +47,23 @@ get_input (FILE *fp, unsigned int *line_number)
 	  (*line_number)++;
 	}
 
-      if (c == '(')
-	paren_count++;
-      else if (c == ')')
-	paren_count--;
-      else if (c == '[')
-	bracket_count++;
-      else if (c == ']')
-	bracket_count--;
-      else if (c == '{')
-	curly_count++;
-      else if (c == '}')
-	curly_count--;
-      else if (c == '"')
+      if (!in_quotes)
+	{
+	  if (c == '(')
+	    paren_count++;
+	  else if (c == ')')
+	    paren_count--;
+	  else if (c == '[')
+	    bracket_count++;
+	  else if (c == ']')
+	    bracket_count--;
+	  else if (c == '{')
+	    curly_count++;
+	  else if (c == '}')
+	    curly_count--;
+	}
+
+      if (c == '"')
 	in_quotes = !in_quotes;
 
       if (c == ';' || c == '}')
