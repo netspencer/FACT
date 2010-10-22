@@ -85,6 +85,7 @@ alloc_func ()
   new = (func_t *) better_malloc (sizeof (func_t));
   new->array_size = 1;
   new->array_up = NULL;
+  new->extrn_func = NULL;
   new->up = NULL;
   new->next = NULL;
   new->args = NULL;

@@ -197,8 +197,13 @@ typedef struct _FUNC
   char *name; 
   char **args;
   char **body;
+
   int array_size;
-  var_t *vars; 
+
+  var_t *vars;
+
+  void * (*extrn_func)(struct _FUNC *);
+
   struct _FUNC *funcs; 
   struct _FUNC *up;
   struct _FUNC *array_up;

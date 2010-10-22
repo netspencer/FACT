@@ -172,6 +172,7 @@ lambda_proc (func_t *scope, word_list expression)
       1,
       NULL,
       NULL,
+      NULL,
       scope,
       NULL,
       NULL,

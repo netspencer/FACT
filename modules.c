@@ -3,7 +3,7 @@
 typedef struct _LIB
 {
   void *library;
-  char *name;
+  char *file_path;
   struct _LIB *next;
 } lib_t;
 
@@ -22,29 +22,31 @@ static lib_t *root = NULL;
 FACT_t
 load_lib (func_t *scope, word_list args)
 {
+  int pos;
+  
+  char *fpath;
+  char **parsed_input;
+
+  void *checker;
+  
+  linked_word *formatted;
+  
   FACT_t path;
   lib_t *scroller;
 
-  if (root == NULL)
-    {
-      root = better_malloc (sizeof (lib_t));
-      scroller = root;
-    }
-  else
-    {
-      for (scroller = root; scroller->next != NULL; scroller = scroller->next)
-	{
-	  if (!strcmp (scroller->name, args.syntax[0]))
-	    return errorman_throw_reg (scope, "cannot re-load library");
-	}
-      scroller->next = better_malloc (sizeof (lib_t));
-      scroller = scroller->next;
-    }
+  struct element
+  {
+    char *name;
+    char **arguments;
 
-  scroller->next = NULL;
-  scroller->name = args.syntax[0];
+    void * (*function)(func_t *);
+  };
 
-  args.move_forward[0] = true;
+  struct elmap
+  {
+    unsigned int size;
+    struct element *elements;
+  } MOD_MAP;
 
   path = eval (scope, args);
 
@@ -56,55 +58,56 @@ load_lib (func_t *scope, word_list args)
 	return errorman_throw_reg (scope, "path to library to be loaded cannot be a function");
     }
 
-  scroller->library = dlopen (array_to_string (path.v_point), RTLD_LAZY);
+  fpath = array_to_string (path.v_point);
+
+  if (root == NULL)
+    {
+      root = better_malloc (sizeof (lib_t));
+      scroller = root;
+    }
+  else
+    {
+      for (scroller = root; scroller->next != NULL; scroller = scroller->next)
+	{
+	  if (!strcmp (scroller->file_path, fpath))
+	    return errorman_throw_reg (scope, "cannot re-load library");
+	}
+      scroller->next = better_malloc (sizeof (lib_t));
+      scroller = scroller->next;
+    }
+
+  scroller->next = NULL;
+  scroller->file_path = fpath;
+
+  scroller->library = dlopen (fpath, RTLD_LAZY);
 
   if (scroller->library == NULL)
-    return errorman_throw_reg (scope, combine_strs ("could not load library ",
+    {
+      printf ("IMPORT ERROR: %s\n", dlerror ());
+      return errorman_throw_reg (scope, combine_strs ("could not import module ",
 						    array_to_string (path.v_point)));
+    }
 
-  return FACT_get_ui (1);
-}
+  checker = dlsym (scroller->library, "MOD_MAP");
 
-FACT_t
-call_lib (func_t *scope, word_list args)
-{
-  FACT_t prim_name;
+  if (checker == NULL)
+    return errorman_throw_reg (scope, "could not find MOD_MAP symbol in module");
+
+  /* This is why I love C: */
+  MOD_MAP = *((struct elmap *) checker);  
+
+  for (pos = 0; pos < loaded->size; pos++)
+    {
+      func_t *ref;
+
+      if ((ref = add_func (scope, loaded->elements[pos].name)) == NULL)
+	continue; /* if it couldn't be added, just skip it. */
+
+      ref->args = loaded->elements[pos].arguments;
+      ref->extrn_func = loaded->elements[pos].function;
+    }
   
-  lib_t *scroller;
-
-  void *function;
-
-  for (scroller = root; scroller != NULL; scroller = scroller->next)
-    {
-      if (!strcmp (scroller->name, args.syntax[0]))
-	break;
-    }
-
-  if (scroller == NULL)
-    return errorman_throw_reg (scope, "call to unknown library");
-
-  args.move_forward[0] = true;
-
-  prim_name = eval (scope, args);
-
-  if (!isvar_t (prim_name))
-    {
-      if (iserror_t (prim_name))
-	return prim_name;
-      else
-	return errorman_throw_reg (scope, "primitive name cannot be a function");
-    }
-
-  function = dlsym (scroller->library, array_to_string (prim_name.v_point));
-
-  while (args.move_forward[0])
-    {
-      args.syntax++;
-      args.move_forward++;
-    }
-
-  /* This is a real stretch of a cast. */
-  return ((FACT_t (*)(func_t *, word_list)) function) (scope, args);
+  return FACT_get_ui (1);
 }
 
 void
@@ -113,5 +116,8 @@ close_libs ( void )
   lib_t *scroller;
 
   for (scroller = root; scroller != NULL; scroller = scroller->next)
-    dlclose (scroller->library);
+    {
+      if (scroller->library != NULL) /* in case there was an error loading something */
+	dlclose (scroller->library);
+    }
 }

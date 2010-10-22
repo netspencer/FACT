@@ -99,8 +99,7 @@ init_std_prims (void)
   add_prim ("lib.std.getchar", input_character); 
   add_prim ("lib.std.putchar", print_character);
   add_prim ("lib.std.putvar", print_var);
-  add_prim ("lib.load", load_lib);
-  add_prim ("lib.call", call_lib);
+  add_prim ("import", load_lib);
 }
 
 /*

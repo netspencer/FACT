@@ -141,6 +141,7 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
 
   new_scope->up = evald.f_point->up;
   new_scope->name = evald.f_point->name;
+  new_scope->extrn_func = evald.f_point->extrn_func;
 
   for (pos = 0; arg_list.syntax[0] != NULL; pos++)
     {
@@ -241,8 +242,13 @@ new_scope (func_t *scope, word_list expression)
   if (prepared.type == ERROR_TYPE) 
     return prepared; /* ha ha, that makes me chortle */
 
-  copy_body = copy (prepared.f_point->body + 1);
-  prepared = procedure (new_scope, copy_body);
+  if (new_scope->extrn_func != NULL)
+    prepared = *((FACT_t *) new_scope->extrn_func (new_scope));
+  else
+    {
+      copy_body = copy (prepared.f_point->body + 1);
+      prepared = procedure (new_scope, copy_body);
+    }
 
   if (prepared.type == ERROR_TYPE)
     return prepared;
@@ -275,7 +281,10 @@ run_func (func_t *scope, word_list expression_list)
   
   copied_body = copy (prepared.f_point->body);
 
-  return_value = expression (new_scope, copied_body);
+  if (new_scope->extrn_func != NULL)
+    return_value = *((FACT_t *) new_scope->extrn_func (new_scope));
+  else
+    return_value = expression (new_scope, copied_body);
 
   return_value.isret = false;
   return_value.break_signal = false;
