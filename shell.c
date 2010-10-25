@@ -130,17 +130,8 @@ shell (func_t *main_scope)
 	}
       
       formatted = create_list (parsed_input);
-      formatted = set_list (formatted, END);
-
-	  
-      while (formatted->previous != NULL)
-	formatted = formatted->previous;
-
-      rev_shunting_yard (formatted);
-
-      while (formatted->previous != NULL)
-	formatted = formatted->previous;
-
+      for (formatted = set_list (formatted, END); formatted->previous != NULL; formatted = formatted->previous);
+      for (rev_shunting_yard (formatted); formatted->previous != NULL; formatted = formatted->previous);
       set_link (formatted);
       parsed_input = convert_link (formatted);
 

@@ -52,7 +52,7 @@
   but it is still used.
 */
 
-extern unsigned int bytes_used;
+//extern unsigned int bytes_used;
 
 /*
   mem_trackopt is a boolean var_tiable used to
@@ -60,7 +60,7 @@ extern unsigned int bytes_used;
   allocated.
 */
 
-extern bool mem_trackopt;
+//extern bool mem_trackopt;
 
 /*---------------------------------------------*
  * Defines: Macros for common code shared      *
@@ -86,6 +86,7 @@ typedef enum _TYPE_DEFINE
   returns a NULL pointer.
 */
 
+/*
 static inline void *
 better_malloc (size_t alloc_size)
 {
@@ -128,6 +129,7 @@ better_malloc (size_t alloc_size)
 
   return temp_pointer;
 }
+*/
 
 /*
   new_realloc: like new_malloc except exits and
@@ -135,6 +137,7 @@ better_malloc (size_t alloc_size)
   pointer.
 */
 
+/*
 static inline void *
 better_realloc (void *to_resize, size_t alloc_size)
 {
@@ -177,6 +180,7 @@ better_realloc (void *to_resize, size_t alloc_size)
   
   return temp_pointer;
 }
+*/
 
 /*---------------------------------------------*
  * Data types: definitions of types and        *
@@ -301,7 +305,7 @@ typedef struct _LINKED_WORD
 
 #include "utilities.h"
 #include "modules.h"
-#include "gmp_mallocs.h"
+#include "malloc_replacements.h"
 #include "errorman.h"
 #include "management.h"
 #include "shell.h"

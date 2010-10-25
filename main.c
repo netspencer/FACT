@@ -1,18 +1,19 @@
 #include "common.h"
 
-unsigned int bytes_used = 0;
-bool mem_trackopt = false;
-
 void
 process_args (int argc, char **argv)
 {
   int arg;
-  FACT_t file_open;
-  static int memt = false;
   static int cmdln = true;
+
+  FACT_t file_open;
+  
   func_t *scope;
+
   var_t *inter_argc;
   var_t *inter_argv;
+
+  set_bytes_used (0);
  
   scope = alloc_func ();
   scope->name = "main";
@@ -26,8 +27,8 @@ process_args (int argc, char **argv)
     {
       static struct option long_options[] =
 	{
-	  {"show-heap", no_argument,       &memt,    1},
-	  {"hide-heap", no_argument,       &memt,    0},
+	  /*{"show-heap", no_argument,       &memt,    1},
+	    {"hide-heap", no_argument,       &memt,    0},*/
 	  {"stdin",     no_argument,       &cmdln,   1},
 	  {"no-stdin",  no_argument,       &cmdln,   0},
 	  {"shebang",   required_argument, 0, 'i'},
@@ -37,7 +38,7 @@ process_args (int argc, char **argv)
 
       int option_index = 0;
 
-      arg = getopt_long (argc, argv, "mnsdi:f:", long_options, &option_index);
+      arg = getopt_long (argc, argv, "sdi:f:", long_options, &option_index);
 
       if (arg == -1)
 	break;
@@ -49,7 +50,8 @@ process_args (int argc, char **argv)
 	  if (long_options[option_index].flag != 0)
 	    break;
 	  break;
-	  
+
+	  /*
 	case 'm':
 	  memt = true;
 	  break;
@@ -57,6 +59,7 @@ process_args (int argc, char **argv)
 	case 'n':
 	  memt = false;
 	  break;
+	  */
 
 	case 's':
 	  cmdln = true;
@@ -67,7 +70,7 @@ process_args (int argc, char **argv)
 	  break;
 
 	case 'f':
-	  mem_trackopt = memt;
+	  //mem_trackopt = memt;
 	  file_open = run_file (scope, optarg, false);
 
 	  if (file_open.type == ERROR_TYPE)
@@ -76,7 +79,7 @@ process_args (int argc, char **argv)
 	  break;
 
 	case 'i':
-	  mem_trackopt = memt;
+	  //	  mem_trackopt = memt;
 	  
 	  /* parse remaining arguments into var_tiables */
 	  inter_argc = add_var (scope, "argc");
@@ -107,7 +110,7 @@ process_args (int argc, char **argv)
 	}
     }
 
-  mem_trackopt = memt;
+  //  mem_trackopt = memt;
 
   if (cmdln)
     shell (scope);
@@ -122,9 +125,9 @@ main (int argc, char **argv)
   GC_INIT ();
   init_std_prims ();
   
-  mp_set_memory_functions (&gmp_malloc,
-			   &gmp_realloc,
-			   &gmp_free);
+  mp_set_memory_functions (&FACT_malloc,
+			   &FACT_realloc,
+			   &FACT_free);
   process_args (argc, argv);
   exit (0);
 }

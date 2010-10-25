@@ -25,28 +25,20 @@ load_lib (func_t *scope, word_list args)
   int pos;
   
   char *fpath;
-  char **parsed_input;
-
-  void *checker;
+  char **parsed_args;
   
   linked_word *formatted;
   
   FACT_t path;
   lib_t *scroller;
 
-  struct element
+  struct elements
   {
     char *name;
     char **arguments;
 
     void * (*function)(func_t *);
-  };
-
-  struct elmap
-  {
-    unsigned int size;
-    struct element *elements;
-  } MOD_MAP;
+  } *MOD_MAP;
 
   path = eval (scope, args);
 
@@ -88,23 +80,34 @@ load_lib (func_t *scope, word_list args)
 						    array_to_string (path.v_point)));
     }
 
-  checker = dlsym (scroller->library, "MOD_MAP");
+  MOD_MAP = dlsym (scroller->library, "MOD_MAP");
 
-  if (checker == NULL)
+  if (MOD_MAP == NULL)
     return errorman_throw_reg (scope, "could not find MOD_MAP symbol in module");
 
   /* This is why I love C: */
-  MOD_MAP = *((struct elmap *) checker);  
+  //MOD_MAP = *((struct elmap *) checker);  
 
-  for (pos = 0; pos < loaded->size; pos++)
+  for (pos = 0; MOD_MAP[pos].name != NULL; pos++)
     {
       func_t *ref;
 
-      if ((ref = add_func (scope, loaded->elements[pos].name)) == NULL)
+      if ((ref = add_func (scope, MOD_MAP[pos].name)) == NULL)
 	continue; /* if it couldn't be added, just skip it. */
 
-      ref->args = loaded->elements[pos].arguments;
-      ref->extrn_func = loaded->elements[pos].function;
+      /* parse the arguments correctly ---- */
+      if (MOD_MAP[pos].arguments)
+	continue;
+      parsed_args = MOD_MAP[pos].arguments;
+      if (parsed_args == NULL)
+	continue;
+      formatted = create_list (parsed_args);
+      for (formatted = set_list (formatted, END); formatted->previous != NULL; formatted = formatted->previous);
+      for (rev_shunting_yard (formatted); formatted->previous != NULL; formatted = formatted->previous);
+      set_link (formatted);
+      ref->args = convert_link (formatted);
+      /* end ---- */
+      ref->extrn_func = MOD_MAP[pos].function;
     }
   
   return FACT_get_ui (1);

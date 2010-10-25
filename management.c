@@ -2,7 +2,7 @@
 
 /* * * * * * * * * * * * * * * * * *
  * alloc_var: allocate the space   *
- * for a var_t struct and initialize *
+ * for a var struct and initialize *
  * all the values.                 *
  * * * * * * * * * * * * * * * * * */
 
@@ -85,6 +85,7 @@ alloc_func ()
   new = (func_t *) better_malloc (sizeof (func_t));
   new->array_size = 1;
   new->array_up = NULL;
+  new->name = NULL;
   new->extrn_func = NULL;
   new->up = NULL;
   new->next = NULL;
