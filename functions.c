@@ -141,7 +141,7 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
 
   new_scope->up = evald.f_point->up;
   new_scope->name = evald.f_point->name;
-  new_scope->extrn_func = NULL;//evald.f_point->extrn_func;
+  new_scope->extrn_func = evald.f_point->extrn_func;
 
   for (pos = 0; arg_list.syntax[0] != NULL; pos++)
     {

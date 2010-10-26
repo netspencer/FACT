@@ -38,6 +38,7 @@ if_statement (func_t *scope, word_list expression_list, bool *success)
       1,
       NULL,
       NULL,
+      NULL,
       scope,
       NULL,
       NULL
@@ -98,6 +99,7 @@ else_clause (func_t *scope, char **words)
       1,
       NULL,
       NULL,
+      NULL,
       scope,
       NULL,
       NULL
@@ -128,6 +130,7 @@ while_loop (func_t *scope, char **words)
       NULL,
       NULL,
       1,
+      NULL,
       NULL,
       NULL,
       scope,
@@ -203,6 +206,7 @@ for_loop (func_t *scope, char **words)
       NULL,
       NULL,
       1,
+      NULL,
       NULL,
       NULL,
       scope,
