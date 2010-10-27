@@ -116,8 +116,14 @@ mpc_sub (mpc_t *rop, mpc_t op1, mpc_t op2)
 void
 mpc_neg (mpc_t *rop, mpc_t op)
 {
+  mpc_t temp;
+
+  temp.precision = op.precision;
+  mpz_init (temp.object);
+  mpz_set (temp.object, op.object);
+  
   rop->precision = op.precision;
-  mpz_neg (rop->object, op.object);
+  mpz_neg (rop->object, temp.object);
 }
 
 void
@@ -133,27 +139,39 @@ mpc_mul (mpc_t *rop, mpc_t op1, mpc_t op2)
 }
 
 void
-mpc_div (mpc_t *rop, mpc_t op1, mpc_t op2)
+mpc_div (mpc_t *rop, mpc_t op1, mpc_t op2)  /* Division by zero is not checked for in this function. */
 {
-  mpz_t temp;
-  /* Division by zero is not checked for in this function. */
-  mpz_init (temp);
-  
-  if (op1.precision == 0)
-    {
-      rop->precision = default_prec;
-      mpz_set (temp, op1.object);      
-    }
-  else
-    {
-      rop->precision = op1.precision;
-      mpz_set (temp, op1.object);
-    }
-  
-  power_of_ten (temp, rop->precision);  
-  mpz_tdiv_q (temp, temp, op2.object);
+  mpc_t temp;
+  mpz_t temp_div;
+  mpz_t temp_res;
 
-  mpz_set (rop->object, temp);
+  //temp.precision = (op1.precision < op2.precision) ? op2.precision : op1.precision;
+  mpz_init (temp.object);
+  mpz_init (temp_res);
+  mpz_init_set (temp_div, op2.object);
+  power_of_ten (temp_div, op2.precision);
+
+  if (op1.precision == 0)
+    temp.precision = default_prec;
+  else
+    temp.precision = op1.precision;
+
+  /*
+  if (temp.precision == 0)
+    temp.precision = default_prec;
+  else if (op1.precision > op2.precision)
+    temp.precision = op1.precision;
+  else
+    temp.precision = op2.precision;
+  */
+  
+  mpz_set (temp.object, op1.object);
+  
+  power_of_ten (temp.object, temp.precision);  
+  mpz_tdiv_q (temp_res, temp.object, op2.object);
+
+  rop->precision = temp.precision;
+  mpz_set (rop->object, temp_res);
 }
 
 void

@@ -243,7 +243,7 @@ new_scope (func_t *scope, word_list expression)
     return prepared; /* ha ha, that makes me chortle */
 
   if (new_scope->extrn_func != NULL)
-    prepared = *((FACT_t *) new_scope->extrn_func (new_scope));
+    prepared = (((FACT_t (*)(func_t *)) new_scope->extrn_func) (new_scope));
   else
     {
       copy_body = copy (prepared.f_point->body + 1);
@@ -282,7 +282,7 @@ run_func (func_t *scope, word_list expression_list)
   copied_body = copy (prepared.f_point->body);
 
   if (new_scope->extrn_func != NULL)
-    return_value = *((FACT_t *) new_scope->extrn_func (new_scope));
+    return_value = (((FACT_t (*)(func_t *)) new_scope->extrn_func) (new_scope));
   else
     return_value = expression (new_scope, copied_body);
 

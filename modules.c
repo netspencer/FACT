@@ -25,9 +25,9 @@ load_lib (func_t *scope, word_list args)
   int pos;
   
   char *fpath;
-  char **parsed_args;
+  //  char **parsed_args;
   
-  linked_word *formatted;
+  //  linked_word *formatted;
   
   FACT_t path;
   lib_t *scroller;
@@ -35,7 +35,7 @@ load_lib (func_t *scope, word_list args)
   struct elements
   {
     char *name;
-    char **arguments;
+    char *arguments;
 
     void * (*function)(func_t *);
   } *MOD_MAP;
@@ -96,9 +96,11 @@ load_lib (func_t *scope, word_list args)
 	continue; /* if it couldn't be added, just skip it. */
 
       /* parse the arguments correctly ---- */
-      if (MOD_MAP[pos].arguments)
+      if (MOD_MAP[pos].arguments == NULL)
 	continue;
-      parsed_args = MOD_MAP[pos].arguments;
+      ref->args = get_words (MOD_MAP[pos].arguments);
+      /*
+      parsed_args = get_words (MOD_MAP[pos].arguments);
       if (parsed_args == NULL)
 	continue;
       formatted = create_list (parsed_args);
@@ -106,11 +108,13 @@ load_lib (func_t *scope, word_list args)
       for (rev_shunting_yard (formatted); formatted->previous != NULL; formatted = formatted->previous);
       set_link (formatted);
       ref->args = convert_link (formatted);
+      */
       /* end ---- */
+      //ref->args = MOD_MAP[pos].arguments;
       ref->extrn_func = MOD_MAP[pos].function;
     }
   
-  return FACT_get_ui (1);
+  return FACT_get_ui (0);
 }
 
 void

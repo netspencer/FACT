@@ -123,6 +123,8 @@ FACT_get_ui (unsigned int op)
   FACT_t ret;
 
   ret.type = VAR_TYPE;
+  ret.isret = false;
+  ret.break_signal = false;
   ret.v_point = alloc_var ();
   mpc_set_ui (&(ret.v_point->data), op);
 
@@ -135,6 +137,8 @@ FACT_get_si (signed int op)
   FACT_t ret;
 
   ret.type = VAR_TYPE;
+  ret.isret = false;
+  ret.break_signal = false;
   ret.v_point = alloc_var ();
   mpc_set_si (&(ret.v_point->data), op);
 

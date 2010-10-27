@@ -37,30 +37,12 @@
 #include <getopt.h>
 #include <dlfcn.h>
 
-/* The following include is an exception,
-   as it is need for the typedefs below. */
+/*
+  The following include is an exception,
+  as it is need for the typedefs below.
+*/
+
 #include "mpc_functions.h"
-
-/* global var_tiables: */
-
-/*
-  bytes_used is sort of a ticker that tracks
-  the amount of bytes in use. When it exceeds
-  a certain limit, garbage collections is
-  forced. I implemented it unaware of the
-  var_tious methods GC has to circumvent it,
-  but it is still used.
-*/
-
-//extern unsigned int bytes_used;
-
-/*
-  mem_trackopt is a boolean var_tiable used to
-  track the heap size each time something is
-  allocated.
-*/
-
-//extern bool mem_trackopt;
 
 /*---------------------------------------------*
  * Defines: Macros for common code shared      *
@@ -73,114 +55,6 @@ typedef enum _TYPE_DEFINE
     FUNCTION_TYPE,
     ERROR_TYPE, 
   } type_define;
-
-#define MAX_BYTES 1000000
-
-//#define MEM_DEBUG
-
-//#define PARSING 2
-
-/*
-  new_malloc: addition to regular malloc that
-  reports and error and exits whenever malloc
-  returns a NULL pointer.
-*/
-
-/*
-static inline void *
-better_malloc (size_t alloc_size)
-{
-  void *temp_pointer;
-
-  if (mem_trackopt)
-    printf("Heap size = %d\n", (int) GC_get_heap_size ());
-
-  if ((int) GC_get_heap_size () == 0)
-    GC_gcollect ();
-  
-  if (bytes_used >= MAX_BYTES)
-    {
-#ifdef MEM_DEBUG
-      printf ("bytes_used exceeds MAX_BYTES\n"
-	      "Current-heap = %d\n", (int) GC_get_heap_size ());
-#endif
-      GC_gcollect ();
-#ifdef MEM_DEBUG
-      printf ("Heap-after-collect = %d\n", (int) GC_get_heap_size ());
-#endif
-      bytes_used = 0;
-    }
-
-  temp_pointer = GC_malloc (alloc_size);
-
-  bytes_used += alloc_size;
-
-  if (temp_pointer == NULL)
-    {
-      GC_gcollect ();
-      temp_pointer = GC_malloc (alloc_size);
-
-      if (temp_pointer == NULL)
-	{
-	  fprintf (stderr, "Could not allocate block of size %d, exiting.\n", (int) alloc_size);
-	  exit (EXIT_FAILURE);
-	}
-    }
-
-  return temp_pointer;
-}
-*/
-
-/*
-  new_realloc: like new_malloc except exits and
-  reports when realloc returns returns a null
-  pointer.
-*/
-
-/*
-static inline void *
-better_realloc (void *to_resize, size_t alloc_size)
-{
-  void *temp_pointer;
-  
-  if (mem_trackopt)
-    printf("Heap size = %d\n", (int) GC_get_heap_size());
-
-  if ((int) GC_get_heap_size () == 0)
-    GC_gcollect ();
-
-  if (bytes_used >= MAX_BYTES)
-    {
-#ifdef MEM_DEBUG
-      printf ("bytes_used exceeds MAX_BYTES\n"
-	      "Current-heap = %d\n", (int) GC_get_heap_size ());
-#endif
-      GC_gcollect ();
-#ifdef MEM_DEBUG
-      printf ("Heap-after-collect = %d\n", (int) GC_get_heap_size ());
-#endif
-      bytes_used = 0;
-    }
-
-  temp_pointer = GC_realloc (to_resize, alloc_size);
-
-  bytes_used += alloc_size;
-
-  if (temp_pointer == NULL)
-    {
-      GC_gcollect ();
-      temp_pointer = GC_realloc (to_resize, alloc_size);
-
-      if (temp_pointer == NULL)
-	{
-	  fprintf (stderr, "Could not allocate block of size %d, exiting.\n", (int) alloc_size);
-	  exit (EXIT_FAILURE);
-	}
-    }
-  
-  return temp_pointer;
-}
-*/
 
 /*---------------------------------------------*
  * Data types: definitions of types and        *
@@ -225,10 +99,10 @@ typedef struct
 {
   type_define type;
   bool isret;
+  bool break_signal;
   var_t *v_point;
   func_t *f_point;
   _ERROR error;
-  bool break_signal;
 } FACT_t;
 
 typedef struct

@@ -49,7 +49,7 @@ defunc_array (func_t *base, func_t *scope, word_list expression)
 	return array_size;
       
       if (array_size.type != VAR_TYPE)
-	return errorman_throw_reg (scope, "array size needs to be a var_tiable");
+	return errorman_throw_reg (scope, "array size needs to be a variable");
 
       if (((size = (mpc_get_si (array_size.v_point->data))) > 1000 || size < 1))
 	return errorman_throw_reg (scope, "array size give is invalid");
@@ -165,7 +165,7 @@ def_array (var_t *base, func_t *scope, word_list expression)
 	return array_size;
 
       if (array_size.type != VAR_TYPE)
-	return errorman_throw_reg (scope, "array size needs to be a var_tiable");
+	return errorman_throw_reg (scope, "array size needs to be a variable");
       
       if ((size = (mpc_get_si (array_size.v_point->data))) > 1000 || size < 2)
 	return errorman_throw_reg (scope, "invalid array size");
@@ -198,7 +198,7 @@ define (func_t *scope, word_list expression)
   return_value.v_point = alloc_var ();
 
   if (expression.syntax[0] == NULL)
-    return errorman_throw_reg (scope, "cannot define anonymous var_t");
+    return errorman_throw_reg (scope, "cannot define anonymous var");
     
   return_value.type = VAR_TYPE;
 
