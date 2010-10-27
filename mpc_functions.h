@@ -19,19 +19,6 @@
  * (c) 2010 Matthew Plant, under the GPL.
  */
 
-typedef struct
-{
-  unsigned int precision; /*
-			    Unsigned as there will never be a
-			    negative precision. By default the
-			    value is 0, indicating 10^0 = 1.
-			  */
-  mpz_t object;           /*
-			    All data is stored in the form of
-			    an integer type.
-			  */
-} mpc_t;
-
 extern void mpc_set_default_prec (unsigned int);
 extern unsigned int mpc_get_default_prec (void);
 

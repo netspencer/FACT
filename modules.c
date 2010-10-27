@@ -2,9 +2,9 @@
 
 typedef struct _LIB
 {
-  void *library;
-  char *file_path;
-  struct _LIB *next;
+  void        * library;
+  char        * file_path;
+  struct _LIB * next;
 } lib_t;
 
 static lib_t *root = NULL;
@@ -22,23 +22,16 @@ static lib_t *root = NULL;
 FACT_t
 load_lib (func_t *scope, word_list args)
 {
-  int pos;
-  
-  char *fpath;
-  //  char **parsed_args;
-  
-  //  linked_word *formatted;
-  
-  FACT_t path;
-  lib_t *scroller;
-
-  struct elements
+  int      pos;
+  char   * fpath;
+  lib_t  * scroller;
+  FACT_t   path;
+  struct   elements
   {
-    char *name;
-    char *arguments;
-
-    void * (*function)(func_t *);
-  } *MOD_MAP;
+    char *   name;
+    char *   arguments;
+    void *(* function)(func_t *);
+  }      *   MOD_MAP;
 
   path = eval (scope, args);
 
@@ -85,12 +78,9 @@ load_lib (func_t *scope, word_list args)
   if (MOD_MAP == NULL)
     return errorman_throw_reg (scope, "could not find MOD_MAP symbol in module");
 
-  /* This is why I love C: */
-  //MOD_MAP = *((struct elmap *) checker);  
-
   for (pos = 0; MOD_MAP[pos].name != NULL; pos++)
     {
-      func_t *ref;
+      func_t * ref;
 
       if ((ref = add_func (scope, MOD_MAP[pos].name)) == NULL)
 	continue; /* if it couldn't be added, just skip it. */
@@ -98,19 +88,9 @@ load_lib (func_t *scope, word_list args)
       /* parse the arguments correctly ---- */
       if (MOD_MAP[pos].arguments == NULL)
 	continue;
-      ref->args = get_words (MOD_MAP[pos].arguments);
-      /*
-      parsed_args = get_words (MOD_MAP[pos].arguments);
-      if (parsed_args == NULL)
-	continue;
-      formatted = create_list (parsed_args);
-      for (formatted = set_list (formatted, END); formatted->previous != NULL; formatted = formatted->previous);
-      for (rev_shunting_yard (formatted); formatted->previous != NULL; formatted = formatted->previous);
-      set_link (formatted);
-      ref->args = convert_link (formatted);
-      */
-      /* end ---- */
-      //ref->args = MOD_MAP[pos].arguments;
+      ref->args = get_words (combine_strs (MOD_MAP[pos].arguments, " "));
+      /* end parsing ---- */
+      
       ref->extrn_func = MOD_MAP[pos].function;
     }
   

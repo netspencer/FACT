@@ -4,40 +4,22 @@
 #define OPEN_FAILED  1
 #define CLOSED       0
 
-void
-set_array (bool *rop, int op)
-{
-  int pos;
-
-  for (pos = 0; pos < op; pos++)
-    rop[pos] = false;
-}
-
 FACT_t
 expression (func_t *scope, char **words)
 {
-  int position; /* current position in "words" */
-  
-  bool isreturn; /* if the block starts with a return or not */
-  bool isbreak;
-  bool getif;
-  
-  char **formatted_expression; /* the block to be evaluated */
-
-  FACT_t return_value; /* value to be eventually returned if nothing fails */
-
-  word_list expression;
-
-  static int depth = -1;
-  static int ifopen[100];
-
-  /*extern int get_exp_length_first (char **, int);*/
+  int           position;             /* current position in "words" */  
+  bool          isreturn;             /* if the block starts with a return or not */
+  bool          isbreak;
+  bool          getif;
+  char       ** formatted_expression; /* the block to be evaluated */
+  FACT_t        return_value;         /* value to be eventually returned if nothing fails */
+  word_list     expression;
+  static int    depth = -1;
+  static int    ifopen [100];
 
   isreturn = false;
   isbreak = false;
-
   return_value.type = VAR_TYPE;
-
   depth++;
   
   position = get_exp_length_first (words, ';'); /* find out how long the statement is */
@@ -131,8 +113,7 @@ expression (func_t *scope, char **words)
 FACT_t
 procedure (func_t *scope, char **words)
 {
-  int len_to_move; /* length moved each time */
-  
+  int    len_to_move;  /* length moved each time */  
   FACT_t return_value; /* value returned */
 
   while (*words != NULL && strcmp (*words, "}"))
@@ -166,33 +147,33 @@ lambda_proc (func_t *scope, word_list expression)
 {
   func_t temp_local = 
     {
-      scope->name,
-      NULL,
-      NULL,
-      1,
-      NULL,
-      NULL,
-      NULL,
-      scope,
-      NULL,
-      NULL,
-    }; /*
-	 this is a temporary scope created to contain
-	 lambda procedures. Note, these are different
-	 from lambda functions. A lot.
-       */
+      .name       = scope->name,
+      .args       = NULL,
+      .body       = NULL,
+      .array_size = 1,
+      .extrn_func = NULL,
+      .vars       = NULL,
+      .funcs      = NULL,
+      .up         = scope,
+      .array_up   = NULL,
+      .next       = NULL,
+    };
   
+   /*
+     temp_local is a temporary scope created to contain
+     lambda procedures. Note, these are different from
+     lambda functions. A lot.
+   */
+
   return procedure (&temp_local, expression.syntax);
 }
 
 FACT_t
 eval (func_t *scope, word_list expression)
 {
-  int call_num;
-
-  char *word;
-  
-  FACT_t return_value;
+  int      call_num;
+  char   * word;
+  FACT_t   return_value;
 
   while (expression.move_forward[0])
     {

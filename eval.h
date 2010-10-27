@@ -16,9 +16,9 @@
  * (c) 2010 Matthew Plant. Sorry for the bloat.
  */
 
-extern FACT_t eval (func_t *, word_list);
-extern FACT_t expression (func_t *, char **);
-extern FACT_t procedure (func_t *, char **);
-extern FACT_t lambda_proc (func_t *, word_list);
+FACT_INTERN_FUNC (FACT_t) eval        (func_t *, word_list);
+FACT_INTERN_FUNC (FACT_t) expression  (func_t *, char **);
+FACT_INTERN_FUNC (FACT_t) procedure   (func_t *, char **);
+FACT_INTERN_FUNC (FACT_t) lambda_proc (func_t *, word_list);
 
 #endif

@@ -89,17 +89,6 @@ liven_func (func_t *scope, word_list expression)
   return func;
 }
 
-int
-count_until_NULL (char **words)
-{
-  int pos;
-
-  for (pos = 0; words[pos] != NULL; pos++)
-    ;
-
-  return pos;
-}
-
 FACT_t
 prepare_function (func_t *scope, func_t *new_scope, word_list expression)
 {

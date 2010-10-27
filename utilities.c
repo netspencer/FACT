@@ -1,5 +1,25 @@
 #include "utilities.h"
 
+void
+set_array (bool *rop, int op)
+{
+  int pos;
+
+  for (pos = 0; pos < op; pos++)
+    rop[pos] = false;
+}
+
+int
+count_until_NULL (char **words)
+{
+  int pos;
+
+  for (pos = 0; words[pos] != NULL; pos++)
+    ;
+
+  return pos;
+}
+
 char *
 combine_strs (char *str1, char *str2)
 {

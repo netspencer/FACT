@@ -14,18 +14,19 @@
  *
  */
 
-extern char *combine_strs (char *, char *);
-extern char **copy (char **);
-extern char *array_to_string (var_t *);
+FACT_INTERN_FUNC (void) set_array (bool *, int);
 
-extern var_t *string_to_array (char *, char *);
-extern var_t *string_array_to_var_t (char **, char *, int);
+FACT_INTERN_FUNC (int) count_until_NULL (char **);
 
-extern FACT_t FACT_get_ui (unsigned int op);
-extern FACT_t FACT_get_si (signed int op);
+FACT_INTERN_FUNC (char * ) combine_strs    (char  * , char *);
+FACT_INTERN_FUNC (char * ) array_to_string (var_t * );
+FACT_INTERN_FUNC (char **) copy            (char  **);
 
-/* The following describes macros to make everyone's lives
-   a bit clearner. */
+FACT_INTERN_FUNC (var_t *) string_to_array       (char * , char *);
+FACT_INTERN_FUNC (var_t *) string_array_to_var_t (char **, char *, int);
+
+FACT_INTERN_FUNC (FACT_t) FACT_get_ui (unsigned int op);
+FACT_INTERN_FUNC (FACT_t) FACT_get_si (  signed int op);
 
 /*
   Macro conditional tests:
@@ -37,8 +38,8 @@ extern FACT_t FACT_get_si (signed int op);
   they can be used otherwise.
 */
 
-#define isvar_t(op) op.type == VAR_TYPE
-#define isfunc_t(op) op.type == FUNCTION_TYPE
-#define iserror_t(op) op.type == ERROR_TYPE
+#define isvar_t(op)   (op.type == VAR_TYPE)
+#define isfunc_t(op)  (op.type == FUNCTION_TYPE)
+#define iserror_t(op) (op.type == ERROR_TYPE)
 
 #endif

@@ -3,19 +3,12 @@
 FACT_t
 defunc_array (func_t *base, func_t *scope, word_list expression)
 {
-  int size;
-  int pos;
-
-  /* char **temp; */
-
-  FACT_t return_value;
-  FACT_t array_size;
-  FACT_t checker;
-
-  func_t *scroller;
-
-  extern void set_array (bool *, int);
-  extern int count_until_NULL (char **);
+  int      size;
+  int      pos;
+  FACT_t   return_value;
+  FACT_t   array_size;
+  FACT_t   checker;
+  func_t * scroller;
   
   return_value.f_point = alloc_func ();
 
@@ -121,17 +114,12 @@ defunc (func_t *scope, word_list expression)
 FACT_t
 def_array (var_t *base, func_t *scope, word_list expression)
 {
-  int size;
-  int pos;
-
-  FACT_t return_value;
-  FACT_t array_size;
-  FACT_t checker;
-
-  var_t *scroller;
-
-  extern void set_array (bool *, int);
-  extern int count_until_NULL (char **);
+  int      size;
+  int      pos;
+  FACT_t   return_value;
+  FACT_t   array_size;
+  FACT_t   checker;
+  var_t  * scroller;
 
   return_value.v_point = alloc_var ();
 
@@ -228,7 +216,7 @@ define (func_t *scope, word_list expression)
 var_t *
 clone_var_t (var_t *surrogate, char *name)
 {
-  var_t *clone;
+  var_t * clone;
 
   if (surrogate == NULL)
     return NULL;
@@ -248,11 +236,10 @@ clone_var_t (var_t *surrogate, char *name)
 FACT_t
 set (func_t *scope, word_list expression)
 {
-  FACT_t arg1;
-  FACT_t arg2;
-
-  var_t *hold;
-  var_t *copy;
+  FACT_t   arg1;
+  FACT_t   arg2;
+  var_t  * hold;
+  var_t  * copy;
 
   arg1 = eval (scope, expression);
   arg2 = eval (scope, expression);
@@ -288,21 +275,13 @@ set (func_t *scope, word_list expression)
       arg1.f_point->up = arg2.f_point->up;
     }
 
-  /*
-  for (pos = 0; words[pos + 1] != NULL; pos++)
-    words[pos] = words[pos + 1];
-  
-  words[pos] = NULL;
-  */
-  
   return arg1;
 }
 
 FACT_t
 get_array_size (func_t *scope, word_list expression)
 {
-  int pos;
-  
+  int    pos;  
   FACT_t return_value;
 
   pos = get_exp_length (expression.syntax, ']');
@@ -325,23 +304,19 @@ get_array_size (func_t *scope, word_list expression)
 FACT_t
 return_array (func_t *scope, word_list expression)
 {
-  int size;
-
-  FACT_t return_value;
-  FACT_t hold;
-
+  int         size;
+  FACT_t      return_value;
+  FACT_t      hold;
   type_define type;
-
   union
   {
-    var_t  *var_t_root;
-    func_t *func_t_root;
+    var_t  * var_t_root;
+    func_t * func_t_root;
   } roots;
-
   union
   {
-    var_t  *var_t_value;
-    func_t *func_t_value;
+    var_t  * var_t_value;
+    func_t * func_t_value;
   } values;
  
   if (!strcmp (expression.syntax[0], "]"))
@@ -467,9 +442,8 @@ size_of (func_t *scope, word_list expression)
 FACT_t
 get_array_var_t (var_t *root, func_t *scope, word_list expression)
 {
-  int size;
-  int position;
-
+  int    size;
+  int    position;
   FACT_t return_value;
   FACT_t array_size;
 
@@ -533,9 +507,8 @@ get_array_var_t (var_t *root, func_t *scope, word_list expression)
 FACT_t
 get_array_func_t (func_t *root, func_t *scope, word_list expression)
 {
-  int size;
-  int position;
-
+  int    size;
+  int    position;
   FACT_t return_value;
   FACT_t array_size;
 

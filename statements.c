@@ -29,22 +29,21 @@ if_statement (func_t *scope, word_list expression_list, bool *success)
 {
   FACT_t return_value;
   FACT_t conditional;
-
   func_t temp_scope =
     {
-      "if_temp",
-      NULL,
-      NULL,
-      1,
-      NULL,
-      NULL,
-      NULL,
-      scope,
-      NULL,
-      NULL
+      .name       = scope->name,
+      .args       = NULL,
+      .body       = NULL,
+      .array_size = 1,
+      .extrn_func = NULL,
+      .vars       = NULL,
+      .funcs      = NULL,
+      .up         = scope,
+      .array_up   = NULL,
+      .next       = NULL,
     };
   
-  (*success) = true;
+  *success = true;
   
   if (strcmp (expression_list.syntax[0], "(") != 0)
     return errorman_throw_reg (scope, "expected '(' after if statement");
@@ -89,20 +88,19 @@ if_statement (func_t *scope, word_list expression_list, bool *success)
 FACT_t
 else_clause (func_t *scope, char **words)
 {
-  FACT_t return_value;
-  
+  FACT_t return_value;  
   func_t temp_scope =
     {
-      "if_temp",
-      NULL,
-      NULL,
-      1,
-      NULL,
-      NULL,
-      NULL,
-      scope,
-      NULL,
-      NULL
+      .name       = scope->name,
+      .args       = NULL,
+      .body       = NULL,
+      .array_size = 1,
+      .extrn_func = NULL,
+      .vars       = NULL,
+      .funcs      = NULL,
+      .up         = scope,
+      .array_up   = NULL,
+      .next       = NULL,
     };
 
   return_value = expression (&temp_scope, words);
@@ -116,26 +114,23 @@ else_clause (func_t *scope, char **words)
 FACT_t
 while_loop (func_t *scope, char **words)
 {
-  int pos_cond;
-  int pos;
-
-  FACT_t conditional_evald;
-  FACT_t block_evald;
-
+  int       pos_cond;
+  int       pos;
+  FACT_t    conditional_evald;
+  FACT_t    block_evald;
   word_list conditional_exp;
-
-  func_t temp_scope =
+  func_t    temp_scope =
     {
-      "while_temp",
-      NULL,
-      NULL,
-      1,
-      NULL,
-      NULL,
-      NULL,
-      scope,
-      NULL,
-      NULL
+      .name       = scope->name,
+      .args       = NULL,
+      .body       = NULL,
+      .array_size = 1,
+      .extrn_func = NULL,
+      .vars       = NULL,
+      .funcs      = NULL,
+      .up         = scope,
+      .array_up   = NULL,
+      .next       = NULL,
     };
 
   extern void set_array (bool *, int);
@@ -184,44 +179,37 @@ while_loop (func_t *scope, char **words)
 FACT_t
 for_loop (func_t *scope, char **words)
 {
-  int pos;
-  int count;
-  int arr_pos;
-  
-  FACT_t index_value;
-  FACT_t limit_value;
-  FACT_t block_evald;
-
-  var_t *var_t_scroller;
-
-  func_t *func_t_scroller;
-
-  word_list index_dest_exp;
-
-  mpc_t one;
-
-  func_t temp_scope =
+  int         pos;
+  int         count;
+  int         arr_pos;  
+  FACT_t      index_value;
+  FACT_t      limit_value;
+  FACT_t      block_evald;
+  word_list   index_dest_exp;
+  mpc_t       one;
+  var_t     * var_t_scroller;
+  func_t    * func_t_scroller;
+  func_t      temp_scope =
     {
-      "for_temp",
-      NULL,
-      NULL,
-      1,
-      NULL,
-      NULL,
-      NULL,
-      scope,
-      NULL,
-      NULL
+      .name       = scope->name,
+      .args       = NULL,
+      .body       = NULL,
+      .array_size = 1,
+      .extrn_func = NULL,
+      .vars       = NULL,
+      .funcs      = NULL,
+      .up         = scope,
+      .array_up   = NULL,
+      .next       = NULL,
     };
-
+  
   extern int count_until_NULL (char **);
   extern void set_array (bool *, int);
 
   index_dest_exp.syntax = words;
   index_dest_exp.move_forward = better_malloc (sizeof (int) *
 					       ((count = count_until_NULL (words)) + 1));
-  //set_array (index_dest_exp.move_forward, count + 1);
-  
+    
   index_value = eval (&temp_scope, index_dest_exp);
 
   if (index_value.type == ERROR_TYPE)

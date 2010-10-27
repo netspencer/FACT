@@ -19,6 +19,13 @@
  * (C) 2010 Matthew Plant. 
  */
 
+#define FACT_INTERN_FUNC(type) extern type
+#if (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 1))
+#define FACT_INTERN_DEPRECATED(type) extern __attribute__((__deprecated__)) type
+#else
+#define FACT_INTERN_DEPRECATED(type) extern type
+#endif
+
 /*---------------------------------------------*
  * Library includes: headers that are not part *
  * of the program itself.                      *
@@ -37,146 +44,14 @@
 #include <getopt.h>
 #include <dlfcn.h>
 
-/*
-  The following include is an exception,
-  as it is need for the typedefs below.
-*/
-
-#include "mpc_functions.h"
-
-/*---------------------------------------------*
- * Defines: Macros for common code shared      *
- * between functions.                          *
- *---------------------------------------------*/
-
-typedef enum _TYPE_DEFINE
-  {   
-    VAR_TYPE = 0,
-    FUNCTION_TYPE,
-    ERROR_TYPE, 
-  } type_define;
-
-/*---------------------------------------------*
- * Data types: definitions of types and        *
- * structs that are used frequently.           *
- *---------------------------------------------*/
-
-typedef struct _VAR
-{ 
-  char *name;
-  int array_size;
-  mpc_t data;
-  struct _VAR *array_up;
-  struct _VAR *next; 
-} var_t;
-
-typedef struct _FUNC
-{
-  char *name; 
-  char **args;
-  char **body;
-
-  int array_size;
-
-  var_t *vars;
-
-  void * (*extrn_func)(struct _FUNC *);
-
-  struct _FUNC *funcs; 
-  struct _FUNC *up;
-  struct _FUNC *array_up;
-  struct _FUNC *next;
-} func_t;
-
-typedef struct 
-{
-  func_t *scope;
-  char *description;
-  bool thrown;
-} _ERROR;
-
-typedef struct 
-{
-  type_define type;
-  bool isret;
-  bool break_signal;
-  var_t *v_point;
-  func_t *f_point;
-  _ERROR error;
-} FACT_t;
-
-typedef struct
-{
-  bool *move_forward;
-  char **syntax;
-} word_list;
-
-typedef enum _word_codes
-  {
-    PARSING_ERROR = -1,
-    END,                     /* -1 */
-    UNKNOWN,                 /* 0  */
-    PLUS,                    
-    MINUS,
-    MULTIPLY,
-    DIVIDE,
-    MOD,
-    ADD_ASSIGN,
-    SUB_ASSIGN,
-    MULT_ASSIGN,
-    DIV_ASSIGN,
-    MOD_ASSIGN,
-    AT,
-    SET,
-    DEF,
-    DEFUNC,
-    FUNC_RET,
-    FUNC_OBJ,
-    FUNC_END,
-    COMMA,
-    IN_SCOPE,
-    OP_CURLY,
-    CL_CURLY,
-    OP_BRACKET,
-    NOP_BRACKET,
-    CL_BRACKET,
-    OP_PAREN,
-    CL_PAREN,
-    QUOTE,
-    AND,
-    OR,
-    EQ,
-    NEQ,
-    LESS,
-    MORE,
-    LESS_EQ,
-    MORE_EQ,
-    SIZE,
-    IF,
-    WHILE,
-    FOR,
-    THEN,
-    ELSE,
-    SEMI,
-    RETURN_STAT,
-  } word_code;
-
-typedef struct _LINKED_WORD
-{
-  word_code code;
-  char *physical; /* only used if code is equal to UNKNOWN, otherwise it is NULL. */
-  struct _LINKED_WORD *hidden;
-  struct _LINKED_WORD *hidden_up;
-  struct _LINKED_WORD *next;
-  struct _LINKED_WORD *previous;
-} linked_word;
-
 /*---------------------------------------------*
  * Local includes: headers that provide        *
- * definitions of internal functions or        *
- * macros.                                     *
+ * definitions of internal functions macros or *
+ * data structures.                            *
  *---------------------------------------------*/
 
+#include "typedefs.h"
+#include "mpc_functions.h"
 #include "utilities.h"
 #include "modules.h"
 #include "malloc_replacements.h"
