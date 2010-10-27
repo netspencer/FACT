@@ -168,7 +168,7 @@ mpc_div (mpc_t *rop, mpc_t op1, mpc_t op2)  /* Division by zero is not checked f
   mpz_set (temp.object, op1.object);
   
   power_of_ten (temp.object, temp.precision);  
-  mpz_tdiv_q (temp_res, temp.object, op2.object);
+  mpz_tdiv_q (temp_res, temp.object, temp_div);
 
   rop->precision = temp.precision;
   mpz_set (rop->object, temp_res);
