@@ -142,14 +142,14 @@ void
 mpc_div (mpc_t *rop, mpc_t op1, mpc_t op2)  /* Division by zero is not checked for in this function. */
 {
   mpc_t temp;
-  mpz_t temp_div;
+  //  mpz_t temp_div;
   mpz_t temp_res;
 
   //temp.precision = (op1.precision < op2.precision) ? op2.precision : op1.precision;
   mpz_init (temp.object);
   mpz_init (temp_res);
-  mpz_init_set (temp_div, op2.object);
-  power_of_ten (temp_div, op2.precision);
+  //mpz_init_set (temp_div, op2.object);
+  //power_of_ten (temp_div, op2.precision);
 
   if (op1.precision == 0)
     temp.precision = default_prec;
@@ -166,9 +166,8 @@ mpc_div (mpc_t *rop, mpc_t op1, mpc_t op2)  /* Division by zero is not checked f
   */
   
   mpz_set (temp.object, op1.object);
-  
-  power_of_ten (temp.object, temp.precision);  
-  mpz_tdiv_q (temp_res, temp.object, temp_div);
+  power_of_ten (temp.object, temp.precision + op2.precision);  
+  mpz_tdiv_q (temp_res, temp.object, op2.object);
 
   rop->precision = temp.precision;
   mpz_set (rop->object, temp_res);
