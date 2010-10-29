@@ -3,17 +3,9 @@
 
 #include "common.h"
 
-/**
- * errorman:
- * Provides functions for the easy handling of
- * errors in code.
- *
- * (c) 2010 Matthew Plant
- */
+FACT_INTERN_FUNC (FACT_t) errorman_throw_reg  (func_t *, char *   );
+FACT_INTERN_FUNC (FACT_t) errorman_throw_prim (func_t *, word_list);
 
-extern FACT_t errorman_throw_reg (func_t *, char *);
-extern FACT_t errorman_throw_prim (func_t *, word_list);
-
-extern void errorman_dump (_ERROR, int, const char *);
+FACT_INTERN_FUNC (void) errorman_dump (_ERROR, int, const char *);
 
 #endif

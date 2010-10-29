@@ -15,33 +15,30 @@
  * TODO:
  * Improve speed and memory usage, fix mod
  * function so that it actually works.
- *
- * (c) 2010 Matthew Plant, under the GPL.
  */
 
-extern void mpc_set_default_prec (unsigned int);
-extern unsigned int mpc_get_default_prec (void);
+FACT_INTERN_FUNC (void        ) mpc_set_default_prec (unsigned int);
+FACT_INTERN_FUNC (unsigned int) mpc_get_default_prec (void        );
 
-extern void mpc_init (mpc_t *);
+FACT_INTERN_FUNC (void) mpc_init    (mpc_t *                      );
+FACT_INTERN_FUNC (void) mpc_set     (mpc_t *, mpc_t               );
+FACT_INTERN_FUNC (void) mpc_set_ui  (mpc_t *, unsigned long int   );
+FACT_INTERN_FUNC (void) mpc_set_si  (mpc_t *, signed long int     );
+FACT_INTERN_FUNC (void) mpc_set_str (mpc_t *, char *, unsigned int);
 
-extern void mpc_set (mpc_t *, mpc_t);
-extern void mpc_set_ui (mpc_t *, unsigned long int);
-extern void mpc_set_si (mpc_t *, signed long int);
-extern void mpc_set_str (mpc_t *, char *, unsigned int);
+FACT_INTERN_FUNC       (void) mpc_add (mpc_t *, mpc_t, mpc_t);
+FACT_INTERN_FUNC       (void) mpc_sub (mpc_t *, mpc_t, mpc_t);
+FACT_INTERN_FUNC       (void) mpc_neg (mpc_t *, mpc_t       );
+FACT_INTERN_FUNC       (void) mpc_mul (mpc_t *, mpc_t, mpc_t);
+FACT_INTERN_FUNC       (void) mpc_div (mpc_t *, mpc_t, mpc_t);
+FACT_INTERN_DEPRECATED (void) mpc_mod (mpc_t *, mpc_t, mpc_t);
 
-extern void mpc_add (mpc_t *, mpc_t, mpc_t);
-extern void mpc_sub (mpc_t *, mpc_t, mpc_t);
-extern void mpc_neg (mpc_t *, mpc_t);
-extern void mpc_mul (mpc_t *, mpc_t, mpc_t);
-extern void mpc_div (mpc_t *, mpc_t, mpc_t);
-extern void mpc_mod (mpc_t *, mpc_t, mpc_t);
+FACT_INTERN_FUNC (int) mpc_cmp    (mpc_t, mpc_t            );
+FACT_INTERN_FUNC (int) mpc_cmp_ui (mpc_t, unsigned long int);
+FACT_INTERN_FUNC (int) mpc_cmp_si (mpc_t, signed long int  );
 
-extern int mpc_cmp (mpc_t, mpc_t);
-extern int mpc_cmp_ui (mpc_t, unsigned long int);
-extern int mpc_cmp_si (mpc_t, signed long int);
-
-extern unsigned long int mpc_get_ui (mpc_t);
-extern signed long int mpc_get_si (mpc_t);
-extern char *mpc_get_str (mpc_t);
+FACT_INTERN_FUNC (unsigned long int) mpc_get_ui (mpc_t);
+FACT_INTERN_FUNC (signed long int  ) mpc_get_si (mpc_t);
+FACT_INTERN_FUNC (char *           ) mpc_get_str (mpc_t);
 
 #endif

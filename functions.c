@@ -23,14 +23,12 @@
 FACT_t
 liven_func (func_t *scope, word_list expression)
 {
-  int pos_args;
-  int pos_block;
-  int position;
-
-  char **args_formatted;
-  char **block_formatted;
-
-  FACT_t func;
+  int       pos_args;
+  int       pos_block;
+  int       position;
+  char   ** args_formatted;
+  char   ** block_formatted;
+  FACT_t    func;
   
   func = eval (scope, expression);
 
@@ -92,19 +90,14 @@ liven_func (func_t *scope, word_list expression)
 FACT_t
 prepare_function (func_t *scope, func_t *new_scope, word_list expression)
 {
-  int pos;
-  int count;
-
-  FACT_t evald;
-  FACT_t arg;
-  FACT_t passed;
-
-  var_t *hold;
-  var_t *temp;
-
-  word_list arg_list;
-
-  extern void set_array (bool *, int);
+  int         pos;
+  int         count;
+  FACT_t      evald;
+  FACT_t      arg;
+  FACT_t      passed;
+  var_t     * hold;
+  var_t     * temp;
+  word_list   arg_list;
 
   evald = eval (scope, expression);
 
@@ -153,7 +146,7 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
 	{
 	  hold = passed.v_point->next;
 	  passed.v_point->next = NULL;
-	  temp = clone_var_t (passed.v_point, arg.v_point->name);
+	  temp = clone_var (passed.v_point, arg.v_point->name);
 	  passed.v_point->next = hold;
 	  arg.v_point->array_up = temp->array_up;
 	  mpc_set (&(arg.v_point->data), temp->data);
@@ -217,12 +210,10 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
 FACT_t
 new_scope (func_t *scope, word_list expression)
 {
-  char **copy_body;
-  
-  FACT_t prepared;
-  FACT_t return_value;
-
-  func_t *new_scope;
+  char   ** copy_body;
+  func_t *  new_scope;
+  FACT_t    prepared;
+  FACT_t    return_value;
 
   new_scope = alloc_func ();
   
@@ -254,12 +245,10 @@ new_scope (func_t *scope, word_list expression)
 FACT_t
 run_func (func_t *scope, word_list expression_list)
 {
-  char **copied_body;
-
-  FACT_t return_value;
-  FACT_t prepared;
-
-  func_t *new_scope;
+  char   ** copied_body;
+  func_t *  new_scope;
+  FACT_t    return_value;
+  FACT_t    prepared;
 
   new_scope = alloc_func ();
 

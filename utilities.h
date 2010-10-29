@@ -8,10 +8,6 @@
  * Various utilies used for making my life
  * easier, such as combining two strings,
  * and moving the string along, etc.
- *
- * (c) 2010 Matthew Plant
- * Sorry about everything.
- *
  */
 
 FACT_INTERN_FUNC (void) set_array (bool *, int);
@@ -19,10 +15,10 @@ FACT_INTERN_FUNC (void) set_array (bool *, int);
 FACT_INTERN_FUNC (int) count_until_NULL (char **);
 
 FACT_INTERN_FUNC (char * ) combine_strs    (char  * , char *);
-FACT_INTERN_FUNC (char * ) array_to_string (var_t * );
-FACT_INTERN_FUNC (char **) copy            (char  **);
+FACT_INTERN_FUNC (char * ) array_to_string (var_t *         );
+FACT_INTERN_FUNC (char **) copy            (char  **        );
 
-FACT_INTERN_FUNC (var_t *) string_to_array       (char * , char *);
+FACT_INTERN_FUNC (var_t *) string_to_array       (char * , char *     );
 FACT_INTERN_FUNC (var_t *) string_array_to_var_t (char **, char *, int);
 
 FACT_INTERN_FUNC (FACT_t) FACT_get_ui (unsigned int op);

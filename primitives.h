@@ -1,25 +1,22 @@
 #ifndef PRIMITIVES_H_
 #define PRIMITIVES_H_
 
+#include "common.h"
+
 /**
- * Primitives.h:
+ * primitives:
  * Provides functions for the
  * easy handeling and calling
  * of math calls and primitives.
- *
- * TODO:
- *  - Remove unnecessary crap.
- *
- * (c) 2010 Matthew Plant.
  */
 
-extern int isprim (char *);
-extern int ismathcall (char *);
+FACT_INTERN_FUNC (int) isprim     (char *);
+FACT_INTERN_FUNC (int) ismathcall (char *);
 
-extern void add_prim (const char *, FACT_t (*)(func_t *, word_list));
-extern void init_std_prims ();
+FACT_INTERN_FUNC (void) add_prim       (const char *, FACT_t (*)(func_t *, word_list));
+FACT_INTERN_FUNC (void) init_std_prims (void                                         );
 
-extern FACT_t runprim (func_t *, word_list, int);
-extern FACT_t eval_math (func_t *, word_list, int);
+FACT_INTERN_FUNC (FACT_t) runprim   (func_t *, word_list, int);
+FACT_INTERN_FUNC (FACT_t) eval_math (func_t *, word_list, int);
 
 #endif

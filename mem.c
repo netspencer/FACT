@@ -214,7 +214,7 @@ define (func_t *scope, word_list expression)
 }
 
 var_t *
-clone_var_t (var_t *surrogate, char *name)
+clone_var (var_t *surrogate, char *name)
 {
   var_t * clone;
 
@@ -225,8 +225,8 @@ clone_var_t (var_t *surrogate, char *name)
   clone->name = name;
   clone->array_size = surrogate->array_size;
 
-  clone->next = clone_var_t (surrogate->next, name);
-  clone->array_up = clone_var_t (surrogate->array_up, name);
+  clone->next = clone_var (surrogate->next, name);
+  clone->array_up = clone_var (surrogate->array_up, name);
 
   mpc_set (&(clone->data), surrogate->data);
 
@@ -254,7 +254,7 @@ set (func_t *scope, word_list expression)
       
       hold = arg2.v_point->next;
       arg2.v_point->next = NULL;
-      copy = clone_var_t (arg2.v_point, arg1.v_point->name);
+      copy = clone_var (arg2.v_point, arg1.v_point->name);
       arg2.v_point->next = hold;
       free_var (arg1.v_point->array_up);
       arg1.v_point->array_up = copy->array_up;
@@ -440,7 +440,7 @@ size_of (func_t *scope, word_list expression)
 }
 
 FACT_t
-get_array_var_t (var_t *root, func_t *scope, word_list expression)
+get_array_var (var_t *root, func_t *scope, word_list expression)
 {
   int    size;
   int    position;
@@ -499,13 +499,13 @@ get_array_var_t (var_t *root, func_t *scope, word_list expression)
   for (root = root->array_up, position = 0; position < size; position++)
     root = root->next;
 
-  return_value = get_array_var_t (root, scope, expression);
+  return_value = get_array_var (root, scope, expression);
 
   return return_value;
 }
 
 FACT_t
-get_array_func_t (func_t *root, func_t *scope, word_list expression)
+get_array_func (func_t *root, func_t *scope, word_list expression)
 {
   int    size;
   int    position;
@@ -564,7 +564,7 @@ get_array_func_t (func_t *root, func_t *scope, word_list expression)
 	 position = 0; position < size; position++)
     root = root->next;
 
-  return_value = get_array_func_t (root, scope, expression);
+  return_value = get_array_func (root, scope, expression);
 
   return return_value;
 }

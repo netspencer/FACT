@@ -5,8 +5,6 @@ ft_putchar (func_t *scope)
 {
   var_t *to_put;
 
-  printf ("scope = %s\n", scope->name);
-
   to_put = get_var (scope, "char");
   putchar (var_get_si (to_put));
 

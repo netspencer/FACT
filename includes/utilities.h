@@ -39,16 +39,16 @@ FACT_API_FUNC (FACT_t) FACT_get_si (signed int op);
   they can be used otherwise.
 */
 
-#define isvar_t(op) (op.type == VAR_TYPE)
-#define isfunc_t(op) (op.type == FUNCTION_TYPE)
+#define isvar_t(op)   (op.type == VAR_TYPE)
+#define isfunc_t(op)  (op.type == FUNCTION_TYPE)
 #define iserror_t(op) (op.type == ERROR_TYPE)
 
-#define FACT_conv_ui(op) mpc_get_ui (op.v_point->data)
-#define FACT_conv_si(op) mpc_get_si (op.v_point->data)
+#define FACT_conv_ui(op)  mpc_get_ui (op.v_point->data)
+#define FACT_conv_si(op)  mpc_get_si (op.v_point->data)
 #define FACT_conv_str(op) mpc_get_str (op.v_point->data)
 
-#define var_get_ui(op) mpc_get_ui (op->data)
-#define var_get_si(op) mpc_get_si (op->data)
+#define var_get_ui(op)  mpc_get_ui (op->data)
+#define var_get_si(op)  mpc_get_si (op->data)
 #define var_get_str(op) mpc_get_str (op->data)
 
 #endif

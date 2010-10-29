@@ -19,7 +19,7 @@
  * (C) 2010 Matthew Plant. 
  */
 
-#define FACT_INTERN_FUNC(type) extern type
+#define FACT_INTERN_FUNC(type) extern type 
 #if (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 1))
 #define FACT_INTERN_DEPRECATED(type) extern __attribute__((__deprecated__)) type
 #else

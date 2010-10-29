@@ -3,30 +3,17 @@
 
 #include "common.h"
 
-/**
- * Parser:
- * Functions for parsing text into
- * correct formating, and finding
- * the length of expressions.
- *
- * TODO:
- *  - Add another function for the
- *    replacing of things like !=
- *    with ni and such.
- *
- * (c) 2010 Matthew Plant.
- */
+FACT_INTERN_FUNC (void) rev_shunting_yard (linked_word *);
+FACT_INTERN_FUNC (void) set_link          (linked_word *);
 
-extern char **get_words (char *);
+FACT_INTERN_FUNC (int) get_exp_length       (char **, int);
+FACT_INTERN_FUNC (int) get_exp_length_first (char **, int);
 
-extern void rev_shunting_yard (linked_word *);
-extern char **convert_link (linked_word *);
-extern void set_link (linked_word *);
+FACT_INTERN_FUNC (char **) get_words    (char        *);
+FACT_INTERN_FUNC (char **) convert_link (linked_word *);
 
-extern linked_word *create_list (char **);
-extern linked_word *set_list (linked_word *, word_code); 
+FACT_INTERN_FUNC (linked_word *) create_list (char        **          );
+FACT_INTERN_FUNC (linked_word *) set_list    (linked_word *, word_code); 
 
-extern int get_exp_length (char **, int);
-extern int get_exp_length_first (char **, int);
 
 #endif

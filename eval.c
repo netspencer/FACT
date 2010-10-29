@@ -205,9 +205,9 @@ eval (func_t *scope, word_list expression)
       else if ((call_num = ismathcall (word)) > -1)
 	return eval_math (scope, expression, call_num);
       else if (get_var (scope, word) != NULL)
-	return_value = get_array_var_t (get_var (scope, word), scope, expression);
+	return_value = get_array_var (get_var (scope, word), scope, expression);
       else if (get_func (scope, word) != NULL)
-	return_value = get_array_func_t (get_func (scope, word), scope, expression);
+	return_value = get_array_func (get_func (scope, word), scope, expression);
       else
 	return errorman_throw_reg (scope, combine_strs ("cannot evaluate ", word));
     }

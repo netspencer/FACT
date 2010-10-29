@@ -3,7 +3,7 @@
 
 #include "common.h"
 
-extern char *get_input (FILE *, unsigned int *);
-extern void shell (func_t *);
+FACT_INTERN_FUNC (char *) get_input (FILE   *, unsigned int *);
+FACT_INTERN_FUNC (void  ) shell     (func_t *                );
 
 #endif

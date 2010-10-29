@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -ggdb -m64 -rdynamic
+CFLAGS =  -ggdb -m64 -rdynamic
 PFLAGS = -pg
 PROG = FACT-GCC
 PARSERV = 3

@@ -267,7 +267,7 @@ for_loop (func_t *scope, char **words)
 
 	      index_value.v_point->array_size = var_t_scroller->array_size;
 	      mpc_set (&(index_value.v_point->data), var_t_scroller->data);
-	      index_value.v_point->array_up = clone_var_t (var_t_scroller->array_up, index_value.v_point->name);
+	      index_value.v_point->array_up = clone_var (var_t_scroller->array_up, index_value.v_point->name);
 	    }
 	  else if (arr_pos != 0)
 	    {
