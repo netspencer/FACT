@@ -184,8 +184,8 @@ statement_length (char **words)
   int w_code;
   int arguments_left;
 
-  extern int get_exp_length_first (char **, int);
-  extern word_code get_block_code (char *);
+  // extern int get_exp_length_first (char **, int);
+  // extern word_code get_block_code (char *);
 
   for (pos = 0, arguments_left = 1; arguments_left > 0 && words[pos] != NULL; pos++, arguments_left--)
     {
@@ -199,23 +199,23 @@ statement_length (char **words)
 	case OP_BRACKET:
 	case NOP_BRACKET:
 	  pos += get_exp_length (words + pos + 1, ']');
-	  //	  printf (":: %s\n", words[pos]);
-
 	  if (get_block_code (words[pos + 1]) == OP_BRACKET)
 	    arguments_left++;
 	  break;
 
 	case OP_CURLY: /* we are assuming that the user is an idiot and we have to check for this */
 	  pos += get_exp_length (words + pos + 1, '}');
-	  //	  arguments_left++;
 	  break;
 
 	case OP_PAREN:
 	  pos += get_exp_length (words + pos + 1, ')');
-	  printf (":: %s\n", words[pos]);
-	  //	  arguments_left++;
 	  break;
-
+	  /*
+	    I'm not sure just adding FUNC_RET and FUNC_OBJ
+	    will work, but it's worth a shot.
+	  */
+	case FUNC_RET:
+	case FUNC_OBJ:
 	case SET:
 	case PLUS:
 	case MINUS:
@@ -235,7 +235,8 @@ statement_length (char **words)
 	case MORE_EQ:
 	  arguments_left += 2;
 	  break;
-	  
+
+	  /*
 	case FUNC_RET:
 	case FUNC_OBJ:
 	  while ((w_code = get_block_code (words[++pos])) != FUNC_END
@@ -249,6 +250,7 @@ statement_length (char **words)
 		pos += get_exp_length (words + pos + 1, ')');
 	    }
 	  break;
+	  */
 
 	case IN_SCOPE:
 	case SIZE:

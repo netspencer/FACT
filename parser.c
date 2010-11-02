@@ -3,7 +3,6 @@
  * (c) 2010 Matthew Plant
  * Includes functions for parsing input into
  * more easily used data.
- *
  */
 
 #include "parser.h"
@@ -39,6 +38,11 @@ is_in_quotes (int character)
 static int
 isopt (int character)
 {
+  /*
+    need to fix this one up a bit.
+    Probably would be a good idea to
+    split up the operators into categories.
+  */
   static int times = 0;
   
   switch (character)
@@ -56,28 +60,22 @@ isopt (int character)
     case '!':
     case '[':
       if (++times > 3)
-	{
-	  times = 0;
-	  return false;
-	}
+	return (times = 0);
       return true;
 
     default:
-      times = 0;
-      return false;
+      return (times = 0);
     }
 }
 
 char **
 get_words (char *start)
 {
-  int count;
-  int count2;
-
-  bool isstring;
-
-  char *end;
-  char **return_string;
+  int     count;
+  int     count2;
+  bool    isstring;
+  char *  end;
+  char ** return_string;
 
   return_string = (char **) better_malloc (sizeof (char *));
   
@@ -134,11 +132,7 @@ get_words (char *start)
 word_code
 get_block_code (char *block)
 {
-  static bool quotes;
-
-  if (quotes == true && strcmp (block, "\""))
-    return UNKNOWN;
-  else if (block == NULL)
+  if (block == NULL)
     return END;
   else if (!strcmp (block, "+"))
     return PLUS;
@@ -172,8 +166,10 @@ get_block_code (char *block)
     return FUNC_RET;
   else if (!strcmp (block, "&"))
     return FUNC_OBJ;
+  /*
   else if (!strcmp (block, "<-"))
     return FUNC_END;
+  */
   else if (!strcmp (block, ":"))
     return IN_SCOPE;
   else if (!strcmp (block, ","))
@@ -193,10 +189,7 @@ get_block_code (char *block)
   else if (!strcmp (block, ")"))
     return CL_PAREN;
   else if (!strcmp (block, "\""))
-    {
-      quotes = !quotes;
-      return QUOTE;
-    }
+    return QUOTE;
   else if (!strcmp (block, /*"and"*/ "&&"))
     return AND;
   else if (!strcmp (block, /*"or"*/ "||"))
@@ -236,7 +229,7 @@ get_block_code (char *block)
 static inline linked_word *
 alloc_word (linked_word *set_prev)
 {
-  linked_word *temp;
+  linked_word * temp;
 
   temp = (linked_word *) better_malloc (sizeof (linked_word));
 
@@ -253,8 +246,8 @@ alloc_word (linked_word *set_prev)
 linked_word *
 create_list (char **words)
 {
-  word_code w_code;
-  linked_word *base;
+  word_code     w_code;
+  linked_word * base;
 
   for (base = alloc_word (NULL); (w_code = get_block_code (words[0])) != END; words++)
     {
@@ -278,8 +271,8 @@ create_list (char **words)
 linked_word *
 set_list (linked_word *start, word_code stopper) 
 {
-  word_code w_code;
-  linked_word *temp_link;
+  word_code     w_code;
+  linked_word * temp_link;
   
   while ((w_code = start->code) != stopper && w_code != END)
     {
@@ -329,6 +322,10 @@ set_list (linked_word *start, word_code stopper)
 
 	  start->hidden->hidden_up = start;
 	}
+      /*
+	Removing this in order to improve
+	function syntax a wee bit.
+
       else if (w_code == FUNC_RET
 	       || w_code == FUNC_OBJ)
 	{
@@ -345,6 +342,7 @@ set_list (linked_word *start, word_code stopper)
 
 	  start->hidden->hidden_up = start;
 	}
+      */
       else if (w_code == DEF
 	       || w_code == DEFUNC)
 	{
@@ -386,8 +384,8 @@ set_list (linked_word *start, word_code stopper)
 void
 swap (linked_word *swapping)
 {
-  linked_word *temp_next;
-  linked_word *temp_prev;
+  linked_word * temp_next;
+  linked_word * temp_prev;
 
   if (swapping->previous == NULL)
     return;
@@ -416,8 +414,8 @@ swap (linked_word *swapping)
 }
 
 #define isnotMDM(op) (op != MULTIPLY && op != DIVIDE && op != MOD)
-#define isnotAS(op) (op != PLUS && op != MINUS)
-#define isnotSE(op) (op != SET)
+#define isnotAS(op)  (op != PLUS && op != MINUS)
+#define isnotSE(op)  (op != SET)
 #define isnotOPC(op) (op != OP_CURLY)
 #define isnotASN(op) (op < ADD_ASSIGN || op > MOD_ASSIGN)
 #define isnotCMP(op) (op < AND || op > MORE_EQ)
@@ -425,7 +423,9 @@ swap (linked_word *swapping)
 static void
 precedence_level1 (linked_word *scan)
 {
-  linked_word *find_end;
+  int           pos;
+  linked_word * find_end;
+  linked_word * move_along;
 
   while (scan->next != NULL)
     {
@@ -467,8 +467,32 @@ precedence_level1 (linked_word *scan)
 	    }
 	  return;
 
+	 
 	case FUNC_RET:
 	case FUNC_OBJ:
+	  for (find_end = scan->next, move_along = scan, pos = 0; (find_end != NULL &&
+								   (find_end->code != OP_PAREN
+								    || pos == 0));
+	       find_end = find_end->next, pos++) 
+	    {
+	      if (pos == 0)
+		{
+		  move_along->hidden = find_end;
+		  move_along = move_along->hidden;
+		  move_along->hidden_up = scan;
+		  move_along->previous = NULL;
+		}
+	      else
+		move_along = move_along->next;
+	    }
+	  scan->next = find_end->next;
+	  move_along->next = find_end;
+	  move_along->next->next = NULL;
+	  scan->next->previous = scan;
+	  rev_shunting_yard (scan->hidden);
+	  break;
+		 
+	  /*
 	  if (scan->hidden->hidden != NULL)
 	    rev_shunting_yard (scan->hidden->hidden);
 
@@ -482,6 +506,7 @@ precedence_level1 (linked_word *scan)
 	  scan->hidden->next = find_end;
 	  find_end->previous = scan->hidden;
 	  break;
+	  */
 
 	case FOR:
 	case THEN:
@@ -965,9 +990,11 @@ convert_link (linked_word *list)
 	  result[position] = "&";
 	  break;
 
+	  /*
 	case FUNC_END:
 	  result[position] = "<-";
 	  break;
+	  */
 
 	case IN_SCOPE:
 	  result[position] = ":";

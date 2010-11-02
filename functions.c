@@ -119,17 +119,24 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
   arg_list.syntax = copy (evald.f_point->args);
   arg_list.move_forward = better_malloc (sizeof (int) *
 					 ((count = count_until_NULL (arg_list.syntax)) + 1));
-  //set_array (arg_list.move_forward, count);
-
   new_scope->up = evald.f_point->up;
   new_scope->name = evald.f_point->name;
   new_scope->extrn_func = evald.f_point->extrn_func;
+
+  if (strcmp (expression.syntax[0], "("))
+    return errorman_throw_reg (scope, "expected '(' after function");
+  else
+    {
+      expression.move_forward[0] = true;
+      expression.move_forward++;
+      expression.syntax++;
+    }
 
   for (pos = 0; arg_list.syntax[0] != NULL; pos++)
     {
       arg = eval (new_scope, arg_list);
 
-      if (!strcmp (expression.syntax[0], "<-"))
+      if (!strcmp (expression.syntax[0], ")"))
 	return errorman_throw_reg (scope, "expected more arguments");
 
       passed = eval (scope, expression);
@@ -168,42 +175,30 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
 	  arg_list.syntax++;
 	  arg_list.move_forward++;
 	}
-
       while (expression.move_forward[0])
 	{
 	  expression.syntax++;
 	  expression.move_forward++;
 	}
-	
       if (arg_list.syntax[0] == NULL)
         {
-          if (strcmp (expression.syntax[0], "<-") && strcmp (expression.syntax[0], ",") == 0)
+          if (strcmp (expression.syntax[0], ")")
+	      && strcmp (expression.syntax[0], ",") == 0)
 	    return errorman_throw_reg (scope, "expected fewer arguments");
-	  
-	  break;
+	  else
+	    break;
         }
       else if (strcmp (arg_list.syntax[0], ",") == 0)
 	{
-	  if (strcmp (expression.syntax[0],",") != 0)
+	  if (strcmp (expression.syntax[0], ",") != 0)
 	    return errorman_throw_reg (scope, "expected more arguments");
-
-	  arg_list.move_forward[0] = true; 
-	  expression.move_forward[0] = true;
+	  else
+	    arg_list.move_forward[0] = expression.move_forward[0] = true;
 	}
       else
 	return errorman_throw_reg (scope, "syntax error in argument declarations");
     }
-
   expression.move_forward[0] = true;
-
-  /*
-  for (count = pos + 2, pos = -1; words[pos + count] != NULL; pos++)
-    words[pos] = words[pos + count];
-
-  for (pos++; pos < count; pos++)
-    words[pos] = NULL;
-  */
-  
   return evald;
 }
 
