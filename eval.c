@@ -4,10 +4,13 @@
 #define OPEN_FAILED  1
 #define CLOSED       0
 
+#define MAX_RECURSION 500 
+
 FACT_t
 expression (func_t *scope, char **words)
 {
-  int           position;             /* current position in "words" */  
+  int           position;             /* current position in "words" */                 
+  int           hold;
   bool          isreturn;             /* if the block starts with a return or not */
   bool          isbreak;
   bool          getif;
@@ -15,21 +18,21 @@ expression (func_t *scope, char **words)
   FACT_t        return_value;         /* value to be eventually returned if nothing fails */
   word_list     expression;
   static int    depth = -1;
-  static int    ifopen [100];
+  static int    ifopen [MAX_RECURSION];
 
   isreturn = false;
   isbreak = false;
   return_value.type = VAR_TYPE;
+
   depth++;
   
   position = get_exp_length_first (words, ';'); /* find out how long the statement is */
 
-  if (depth == 100)
+  if (depth == MAX_RECURSION)
     {
       depth--;
-      return errorman_throw_reg (scope, "reached the maximum recursion depth of 100");
-    }
-  
+      return errorman_throw_reg (scope, "reached the maximum recursion depth");
+    }  
   if (position < 1
       || (words[position - 1][0] != ';'
 	  && words[position - 1][0] != '}'))
@@ -52,22 +55,44 @@ expression (func_t *scope, char **words)
       if (getif)
 	ifopen[depth] = OPEN_SUCCESS;
       else
-	ifopen[depth] = OPEN_FAILED;
+	{
+	  ifopen[depth] = OPEN_FAILED;
+	  for (position = 1; formatted_expression[position] != NULL; position++)
+	    {
+	      int temp_depth = depth + 1;
+
+	      if (temp_depth >= MAX_RECURSIONS)
+		return errorman_throw_reg ("You have too many nested if loops. They exceed the maximum recursion depth");
+	      
+	      if (!strcmp (formatted_expression[position], "if"))
+		ifopen[temp_depth++] = OPEN_FAILED;
+	      else if (!strcmp (formatted_expression[position], ";")
+		       || !strcmp (formatted_expression[position], ";"))
+		break;
+	    }
+	}
     }
   else if (strcmp (formatted_expression[0], "else") == 0)
     {
-      if (ifopen[depth] == OPEN_FAILED)
+      for (position = MAX_RECURSION - 1; position >= 0; position--)
 	{
-	  depth--;
-	  return_value = else_clause (scope, formatted_expression + 1);
-	  depth++;
+	  if (ifopen[position] == OPEN_FAILED)
+	    {
+	      hold = depth;
+	      depth = position - 1;
+	      return_value = else_clause (scope, formatted_expression + 1);
+	      depth = hold;
+	      break;
+	    }
+	  else if (ifopen[position] == OPEN_SUCCESS)
+	    {
+	      if (strcmp (formatted_expression[1], "if") != 0)
+		ifopen[position] = CLOSED;
+	      depth--;
+	      return FACT_get_ui (0);
+	    }
 	}
-      else if (ifopen[depth] == OPEN_SUCCESS)
-	{
-	  if (strcmp (formatted_expression[1], "if") != 0)
-	    ifopen[depth] = CLOSED;
-	}
-      else
+      if (position == -1)
 	{
 	  depth--;
 	  return errorman_throw_reg (scope, "unmatched 'else'");
@@ -85,6 +110,8 @@ expression (func_t *scope, char **words)
 	{
 	  expression.syntax = formatted_expression + 1;
 	  return_value = lambda_proc (scope, expression);
+	  for (position = depth + 1; position < MAX_RECURSION; position++) 
+	    ifopen[position] = CLOSED;
 	}
       else if (strcmp (formatted_expression[0], "return") == 0)
 	{

@@ -3,30 +3,29 @@
 void
 set_array (bool *rop, int op)
 {
-  int pos;
-
+  while (op)
+    rop[--op] = false;
+  /*
   for (pos = 0; pos < op; pos++)
     rop[pos] = false;
+  */
 }
 
 int
 count_until_NULL (char **words)
 {
   int pos;
-
-  for (pos = 0; words[pos] != NULL; pos++)
-    ;
-
+  for (pos = 0; words[pos] != NULL; pos++);
   return pos;
 }
 
 char *
 combine_strs (char *str1, char *str2)
 {
-  int new_length;
-  int scroll1;
-  int scroll2;
-  char *new_string;
+  int    new_length;
+  int    scroll1;
+  int    scroll2;
+  char * new_string;
 
   new_length = strlen (str1) + strlen (str2);
   new_string = (char *) better_malloc (sizeof (char) * new_length);
@@ -45,9 +44,9 @@ combine_strs (char *str1, char *str2)
 char **
 copy (char **words)
 {
-  int pos;
-  int count;
-  char **temp;
+  int     pos;
+  int     count;
+  char ** temp;
 
   if (words == NULL)
     return NULL;
@@ -67,11 +66,10 @@ copy (char **words)
 char *
 array_to_string (var_t *convertable)
 {
-  var_t *scroller;
-
-  char *return_value;
-  char *setter;
-
+  char  * return_value;
+  char  * setter;
+  var_t * scroller;
+  
   return_value = (char *) better_malloc (sizeof (char) * convertable->array_size);
   setter = return_value;
 
@@ -89,10 +87,10 @@ array_to_string (var_t *convertable)
 var_t *
 string_to_array (char *convertable, char *name)
 {
-  int length;
-  int pos;
-  var_t *root;
-  var_t *scroller;
+  int     length;
+  int     pos;
+  var_t * root;
+  var_t * scroller;
 
   length = strlen (convertable) + 1;
 
@@ -114,9 +112,9 @@ string_to_array (char *convertable, char *name)
 var_t *
 string_array_to_var_t (char **strings, char *var_t_name, int array_size)
 {
-  int pos;
-  var_t *root;
-  var_t *scroller;
+  int     pos;
+  var_t * root;
+  var_t * scroller;
   
   root = alloc_var ();
   root->name = var_t_name;

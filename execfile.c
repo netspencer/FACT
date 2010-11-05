@@ -3,17 +3,12 @@
 FACT_t
 run_file (func_t *scope, const char *filename, bool silent)
 {
-  unsigned int line_num;
-  //  int read;
-  
-  char *input;
-  char **parsed_input;
-
-  FILE *fp;
-
-  linked_word *formatted;
-
-  FACT_t returned;
+  char         *  input;
+  char         ** parsed_input;
+  FILE         *  fp;
+  FACT_t          returned;
+  linked_word  *  formatted;
+  unsigned int    line_num;
 
   if (!silent)
     printf ("Opening file <%s>\n", filename);

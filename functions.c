@@ -92,11 +92,11 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
 {
   int         pos;
   int         count;
+  var_t     * hold;
+  var_t     * temp;
   FACT_t      evald;
   FACT_t      arg;
   FACT_t      passed;
-  var_t     * hold;
-  var_t     * temp;
   word_list   arg_list;
 
   evald = eval (scope, expression);
@@ -218,6 +218,7 @@ new_scope (func_t *scope, word_list expression)
     return prepared; /* ha ha, that makes me chortle */
 
   if (new_scope->extrn_func != NULL)
+    /* Well that is, um, oh wow. */ 
     prepared = (((FACT_t (*)(func_t *)) new_scope->extrn_func) (new_scope));
   else
     {

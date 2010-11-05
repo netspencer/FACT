@@ -202,9 +202,6 @@ for_loop (func_t *scope, char **words)
       .array_up   = NULL,
       .next       = NULL,
     };
-  
-  extern int count_until_NULL (char **);
-  extern void set_array (bool *, int);
 
   index_dest_exp.syntax = words;
   index_dest_exp.move_forward = better_malloc (sizeof (int) *
