@@ -50,26 +50,11 @@ run_file (func_t *scope, const char *filename, bool silent)
 	}
 
       formatted = create_list (parsed_input);
-
-      formatted = set_list (formatted, END);
-
-      while (formatted->previous != NULL)
-	formatted = formatted->previous;
-
-      rev_shunting_yard (formatted);
-
-      while (formatted->previous != NULL)
-	formatted = formatted->previous;
-
+      for (formatted = set_list (formatted, END); formatted->previous != NULL; formatted = formatted->previous);
+      for (rev_shunting_yard (formatted); formatted->previous != NULL; formatted = formatted->previous);
       set_link (formatted);
       parsed_input = convert_link (formatted);
-
-      /*
-      for (read = 0; parsed_input[read] != NULL; read++)
-	printf ("%s ", parsed_input[read]);
-      putchar ('\n');
-      */
-
+      
       returned = expression (scope, parsed_input);
 
       if (returned.type == ERROR_TYPE)

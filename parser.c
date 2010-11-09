@@ -470,28 +470,14 @@ precedence_level1 (linked_word *scan)
 	 
 	case FUNC_RET:
 	case FUNC_OBJ:
-	  for (find_end = scan->next, move_along = scan, pos = 0; (find_end != NULL &&
-								   (find_end->code != OP_PAREN
-								    || pos == 0));
-	       find_end = find_end->next, pos++) 
-	    {
-	      if (pos == 0)
-		{
-		  move_along->hidden = find_end;
-		  move_along = move_along->hidden;
-		  move_along->hidden_up = scan;
-		  move_along->previous = NULL;
-		}
-	      else
-		move_along = move_along->next;
-	    }
-	  scan->next = find_end->next;
-	  move_along->next = find_end;
-	  move_along->next->next = NULL;
-	  scan->next->previous = scan;
-	  rev_shunting_yard (scan->hidden);
+	  scan->hidden = scan->next;
+	  scan->next = scan->next->next;
+	  scan->hidden->hidden_up = scan;
+	  scan->hidden->previous = NULL;
+	  scan->hidden->next->previous = scan;
+	  scan->hidden->next = NULL;
+	  rev_shunting_yard (scan->hidden->hidden);
 	  break;
-		 
 	  /*
 	  if (scan->hidden->hidden != NULL)
 	    rev_shunting_yard (scan->hidden->hidden);

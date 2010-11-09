@@ -341,6 +341,7 @@ return_array (func_t *scope, word_list expression)
      
       roots.func_t_root = alloc_func ();
       roots.func_t_root->name = "result";
+      roots.func_t_root->up = scope;
       roots.func_t_root->array_up = values.func_t_value;
     }
   

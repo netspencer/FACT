@@ -99,6 +99,11 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
   FACT_t      passed;
   word_list   arg_list;
 
+  if (strcmp (expression.syntax[0], "("))
+    return errorman_throw_reg (scope, "expected '(' after function call");
+  else
+    expression.move_forward[0] = true;
+
   evald = eval (scope, expression);
 
   if (evald.type == ERROR_TYPE)
@@ -108,7 +113,10 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
     return errorman_throw_reg (scope, "cannot run a non-function");
 
   if (evald.f_point->args == NULL)
-    return errorman_throw_reg (scope, "given function has no body");
+    {
+      printf (":%s\n", evald.f_point->name);
+      return errorman_throw_reg (scope, "given function has no body");
+    }
 
   while (expression.move_forward[0])
     {
@@ -123,15 +131,15 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
   new_scope->name = evald.f_point->name;
   new_scope->extrn_func = evald.f_point->extrn_func;
 
-  if (strcmp (expression.syntax[0], "("))
-    return errorman_throw_reg (scope, "expected '(' after function");
+  if (arg_list.syntax[0] != NULL && strcmp (expression.syntax[0], ","))
+    return errorman_throw_reg (scope, "expected more arguments");
   else
     {
       expression.move_forward[0] = true;
       expression.move_forward++;
       expression.syntax++;
     }
-
+  
   for (pos = 0; arg_list.syntax[0] != NULL; pos++)
     {
       arg = eval (new_scope, arg_list);

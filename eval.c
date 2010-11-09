@@ -61,8 +61,8 @@ expression (func_t *scope, char **words)
 	    {
 	      int temp_depth = depth + 1;
 
-	      if (temp_depth >= MAX_RECURSIONS)
-		return errorman_throw_reg ("You have too many nested if loops. They exceed the maximum recursion depth");
+	      if (temp_depth >= MAX_RECURSION)
+		return errorman_throw_reg (scope, "You have too many nested if loops. They exceed the maximum recursion depth");
 	      
 	      if (!strcmp (formatted_expression[position], "if"))
 		ifopen[temp_depth++] = OPEN_FAILED;
