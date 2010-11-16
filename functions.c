@@ -102,8 +102,12 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
   if (strcmp (expression.syntax[0], "("))
     return errorman_throw_reg (scope, "expected '(' after function call");
   else
-    expression.move_forward[0] = true;
-
+    {
+      expression.move_forward[0] = true;
+      expression.move_forward++;
+      expression.syntax++;
+    }
+  
   evald = eval (scope, expression);
 
   if (evald.type == ERROR_TYPE)
@@ -138,6 +142,21 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
       expression.move_forward[0] = true;
       expression.move_forward++;
       expression.syntax++;
+    }
+
+#undef DEBUG
+
+#ifdef DEBUG
+  printf ("FIRST: %s\n", expression.syntax[0]);
+#endif
+
+#define DEBUG
+
+  if (arg_list.syntax[0] == NULL)
+    {
+      if (strcmp (expression.syntax[-1], ")"))
+	return errorman_throw_reg (scope, "expected fewer arguments");
+      return evald;
     }
   
   for (pos = 0; arg_list.syntax[0] != NULL; pos++)

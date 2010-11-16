@@ -3,20 +3,18 @@
 void
 process_args (int argc, char **argv)
 {
-  int arg;
-  static int cmdln = true;
-
-  FACT_t file_open;
-  
-  func_t *scope;
-
-  var_t *inter_argc;
-  var_t *inter_argv;
+  int          arg;
+  var_t      * inter_argc;
+  var_t      * inter_argv;
+  FACT_t       file_open;  
+  func_t     * scope;
+  static int   cmdln = true;
 
   set_bytes_used (0);
  
   scope = alloc_func ();
   scope->name = "main";
+  init_std_prims (scope);
 
   file_open = run_file (scope, "stdlib.ft", true);
 
@@ -123,7 +121,6 @@ main (int argc, char **argv)
   atexit (close_libs);
 
   GC_INIT ();
-  init_std_prims ();
   
   mp_set_memory_functions (&FACT_malloc,
 			   &FACT_realloc,

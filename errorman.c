@@ -15,13 +15,14 @@ errorman_throw_reg (func_t *scope, char *description)
   return return_value;
 }
 
+/*
+
 FACT_t
 errorman_throw_prim (func_t *scope, word_list expression)
 {
-  char *description;
-  
-  FACT_t return_value;
-  FACT_t evald;
+  char   * description;  
+  FACT_t   return_value;
+  FACT_t   evald;
 
   evald = eval (scope, expression);
 
@@ -41,6 +42,7 @@ errorman_throw_prim (func_t *scope, word_list expression)
 
   return return_value;
 }
+*/
 
 void
 errorman_dump (_ERROR error, int line_num, const char *filename)

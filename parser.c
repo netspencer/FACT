@@ -7,6 +7,59 @@
 
 #include "parser.h"
 
+static char *
+lookup_word (int code)
+{
+  static char * lookup_table [] =
+    {
+      "+"     ,
+      "-"     ,
+      "*"     ,
+      "/"     ,
+      "%"     ,
+      "+="    ,
+      "-="    ,
+      "*="    ,
+      "/="    ,
+      "%="    ,
+      "@"     ,
+      "="     ,
+      "def"   ,
+      "defunc",
+      "$"     ,
+      "&"     ,
+      ","     ,
+      ":"     ,
+      "{"     ,
+      "}"     ,
+      "["     ,
+      "!["    ,
+      "]"     ,
+      "("     ,
+      ")"     ,
+      "\""    ,
+      "&&"    ,
+      "||"    ,
+      "=="    ,
+      "!="    ,
+      "<"     ,
+      ">"     ,
+      "<="    ,
+      ">="    ,
+      "sizeof",
+      "if"    ,
+      "while" ,
+      "for"   ,
+      "then"  ,
+      "else"  ,
+      ";"     ,
+      "return",
+    };
+
+  return lookup_table[code];
+}
+
+
 static bool
 is_in_quotes (int character)
 {
@@ -276,6 +329,12 @@ set_list (linked_word *start, word_code stopper)
   
   while ((w_code = start->code) != stopper && w_code != END)
     {
+      if (stopper == QUOTE)
+	{
+	  start = start->next;
+	  continue;
+	}
+      
       if (w_code == OP_CURLY)
 	{
 	  start->hidden = start->next;
@@ -419,7 +478,176 @@ swap (linked_word *swapping)
 #define isnotOPC(op) (op != OP_CURLY)
 #define isnotASN(op) (op < ADD_ASSIGN || op > MOD_ASSIGN)
 #define isnotCMP(op) (op < AND || op > MORE_EQ)
+#define isFACTop(op) ((op >= PLUS && op <= MOD_ASSIGN) || op == SET || (op >= AND && op <= MORE_EQ) || op == IN_SCOPE)
 
+char *
+parsing_error_set_get (char *new)
+{
+  /*
+    If passed NULL, this function will
+    return the last string. Else, it will
+    set it to the one passed
+  */
+  static char * error = NULL;
+
+  if (new == NULL)
+    return error;
+  else
+    return (error = new);
+}
+  
+bool
+parsing_error (linked_word *scan, bool comma_ok,
+	       unsigned char inside) // 0 = none, 1 = in paren, 2 = in bracket, 3 = in curly, 4 = in definition.
+{
+  typedef enum
+  {
+    NON_OPT ,
+    OPT     , /* also START */
+    FUNC    ,
+    NEG     ,
+    MKFUNC  ,
+  } _prev_type;
+  _prev_type prev_link;
+
+  /*
+    This function does not work. It needs to be fixed.
+    Not only does it not really work all that well, it
+    has yet to be golfed.
+  */
+
+  for (prev_link = OPT; scan != NULL; scan = scan->next)
+    {
+      if (scan->code == UNKNOWN)
+	parsing_error_set_get (combine_strs ("unexpected ", scan->physical));
+      else if (scan->code != END)
+	parsing_error_set_get (combine_strs ("unexpected ", lookup_word (scan->code - PLUS)));	
+
+      if (scan->code == AT)
+	{
+	  if (prev_link != OPT)
+	    return true;
+	  prev_link = MKFUNC;
+	}
+      else if (scan->code == FUNC_RET
+	       || scan->code == FUNC_OBJ)
+	{
+	  if (prev_link != OPT && prev_link != NEG)
+	    return true;
+	  prev_link = FUNC;
+	}
+      else if (scan->code == DEF || scan->code == DEFUNC)
+	{
+	  if ((prev_link != OPT && prev_link != NEG && prev_link != MKFUNC)
+	      || (parsing_error (scan->hidden, false, 4)))
+	    return true;
+	  prev_link = (prev_link == MKFUNC) ? MKFUNC : NON_OPT;
+	}
+      else if (scan->code == CL_CURLY)
+	{
+	  if (inside == 3 && prev_link == OPT)
+	    return false;
+	  else
+	    return true;
+	}
+      else if (scan->code == CL_BRACKET)
+	{
+	  if (inside == 2 && prev_link == NON_OPT)
+	    return false;
+	  else
+	    return true;
+	}
+      else if (scan->code == CL_PAREN)
+	{
+	  if (inside == 1 && prev_link == NON_OPT)
+	    return false;
+	  else
+	    return true;
+	}   
+      else if (scan->code == UNKNOWN || scan->code == QUOTE)
+	{
+	  if (prev_link == NON_OPT || prev_link == FUNC)
+	    return true;
+	  if (inside == 4)
+	    return false;
+	  prev_link = NON_OPT;
+	}
+      else if (isFACTop (scan->code))
+	{
+	  if (prev_link == OPT)
+	    {
+	      if (scan->code == MINUS)
+		prev_link = NEG;
+	      else
+		return true;
+	    }
+	  else if (prev_link == NEG || inside == 4)
+	    return true;
+	  else
+	    prev_link = OPT;
+	}
+      else if (scan->code == OP_CURLY)
+	{
+	  if ((prev_link != NON_OPT && prev_link != MKFUNC)
+	      || parsing_error (scan->hidden, false, 3))
+	    return true;
+	  prev_link = NON_OPT;
+	}
+      else if (scan->code == OP_BRACKET)
+	{
+	  if (parsing_error (scan->hidden, false, 2))
+	    return true;
+	  if (inside != 4)
+	    prev_link = OPT;	    
+	}
+      else if (scan->code == NOP_BRACKET)
+	{
+	  if (prev_link != NEG
+	      || parsing_error (scan->hidden, true, 2))
+	    return true;
+	  prev_link = NON_OPT;
+	}
+      else if (scan->code == OP_PAREN)
+	{
+	  if (prev_link == MKFUNC)
+	    {
+	      if (parsing_error (scan->hidden, true, 1))
+		return true;
+	    }
+	  else if (prev_link == FUNC)
+	    {
+	      if (parsing_error (scan->hidden, true, 1))
+		return true;
+	      prev_link = NON_OPT;
+	    }
+	  else if (prev_link != OPT && prev_link != NEG)
+	    return true; 
+	  else if (parsing_error (scan->hidden, false, 1))
+	    return true;
+	  else
+	    prev_link = NON_OPT;
+	}
+      else if (scan->code == COMMA)
+	{
+	  if (!comma_ok || prev_link == OPT || prev_link == NEG)
+	    return true;
+	  prev_link = OPT;
+	}
+      else if (scan->code == SEMI)
+	{
+	  if (prev_link == OPT || prev_link == NEG || inside == 1 || inside == 2)
+	    return true;
+	  else if (inside == 0)
+	    return false;
+	  else
+	    prev_link = OPT;
+	}
+      else if (scan->code == END)
+	return false;
+    }
+  return false;
+}
+	  
 static void
 precedence_level1 (linked_word *scan)
 {
@@ -903,13 +1131,19 @@ set_link (linked_word *scan)
 char **
 convert_link (linked_word *list)
 {
-  char **result;
-  int position;
-
+  int     position;
+  char ** result;
+      
+  
   result = (char **) better_malloc (sizeof (char *));
 
   for (position = 0; list != NULL; list = list->next, position++)
     {
+      if (list->code == UNKNOWN)
+	result[position] = list->physical;
+      else if (list->code > UNKNOWN)
+	result[position] = lookup_word(list->code - PLUS);
+      /*
       switch (list->code)
 	{
 	case PLUS:
@@ -975,12 +1209,6 @@ convert_link (linked_word *list)
 	case FUNC_OBJ:
 	  result[position] = "&";
 	  break;
-
-	  /*
-	case FUNC_END:
-	  result[position] = "<-";
-	  break;
-	  */
 
 	case IN_SCOPE:
 	  result[position] = ":";
@@ -1093,6 +1321,7 @@ convert_link (linked_word *list)
 	default:
 	  break;
 	}
+      */
 
       result = better_realloc (result, sizeof (char **) * (position + 1));
     }

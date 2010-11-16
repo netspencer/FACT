@@ -3,6 +3,7 @@
 FACT_t
 run_file (func_t *scope, const char *filename, bool silent)
 {
+  int             print_parsed;
   char         *  input;
   char         ** parsed_input;
   FILE         *  fp;
@@ -51,9 +52,20 @@ run_file (func_t *scope, const char *filename, bool silent)
 
       formatted = create_list (parsed_input);
       for (formatted = set_list (formatted, END); formatted->previous != NULL; formatted = formatted->previous);
+#ifdef PARSE_CHECK
+      if (parsing_error (formatted, false, 0))
+	printf ("Parsing error: %s.\n", parsing_get_error ());
+#endif
       for (rev_shunting_yard (formatted); formatted->previous != NULL; formatted = formatted->previous);
       set_link (formatted);
       parsed_input = convert_link (formatted);
+
+#ifdef DEBUG
+      puts ("PARSED: ");
+      for (print_parsed = 0; parsed_input[print_parsed]; print_parsed++)
+	printf ("'%s' ", parsed_input[print_parsed]);
+      putchar ('\n');
+#endif
       
       returned = expression (scope, parsed_input);
 

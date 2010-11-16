@@ -20,12 +20,12 @@ static lib_t *root = NULL;
 */
 
 FACT_t
-load_lib (func_t *scope, word_list args)
+load_lib (func_t *scope)
 {
   int      pos;
   char   * fpath;
   lib_t  * scroller;
-  FACT_t   path;
+  var_t  * path;
   struct   elements
   {
     char *   name;
@@ -33,8 +33,10 @@ load_lib (func_t *scope, word_list args)
     void *(* function)(func_t *);
   }      *   MOD_MAP;
 
-  path = eval (scope, args);
+  path = get_var (scope, "path"); // eval (scope, args);
+  scope = scope->up;
 
+  /*
   if (!isvar_t (path))
     {
       if (iserror_t (path))
@@ -42,8 +44,9 @@ load_lib (func_t *scope, word_list args)
       else
 	return errorman_throw_reg (scope, "path to library to be loaded cannot be a function");
     }
+  */
 
-  fpath = array_to_string (path.v_point);
+  fpath = array_to_string (path);
 
   if (root == NULL)
     {
@@ -70,7 +73,7 @@ load_lib (func_t *scope, word_list args)
     {
       printf ("IMPORT ERROR: %s\n", dlerror ());
       return errorman_throw_reg (scope, combine_strs ("could not import module ",
-						    array_to_string (path.v_point)));
+						      array_to_string (path)));
     }
 
   MOD_MAP = dlsym (scroller->library, "MOD_MAP");

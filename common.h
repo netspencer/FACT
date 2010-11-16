@@ -26,6 +26,9 @@
 #define FACT_INTERN_DEPRECATED(type) extern type
 #endif
 
+#define PARSE_CHECK
+#define DEBUG
+
 /*---------------------------------------------*
  * Library includes: headers that are not part *
  * of the program itself.                      *

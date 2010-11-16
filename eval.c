@@ -100,7 +100,8 @@ expression (func_t *scope, char **words)
     }
   else
     {
-      ifopen[depth] = CLOSED;
+      for (position = MAX_RECURSION - 1; position >= depth; position--)
+	ifopen[position] = CLOSED;
        
       if (strcmp (formatted_expression[0], "while") == 0)
 	return_value = while_loop (scope, formatted_expression + 1);

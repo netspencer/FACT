@@ -15,15 +15,13 @@ print_logo ()
 char *
 get_input (FILE *fp, unsigned int *line_number)
 {
-  int count;
-  int paren_count;
-  int bracket_count;
-  int curly_count;
-  int c;
-
-  bool in_quotes;
-  
-  char *input;
+  int    count;
+  int    paren_count;
+  int    bracket_count;
+  int    curly_count;
+  int    c;
+  bool   in_quotes;  
+  char * input;
 
   for (count = 1, input = NULL, in_quotes = false,
 	 paren_count = bracket_count = curly_count = 0; (c = fgetc (fp)) != EOF; count++)
@@ -95,13 +93,12 @@ get_input (FILE *fp, unsigned int *line_number)
 void
 shell (func_t *main_scope)
 {
-  char *input;
-  char **parsed_input;
-  unsigned int line_num;
-
-  FACT_t returned;
-
-  linked_word *formatted;
+  int             print_parsed;
+  char         *  input;
+  char         ** parsed_input;
+  FACT_t          returned;
+  linked_word  *  formatted;
+  unsigned int    line_num;
 
   /* Print out the disclaimer and logo. */
   printf ("The FACT programming language interactive shell\n(c) 2010 Matthew Plant, under a copyleft license.\n");
@@ -131,9 +128,20 @@ shell (func_t *main_scope)
       
       formatted = create_list (parsed_input);
       for (formatted = set_list (formatted, END); formatted->previous != NULL; formatted = formatted->previous);
+#ifdef PARSE_CHECK
+      if (parsing_error (formatted, false, 0))
+	printf ("Parsing error: %s.\n", parsing_get_error ());
+#endif
       for (rev_shunting_yard (formatted); formatted->previous != NULL; formatted = formatted->previous);
       set_link (formatted);
       parsed_input = convert_link (formatted);
+
+#ifdef DEBUG
+      puts ("PARSED: ");
+      for (print_parsed = 0; parsed_input[print_parsed]; print_parsed++)
+	printf ("'%s' ", parsed_input[print_parsed]);
+      putchar ('\n');
+#endif
 
       returned = expression (main_scope, parsed_input);
 

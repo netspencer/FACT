@@ -63,8 +63,10 @@ add_prim (const char * prim_name,
 }
 
 void
-init_std_prims (void)
+init_std_prims (func_t *scope)
 {
+  func_t *import;
+  
   /* All primitives that are symbols */
   add_prim ("=", set);
   add_prim ("(", paren);
@@ -75,7 +77,6 @@ init_std_prims (void)
   add_prim ("&", new_scope);
   add_prim (":", in_scope);
   add_prim ("\"", new_string);
-  add_prim ("?", errorman_throw_prim);
   add_prim ("&&", and);
   add_prim ("||", or);
   add_prim ("def", define);
@@ -89,7 +90,11 @@ init_std_prims (void)
   add_prim ("lib.std.getchar", input_character); 
   add_prim ("lib.std.putchar", print_character);
   add_prim ("lib.std.putvar", print_var);
-  add_prim ("import", load_lib);
+  // add_prim ("import", load_lib);
+  /* All primitives that are functions */
+  import = add_func (scope, "import");
+  import->args = get_words ("def path "); /* the extra space is required for parsing reasons. */
+  import->extrn_func = load_lib;
 }
 
 int

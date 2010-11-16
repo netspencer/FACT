@@ -13,6 +13,7 @@ SRCS = main.c malloc_replacements.c functions.c string.c \
 LIBS = -lgc -lgmp -ldl
 
 all: $(PROG)
+	cd ./stdlib ; make ; 
 
 $(PROG):	$(SRCS)
 	$(CC) $(CFLAGS) -D PARSING=$(PARSERV) -o $(PROG) $(SRCS) $(LIBS)
