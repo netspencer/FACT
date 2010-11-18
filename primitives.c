@@ -87,6 +87,8 @@ init_std_prims (func_t *scope)
   add_prim ("sizeof", size_of);
   add_prim ("while", invalid_while);
   add_prim ("lambda", lambda);
+  add_prim ("up", up);
+  add_prim ("this", this);
   add_prim ("lib.std.getchar", input_character); 
   add_prim ("lib.std.putchar", print_character);
   add_prim ("lib.std.putvar", print_var);
@@ -94,7 +96,7 @@ init_std_prims (func_t *scope)
   /* All primitives that are functions */
   import = add_func (scope, "import");
   import->args = get_words ("def path "); /* the extra space is required for parsing reasons. */
-  import->extrn_func = load_lib;
+  import->extrn_func = (void * (*) (struct _FUNC *)) load_lib;
 }
 
 int
@@ -167,10 +169,10 @@ eval_math (func_t *scope, word_list expression, int call_num)
   arg1 = eval (scope, expression);
   arg2 = eval (scope, expression);
 
-  /* There has to be a better way to do this and I will implement it eventually. */
+  /* There is a better way to do this and I will implement it eventually. */
   if (call_num == 1 && arg1.type == VAR_TYPE
       && arg2.type == ERROR_TYPE && (!strcmp (arg2.error.description, "cannot evaluate ;")
-				  || !strcmp (arg2.error.description, "cannot evaluate <-")
+				     || !strcmp (arg2.error.description, "cannot evaluate <-")
 				     || !strcmp (arg2.error.description, "cannot evaluate empty expression")))
     {
       mpc_neg (&(arg1.v_point->data), arg1.v_point->data);

@@ -4,6 +4,7 @@ FACT_t
 run_file (func_t *scope, const char *filename, bool silent)
 {
   int             print_parsed;
+  char         *  hold_fn;
   char         *  input;
   char         ** parsed_input;
   FILE         *  fp;
@@ -16,8 +17,14 @@ run_file (func_t *scope, const char *filename, bool silent)
 
   fp = fopen (filename, "r");
 
+  hold_fn = scope->name;
+  scope->name = (char *) filename;
+
   if (fp == NULL)
-    return errorman_throw_reg (scope, "could not open file");
+    {
+      return errorman_throw_reg (scope, "could not open file");
+      scope->name = hold_fn;
+    }
 
   line_num = 1;
 
@@ -34,6 +41,7 @@ run_file (func_t *scope, const char *filename, bool silent)
 
 	  returned.type = VAR_TYPE;
 	  returned.isret = false;
+	  scope->name = hold_fn;
 	  return returned;
 	}
 
@@ -47,6 +55,7 @@ run_file (func_t *scope, const char *filename, bool silent)
 	    printf ("Closing file <%s>.\n", filename);
 
 	  returned.type = VAR_TYPE;
+	  scope->name = hold_fn;
 	  return returned;
 	}
 
@@ -81,6 +90,7 @@ run_file (func_t *scope, const char *filename, bool silent)
 
 	  if (!silent)
 	    printf ("Closing file <%s>.\n", filename);
+	  scope->name = hold_fn;
 	  return returned;
         }
     }

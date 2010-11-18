@@ -250,8 +250,9 @@ set (func_t *scope, word_list expression)
   if (arg1.type == VAR_TYPE)
     {
       if (arg2.type == FUNCTION_TYPE)
-	return errorman_throw_reg (scope, "cannot set a var_t to a function");
-      
+	return errorman_throw_reg (scope, "cannot set a var to a function");
+      if (arg1.v_point->locked)
+	return arg2;
       hold = arg2.v_point->next;
       arg2.v_point->next = NULL;
       copy = clone_var (arg2.v_point, arg1.v_point->name);
@@ -264,8 +265,9 @@ set (func_t *scope, word_list expression)
   else if (arg1.type == FUNCTION_TYPE)
     {
       if (arg2.type == VAR_TYPE)
-	return errorman_throw_reg (scope, "cannot set a function to a var_t");
-
+	return errorman_throw_reg (scope, "cannot set a function to a var");
+      if (arg1.f_point->locked)
+	return arg2;
       arg1.f_point->array_size = arg2.f_point->array_size;
       arg1.f_point->args = arg2.f_point->args;
       arg1.f_point->body = arg2.f_point->body;
@@ -273,6 +275,7 @@ set (func_t *scope, word_list expression)
       arg1.f_point->funcs = arg2.f_point->funcs;
       arg1.f_point->array_up = arg2.f_point->array_up;
       arg1.f_point->up = arg2.f_point->up;
+      arg1.f_point->extrn_func = arg2.f_point->extrn_func;
     }
 
   return arg1;

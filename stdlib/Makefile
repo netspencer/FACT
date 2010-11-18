@@ -2,7 +2,7 @@ CC = gcc
 CFLAGS = -Wall -ggdb -m64 -shared -ldl -fPIC
 LIBNAME = stdlib.soft
 
-SRCS = stdlib.c # more will be added, I guarantee it. Maybe
+SRCS = stdlib.c file_io.c # more will be added, I guarantee it. Maybe
 
 all: $(LIBNAME)
 

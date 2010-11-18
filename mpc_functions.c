@@ -178,8 +178,30 @@ mpc_mod (mpc_t *rop, mpc_t op1, mpc_t op2)
 {
   /* Division by zero is not checked, and this function
      literally doesn't even work. It's just filler because
-     I'm tired. */
-  mpz_mod (rop->object, op1.object, op2.object);
+     I'm tired. HAHAHA DISREGARD THAT I FIXED IT. */
+   mpc_t temp;
+  
+  temp.precision = (op1.precision < op2.precision) ? op2.precision : op1.precision;
+  mpz_init (temp.object);
+
+  if (op1.precision == op2.precision)
+    mpz_mod (temp.object, op1.object, op2.object);
+  else if (op1.precision > op2.precision)
+    {
+      mpz_set (temp.object, op2.object);
+      power_of_ten (temp.object, op1.precision - op2.precision);
+      mpz_mod (temp.object, op1.object, temp.object);
+    }
+  else
+    {
+      mpz_set (temp.object, op1.object);
+      power_of_ten (temp.object, op2.precision - op1.precision);
+      mpz_mod (temp.object, temp.object, op2.object);
+    }
+
+  rop->precision = temp.precision;
+  mpz_set (rop->object, temp.object);
+  // mpz_mod (rop->object, op1.object, op2.object);
 }
 
 int

@@ -72,6 +72,7 @@ alloc_var ()
   new->array_up = NULL;
   new->next = NULL;
   new->name = NULL;
+  new->locked = false;
   mpc_init (&(new->data));
 
   return new;
@@ -82,17 +83,19 @@ alloc_func ()
 {
   func_t * new;
 
-  new = (func_t *) better_malloc (sizeof (func_t));
+  new             = (func_t *) better_malloc (sizeof (func_t));
   new->array_size = 1;
-  new->array_up = NULL;
-  new->name = NULL;
+  new->array_up   = NULL;
+  new->name       = NULL;
   new->extrn_func = NULL;
-  new->up = NULL;
-  new->next = NULL;
-  new->args = NULL;
-  new->body = NULL;
-  new->vars = NULL;
-  new->funcs = NULL;
+  new->up         = NULL;
+  new->next       = NULL;
+  new->args       = NULL;
+  new->body       = NULL;
+  new->vars       = NULL;
+  new->funcs      = NULL;
+  new->usr_data   = NULL;
+  new->locked     = false;
 
   return new;
 }

@@ -214,7 +214,10 @@ add_assignment (FACT_t arg1, FACT_t arg2)
 
   if (arg1.type == FUNCTION_TYPE
       || arg2.type == FUNCTION_TYPE)
-    return errorman_throw_reg (NULL, "both arguments to += must be var_tiables");
+    return errorman_throw_reg (NULL, "both arguments to += must be variables");
+
+  if (arg1.v_point->locked)
+    return add (arg1, arg2);
 
   mpc_add (&(arg1.v_point->data), arg1.v_point->data, arg2.v_point->data);
 
@@ -231,8 +234,11 @@ sub_assignment (FACT_t arg1, FACT_t arg2)
 
   if (arg1.type == FUNCTION_TYPE
       || arg2.type == FUNCTION_TYPE)
-    return errorman_throw_reg (NULL, "both arguments to -= must be var_tiables");
+    return errorman_throw_reg (NULL, "both arguments to -= must be variables");
 
+  if (arg1.v_point->locked)
+    return sub (arg1, arg2);
+  
   mpc_sub (&(arg1.v_point->data), arg1.v_point->data, arg2.v_point->data);
 
   return arg1;
@@ -248,7 +254,10 @@ mult_assignment (FACT_t arg1, FACT_t arg2)
 
   if (arg1.type == FUNCTION_TYPE
       || arg2.type == FUNCTION_TYPE)
-    return errorman_throw_reg (NULL, "both arguments to *= must be var_tiables");
+    return errorman_throw_reg (NULL, "both arguments to *= must be variables");
+
+  if (arg1.v_point->locked)
+    return mult (arg1, arg2);
 
   mpc_mul (&(arg1.v_point->data), arg1.v_point->data, arg2.v_point->data);
 
@@ -265,10 +274,13 @@ div_assignment (FACT_t arg1, FACT_t arg2)
   
   if (arg1.type == FUNCTION_TYPE
       || arg2.type == FUNCTION_TYPE)
-    return errorman_throw_reg (NULL, "both arguments to /= must be var_tiables");
+    return errorman_throw_reg (NULL, "both arguments to /= must be variables");
 
   if (mpc_cmp_si (arg2.v_point->data, 0) == 0)
     return errorman_throw_reg (NULL, "divide by zero error");
+
+  if (arg1.v_point->locked)
+    return divide (arg1, arg2);
 
   mpc_div (&(arg1.v_point->data), arg1.v_point->data, arg2.v_point->data);
 
@@ -285,10 +297,13 @@ mod_assignment (FACT_t arg1, FACT_t arg2)
   
   if (arg1.type == FUNCTION_TYPE
       || arg2.type == FUNCTION_TYPE)
-    return errorman_throw_reg (NULL, "both arguments to %= must be var_tiables");
+    return errorman_throw_reg (NULL, "both arguments to %= must be variables");
 
   if (mpc_cmp_si (arg2.v_point->data, 0) == 0)
     return errorman_throw_reg (NULL, "mod by zero error");
+
+  if (arg1.v_point->locked)
+    return mod (arg1, arg2);
 
   mpc_mod (&(arg1.v_point->data), arg1.v_point->data, arg2.v_point->data);
 

@@ -18,6 +18,8 @@
 #include "utilities.h"
 #include "malloc_replacements.h"
 #include "management.h"
+#include "errorman.h"
+#include "execfile.h"
 /* more to come */
 
 #endif

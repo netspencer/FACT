@@ -93,7 +93,7 @@ load_lib (func_t *scope)
 	continue;
       ref->args = get_words (combine_strs (MOD_MAP[pos].arguments, " "));
       /* end parsing ---- */
-      
+      ref->locked = true;
       ref->extrn_func = MOD_MAP[pos].function;
     }
   

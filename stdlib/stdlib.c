@@ -1,4 +1,4 @@
-#include <FACT/FACT.h>
+#include "stdlib.h"
 
 FACT_t
 ft_putchar (func_t *scope)
@@ -11,6 +11,44 @@ ft_putchar (func_t *scope)
   return FACT_get_ui (0);
 }
 
+FACT_t
+lock_object (func_t *scope)
+{
+  var_t  * obj_name;
+  var_t  * obj_var;
+  func_t * obj_func;
+  func_t * search;
+  FACT_t   return_value;
+
+  search = get_func (scope, "search");
+
+  obj_name = get_var (scope, "name");
+  obj_var = get_var (search, array_to_string (obj_name));
+
+  if (obj_var == NULL)
+    {
+      obj_func = get_func (search, array_to_string (obj_name));
+      if (obj_func == NULL)
+	return errorman_throw_reg (scope->up, "no object of that name exists");
+    }
+
+  if (obj_var != NULL)
+    {
+      return_value.type = VAR_TYPE;
+      obj_var->locked = true;
+      return_value.v_point = obj_var;
+    }
+  else
+    {
+      return_value.type = FUNCTION_TYPE;
+      obj_func->locked = true;
+      return_value.f_point = obj_func;
+    }
+
+  return return_value;
+}
+  
+    
 FACT_t
 throw_error (func_t *scope)
 {
@@ -32,7 +70,10 @@ throw_error (func_t *scope)
 
 struct elements MOD_MAP [] =
   {
-    { "putchar", "def char"        , &ft_putchar  },
-    { "throw"  , "def description" , &throw_error },
-    { NULL     , NULL              , NULL         }
+    { "run"     , "def filename"           , &run_file_soft },
+    { "run_loud", "def filename"           , &run_file_loud },
+    { "putchar" , "def char"               , &ft_putchar    },
+    { "lock"    , "defunc search, def name", &lock_object   },
+    { "throw"   , "def description"        , &throw_error   },
+    { NULL      , NULL                     , NULL           }
   };

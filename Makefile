@@ -20,13 +20,19 @@ $(PROG):	$(SRCS)
 
 install:
 	cp ./FACT-GCC /usr/bin/FACT
-	chmod +x /usr/bin/FACT # this is to make sure that FACT is an executable
-	rm -r /usr/include/FACT/ # clear it out
-	cp -r ./includes /usr/include/FACT/ # install the development headers 
+	chmod +x /usr/bin/FACT                     # this is to make sure that FACT is an executable
+	rm -r /usr/include/FACT/                   # clear them out
+	rm -r /etc/FACT
+	cp -r ./includes /usr/include/FACT/        # install the development headers
+	mkdir /etc/FACT                            # make the folder containing all the data
+	mkdir /etc/FACT/modules
+	mkdir /etc/FACT/include
+	cp ./stdlib/stdlib.soft /etc/FACT/modules/ # install the stdlib so
+	cp ./stdlib.ft /etc/FACT/include/          # install the stdlib ft
 
 clean:
 	rm -f $(PROG)
-
+	cd ./stdlib ; make clean ;
 profile:	$(SRCS)	
 	$(CC) $(CFLAGS) -D PARSING=$(PARSERV) -o $(PROG) $(SRCS) $(LIBS) $(PFLAGS)
 

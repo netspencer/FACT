@@ -16,7 +16,7 @@ process_args (int argc, char **argv)
   scope->name = "main";
   init_std_prims (scope);
 
-  file_open = run_file (scope, "stdlib.ft", true);
+  file_open = run_file (scope, "/etc/FACT/include/stdlib.ft", true);
 
   if (file_open.type == ERROR_TYPE)
     errorman_dump (file_open.error, 0, optarg);

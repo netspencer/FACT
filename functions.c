@@ -81,6 +81,10 @@ liven_func (func_t *scope, word_list expression)
   func.f_point->body = block_formatted;
   func.f_point->up = scope;
 
+#ifdef DEBUG
+  printf ("up = %s\n", scope->name);
+#endif
+
   for (position = 0; position < pos_args + pos_block; position++)
     expression.move_forward[position] = true;
   
@@ -131,6 +135,11 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
   arg_list.syntax = copy (evald.f_point->args);
   arg_list.move_forward = better_malloc (sizeof (int) *
 					 ((count = count_until_NULL (arg_list.syntax)) + 1));
+#ifdef DEBUG
+  printf ("FUNC = %s\n", evald.f_point->name);
+  printf ("up_scope = %s\n", scope->name);
+  printf ("up_evald = %s\n", evald.f_point->up->name);
+#endif
   new_scope->up = evald.f_point->up;
   new_scope->name = evald.f_point->name;
   new_scope->extrn_func = evald.f_point->extrn_func;
@@ -321,3 +330,30 @@ lambda (func_t *scope, word_list expression)
 
   return return_value;
 }
+
+FACT_t
+up (func_t *scope, word_list expression)
+{
+  FACT_t return_value;
+
+  return_value.type = FUNCTION_TYPE;
+
+  if (scope->up == NULL)
+    return_value.f_point = scope;
+  else
+    return_value.f_point = scope->up;
+
+  return return_value;
+}
+
+FACT_t
+this (func_t *scope, word_list expression)
+{
+  FACT_t return_value;
+
+  return_value.type = FUNCTION_TYPE;
+  return_value.f_point = scope;
+
+  return return_value;
+}
+  
