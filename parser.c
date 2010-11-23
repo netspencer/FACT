@@ -173,7 +173,7 @@ get_words (char *start)
             return_string[count][count2] = *start;
 	  
 	  return_string[count][count2] = '\0';
-	  start = end;
+	  start                        = end;
 	}
     }
       
@@ -284,14 +284,14 @@ alloc_word (linked_word *set_prev)
 {
   linked_word * temp;
 
-  temp = (linked_word *) better_malloc (sizeof (linked_word));
-
-  temp->code = UNKNOWN;
-  temp->physical = NULL;
-  temp->hidden = NULL;
-  temp->hidden_up = NULL;
-  temp->next = NULL;
-  temp->previous = set_prev;
+  temp              = (linked_word *) better_malloc (sizeof (linked_word));
+  temp->code        = UNKNOWN;
+  temp->is_negative = false;
+  temp->physical    = NULL;
+  temp->hidden      = NULL;
+  temp->hidden_up   = NULL;
+  temp->next        = NULL;
+  temp->previous    = set_prev;
 
   return temp;
 }
@@ -308,9 +308,8 @@ create_list (char **words)
 	base->physical = words[0];
 
       base->code = w_code;
-
       base->next = alloc_word (base);
-      base = base->next;
+      base       = base->next;
     }
 
   base->code = END;
@@ -337,101 +336,76 @@ set_list (linked_word *start, word_code stopper)
       
       if (w_code == OP_CURLY)
 	{
-	  start->hidden = start->next;
+	  start->hidden         = start->next;
 	  start->next->previous = NULL;
-      	  temp_link = set_list (start->next, CL_CURLY);
+      	  temp_link             = set_list (start->next, CL_CURLY);
 
 	  if (temp_link->code == END)
 	    return temp_link;
 	  
-	  start->next = temp_link->next;
+	  start->next               = temp_link->next;
 	  temp_link->next->previous = start;
-	  temp_link->next = NULL;
-
-	  start->hidden->hidden_up = start;
+	  temp_link->next           = NULL;
+	  start->hidden->hidden_up  = start;
 	}
       else if (w_code == OP_BRACKET
 	       || w_code == NOP_BRACKET)
 	{
-	  start->hidden = start->next;
+	  start->hidden         = start->next;
 	  start->next->previous = NULL;
-	  temp_link = set_list (start->next, CL_BRACKET);
+	  temp_link             = set_list (start->next, CL_BRACKET);
 
 	  if (temp_link->code == END)
 	    return temp_link;
 	  
-	  start->next = temp_link->next;
+	  start->next               = temp_link->next;
 	  temp_link->next->previous = start;
-	  temp_link->next = NULL;
-
-	  start->hidden->hidden_up = start;
+	  temp_link->next           = NULL;
+	  start->hidden->hidden_up  = start;
 	}
       else if (w_code == OP_PAREN)
 	{
-	  start->hidden = start->next;
+	  start->hidden         = start->next;
 	  start->next->previous = NULL;
-	  temp_link = set_list (start->next, CL_PAREN);
+	  temp_link             = set_list (start->next, CL_PAREN);
 
 	  if (temp_link->code == END)
 	    return temp_link;
 	  
-	  start->next = temp_link->next;
+	  start->next               = temp_link->next;
 	  temp_link->next->previous = start;
-	  temp_link->next = NULL;
+	  temp_link->next           = NULL;
 
 	  start->hidden->hidden_up = start;
 	}
-      /*
-	Removing this in order to improve
-	function syntax a wee bit.
-
-      else if (w_code == FUNC_RET
-	       || w_code == FUNC_OBJ)
-	{
-	  start->hidden = start->next;
-	  start->next->previous = NULL;
-	  temp_link = set_list (start->next, FUNC_END);
-
-	  if (temp_link->code == END)
-	    return temp_link;
-	  
-	  start->next = temp_link->next;
-	  temp_link->next->previous = start;
-	  temp_link->next = NULL;
-
-	  start->hidden->hidden_up = start;
-	}
-      */
       else if (w_code == DEF
 	       || w_code == DEFUNC)
 	{
-	  start->hidden = start->next;
+	  start->hidden         = start->next;
 	  start->next->previous = NULL;
-	  temp_link = set_list (start->next, UNKNOWN);
+	  temp_link             = set_list (start->next, UNKNOWN);
 
 	  if (temp_link->code == END)
 	    return temp_link;
 	  
-	  start->next = temp_link->next;
+	  start->next               = temp_link->next;
 	  temp_link->next->previous = start;
-	  temp_link->next = NULL;
-
-	  start->hidden->hidden_up = start;
+	  temp_link->next           = NULL;
+	  start->hidden->hidden_up  = start;
 	}
       else if (w_code == QUOTE)
 	{
-	  start->hidden = start->next;
+	  start->hidden         = start->next;
 	  start->next->previous = NULL;
-	  temp_link = set_list (start->next, QUOTE);
+	  temp_link             = set_list (start->next, QUOTE);
 
 	  if (temp_link->code == END)
 	    return temp_link;
 	  
-	  start->next = temp_link->next;
+	  start->next               = temp_link->next;
 	  temp_link->next->previous = start;
-	  temp_link->next = NULL;
-
-	  start->hidden->hidden_up = start;
+	  temp_link->next           = NULL;
+	  start->hidden->hidden_up  = start;
 	}
 
       start = start->next;
@@ -451,19 +425,17 @@ swap (linked_word *swapping)
 
   if (swapping->previous->hidden_up != NULL)
     {
-      swapping->hidden_up = swapping->previous->hidden_up;
-      swapping->hidden_up->hidden = swapping;
+      swapping->hidden_up           = swapping->previous->hidden_up;
+      swapping->hidden_up->hidden   = swapping;
       swapping->previous->hidden_up = NULL;
     }
 
-  temp_next = swapping->next;
-  temp_prev = swapping->previous->previous;
-
-  swapping->previous->next = temp_next;
+  temp_next                    = swapping->next;
+  temp_prev                    = swapping->previous->previous;
+  swapping->previous->next     = temp_next;
   swapping->previous->previous = swapping;
-
-  swapping->next = swapping->previous;
-  swapping->previous = temp_prev;
+  swapping->next               = swapping->previous;
+  swapping->previous           = temp_prev;
 
   if (temp_next != NULL)
     temp_next->previous = swapping->next;
@@ -678,7 +650,7 @@ precedence_level1 (linked_word *scan)
 		   find_end->previous != NULL;
 		   find_end = find_end->previous);
 	      
-	      scan->next->next = find_end;
+	      scan->next->next   = find_end;
 	      find_end->previous = scan->next;
 	    }
 	  else
@@ -690,7 +662,7 @@ precedence_level1 (linked_word *scan)
 		   find_end->previous != NULL;
 		   find_end = find_end->previous);
 	      
-	      scan->next = find_end;
+	      scan->next         = find_end;
 	      find_end->previous = scan;
 	    }
 	  return;
@@ -698,29 +670,14 @@ precedence_level1 (linked_word *scan)
 	 
 	case FUNC_RET:
 	case FUNC_OBJ:
-	  scan->hidden = scan->next;
-	  scan->next = scan->next->next;
-	  scan->hidden->hidden_up = scan;
-	  scan->hidden->previous = NULL;
+	  scan->hidden                 = scan->next;
+	  scan->next                   = scan->next->next;
+	  scan->hidden->hidden_up      = scan;
+	  scan->hidden->previous       = NULL;
 	  scan->hidden->next->previous = scan;
-	  scan->hidden->next = NULL;
-	  rev_shunting_yard (scan->hidden->hidden);
+	  scan->hidden->next           = NULL;
+	  rev_shunting_yard ((scan->hidden->hidden != NULL) ? scan->hidden->hidden : NULL);
 	  break;
-	  /*
-	  if (scan->hidden->hidden != NULL)
-	    rev_shunting_yard (scan->hidden->hidden);
-
-	  scan->hidden->next->previous = NULL;
-	  rev_shunting_yard (scan->hidden->next);
-
-	  for (find_end = scan->hidden->next;
-	       find_end->previous != NULL;
-	       find_end = find_end->previous);
-	  
-	  scan->hidden->next = find_end;
-	  find_end->previous = scan->hidden;
-	  break;
-	  */
 
 	case FOR:
 	case THEN:
@@ -736,10 +693,10 @@ precedence_level1 (linked_word *scan)
 	       find_end->previous != NULL;
 	       find_end = find_end->previous);
 
-	  scan->next = find_end;
+	  scan->next         = find_end;
 	  find_end->previous = scan;
 	  return;
-
+	  
 	default:
 	  break;
 	}
@@ -750,7 +707,7 @@ precedence_level1 (linked_word *scan)
 void
 precedence_level2 (linked_word *scan)
 {
-  linked_word *hold;
+  linked_word * hold;
 
   while (scan->next != NULL)
     {
@@ -772,8 +729,8 @@ precedence_level2 (linked_word *scan)
 	  while (scan->previous != NULL
 		 && scan->previous->code != IN_SCOPE
 		 && isnotMDM (scan->previous->code)
-		 && isnotAS (scan->previous->code)
-		 && isnotSE (scan->previous->code)
+		 && isnotAS  (scan->previous->code)
+		 && isnotSE  (scan->previous->code)
 		 && isnotOPC (scan->previous->code)
 		 && isnotASN (scan->previous->code)
 		 && isnotCMP (scan->previous->code))
@@ -824,7 +781,7 @@ precedence_level3 (linked_word *scan)
 void
 precedence_level4 (linked_word *scan)
 {
-  linked_word *hold;
+  linked_word * hold;
 
   while (scan->next != NULL)
     {
@@ -1118,8 +1075,8 @@ set_link (linked_word *scan)
     {
       if (scan->hidden != NULL)
 	{
-	  temp_next = scan->next;
-	  scan->next = scan->hidden;
+	  temp_next              = scan->next;
+	  scan->next             = scan->hidden;
 	  scan->hidden->previous = scan;
 	  set_end (scan->next, temp_next);
 	}

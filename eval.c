@@ -20,13 +20,12 @@ expression (func_t *scope, char **words)
   static int    depth = -1;
   static int    ifopen [MAX_RECURSION];
 
-  isreturn = false;
-  isbreak = false;
-  return_value.type = VAR_TYPE;
+  isreturn          = false;
+  isbreak           = false;
+  return_value.type = VAR_TYPE;   
+  position          = get_exp_length_first (words, ';'); /* find out how long the statement is */
 
   depth++;
-  
-  position = get_exp_length_first (words, ';'); /* find out how long the statement is */
 
   if (depth == MAX_RECURSION)
     {
@@ -41,16 +40,20 @@ expression (func_t *scope, char **words)
       return errorman_throw_reg (scope, "syntax error; expected closing ';' or '}'");
     }
 
-  formatted_expression = better_malloc (sizeof (char *) * (position + 2)); /* allocate space for expression */
-  expression.move_forward = better_malloc (sizeof (bool) * (position + 2));
+  // Before:
+  // formatted_expression    = better_malloc (sizeof (char *) * (position + 2)); /* allocate space for expression */
+  // expression.move_forward = better_malloc (sizeof (bool  ) * (position + 2));
+  // After:
+  formatted_expression    = better_malloc (sizeof (char *) * (position + 1));
+  expression.move_forward = better_malloc (sizeof (bool  ) * (position + 1));
 
-  for (formatted_expression[position + 1] = NULL; position >= 0; position--)
+  for (formatted_expression[position] = NULL, position--; position >= 0; position--)
     formatted_expression[position] = words[position];
 
   if (strcmp (formatted_expression[0], "if") == 0)
     {
       expression.syntax = formatted_expression + 1;
-      return_value = if_statement (scope, expression, &getif);
+      return_value      = if_statement (scope, expression, &getif);
 
       if (getif)
 	ifopen[depth] = OPEN_SUCCESS;
@@ -78,10 +81,10 @@ expression (func_t *scope, char **words)
 	{
 	  if (ifopen[position] == OPEN_FAILED)
 	    {
-	      hold = depth;
-	      depth = position - 1;
+	      hold         = depth;
+	      depth        = position - 1;
 	      return_value = else_clause (scope, formatted_expression + 1);
-	      depth = hold;
+	      depth        = hold;
 	      break;
 	    }
 	  else if (ifopen[position] == OPEN_SUCCESS)
@@ -110,22 +113,22 @@ expression (func_t *scope, char **words)
       else if (strcmp (formatted_expression[0], "{") == 0)
 	{
 	  expression.syntax = formatted_expression + 1;
-	  return_value = lambda_proc (scope, expression);
+	  return_value      = lambda_proc (scope, expression);
 	  for (position = depth + 1; position < MAX_RECURSION; position++) 
 	    ifopen[position] = CLOSED;
 	}
       else if (strcmp (formatted_expression[0], "return") == 0)
 	{
 	  expression.syntax = formatted_expression + 1;
-	  return_value = eval (scope, expression);
-	  isreturn = true;
+	  return_value      = eval (scope, expression);
+	  isreturn          = true;
 	}
       else if (strcmp (formatted_expression[0], "break") == 0)
 	isbreak = true;
       else
 	{
 	  expression.syntax = formatted_expression;
-	  return_value = eval (scope, expression);
+	  return_value      = eval (scope, expression);
 	}
     }
 
@@ -159,10 +162,10 @@ procedure (func_t *scope, char **words)
     
   if (*words == NULL || !strcmp(*words, "}"))
     {
-      return_value.isret = false;
+      return_value.isret        = false;
       return_value.break_signal = false;
-      return_value.v_point = alloc_var ();
-      return_value.type = VAR_TYPE;
+      return_value.v_point      = alloc_var ();
+      return_value.type         = VAR_TYPE;
       
       return return_value;
     }
@@ -209,8 +212,7 @@ eval (func_t *scope, word_list expression)
       expression.move_forward++;
     }
 
-  word = expression.syntax[0];
-
+  word                       = expression.syntax[0];
   expression.move_forward[0] = true;
 
   if (word == NULL)
@@ -240,7 +242,7 @@ eval (func_t *scope, word_list expression)
 	return errorman_throw_reg (scope, combine_strs ("cannot evaluate ", word));
     }
   
-  return_value.isret = false;
+  return_value.isret        = false;
   return_value.break_signal = false;
 
   return return_value;

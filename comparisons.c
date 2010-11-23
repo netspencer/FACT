@@ -24,7 +24,7 @@ equal (FACT_t arg1, FACT_t arg2)
 {
   FACT_t return_value;
 
-  return_value.type = VAR_TYPE;
+  return_value.type    = VAR_TYPE;
   return_value.v_point = alloc_var ();
     
   if (arg1.type != arg2.type)
@@ -35,7 +35,7 @@ equal (FACT_t arg1, FACT_t arg2)
       if (mpc_cmp (arg1.v_point->data, arg2.v_point->data) == 0)
         mpc_set_si (&(return_value.v_point->data), 1);
     }
-  else /* this block does not work, will be fixed when I give a damn */ 
+  else /* I *THINK* this works. */ 
     {
       if (arg1.f_point == arg2.f_point)
         mpc_set_si (&(return_value.v_point->data), 1);
@@ -54,7 +54,7 @@ not_equal (FACT_t arg1, FACT_t arg2)
 {
   FACT_t return_value;
 
-  return_value.type = VAR_TYPE;
+  return_value.type    = VAR_TYPE;
   return_value.v_point = alloc_var ();
 
   if (arg1.type != arg2.type)
@@ -65,7 +65,7 @@ not_equal (FACT_t arg1, FACT_t arg2)
       if (mpc_cmp (arg1.v_point->data, arg2.v_point->data) != 0)
         mpc_set_si (&(return_value.v_point->data), 1);
     }
-  else /* this block does not work, will be fixed when I give a damn */ 
+  else
     {
       if (arg1.f_point != arg2.f_point)
         mpc_set_si (&(return_value.v_point->data), 1);
@@ -86,7 +86,7 @@ more (FACT_t arg1, FACT_t arg2)
 {
   FACT_t return_value;
 
-  return_value.type = VAR_TYPE;
+  return_value.type    = VAR_TYPE;
   return_value.v_point = alloc_var ();
 
   if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
@@ -110,7 +110,7 @@ more_equal (FACT_t arg1, FACT_t arg2)
 {
   FACT_t return_value;
 
-  return_value.type = VAR_TYPE;
+  return_value.type    = VAR_TYPE;
   return_value.v_point = alloc_var ();
   
   if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
@@ -134,7 +134,7 @@ less (FACT_t arg1, FACT_t arg2)
 {
   FACT_t return_value;
   
-  return_value.type = VAR_TYPE;
+  return_value.type    = VAR_TYPE;
   return_value.v_point = alloc_var ();
 
   if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
@@ -158,7 +158,7 @@ less_equal (FACT_t arg1, FACT_t arg2)
 {
   FACT_t return_value;
 
-  return_value.type = VAR_TYPE;
+  return_value.type    = VAR_TYPE;
   return_value.v_point = alloc_var ();
 
   if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
@@ -313,7 +313,7 @@ and (func_t *scope, word_list expression)
   else if (arg1.type == FUNCTION_TYPE)
     return errorman_throw_reg (scope, "arguments to && must be var_tiables");
 
-  return_value.type = VAR_TYPE;
+  return_value.type    = VAR_TYPE;
   return_value.v_point = alloc_var ();
 
   while (expression.move_forward[0])
@@ -370,7 +370,7 @@ or
   else if (arg1.type == FUNCTION_TYPE)
     return errorman_throw_reg (scope, "arguments to || must be var_tiables");
 
-  return_value.type = VAR_TYPE;
+  return_value.type    = VAR_TYPE;
   return_value.v_point = alloc_var ();
 
   mpc_set_ui (&(return_value.v_point->data), 1);

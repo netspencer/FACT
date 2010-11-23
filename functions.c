@@ -19,7 +19,6 @@
  *                                       *
  * * * * * * * * * * * * * * * * * * * * */
 			
- 
 FACT_t
 liven_func (func_t *scope, word_list expression)
 {
@@ -34,9 +33,10 @@ liven_func (func_t *scope, word_list expression)
 
   if (func.type == ERROR_TYPE)
     return func;
-  
   if (func.type != FUNCTION_TYPE)
     return errorman_throw_reg (scope, "cannot give body to non-function");
+  if (func.f_point->locked)
+    return errorman_throw_reg (scope, "function has been locked");
 
   while (expression.move_forward[0])
     {
@@ -47,44 +47,44 @@ liven_func (func_t *scope, word_list expression)
   if (expression.syntax[0] == NULL || strcmp (expression.syntax[0], "("))
     return errorman_throw_reg (scope, "expected '(' after function");
 
-  pos_args = get_exp_length (expression.syntax + 1, ')');
-  
-  args_formatted = (char **) better_malloc ((sizeof (char *)) * pos_args);
-  
+  pos_args                     = get_exp_length (expression.syntax + 1, ')');
+  args_formatted               = (char **) better_malloc ((sizeof (char *)) * pos_args);  
   args_formatted[pos_args - 1] = NULL;
-  position = pos_args - 1;
+  position                     = pos_args - 1;
     
   while (position > 0)
     {
       position--;
-      args_formatted[position] = expression.syntax[position + 1];
+      args_formatted[position]              = expression.syntax[position + 1];
       expression.move_forward[position + 1] = true;
     }
     
   if (expression.syntax[pos_args] == NULL)
     return errorman_throw_reg (scope, "no body given");
 
-  pos_block = get_exp_length_first (expression.syntax + pos_args, ';');
-  block_formatted = better_malloc ((sizeof (char *)) * pos_block);
-
+  pos_block                    = get_exp_length_first (expression.syntax + pos_args, ';');
+  block_formatted              = better_malloc ((sizeof (char *)) * pos_block);
   block_formatted[--pos_block] = NULL;
-  position = pos_block;
+  position                     = pos_block;
 
   while (position > 0)
     {
       position--;
-      block_formatted[position] = expression.syntax[position + pos_args + 1];
+      block_formatted[position]                        = expression.syntax[position + pos_args + 1];
       expression.move_forward[position + pos_args + 1] = true;
     }
   
   func.f_point->args = args_formatted;
   func.f_point->body = block_formatted;
-  func.f_point->up = scope;
+  func.f_point->up   = scope;
 
+#undef DEBUG
 #ifdef DEBUG
   printf ("up = %s\n", scope->name);
 #endif
-
+#ifndef DEBUG
+#define DEBUG
+#endif
   for (position = 0; position < pos_args + pos_block; position++)
     expression.move_forward[position] = true;
   
@@ -122,7 +122,9 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
 
   if (evald.f_point->args == NULL)
     {
+#ifdef DEBUG    
       printf (":%s\n", evald.f_point->name);
+#endif
       return errorman_throw_reg (scope, "given function has no body");
     }
 
@@ -132,16 +134,17 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
       expression.move_forward++;
     }
   
-  arg_list.syntax = copy (evald.f_point->args);
-  arg_list.move_forward = better_malloc (sizeof (int) *
-					 ((count = count_until_NULL (arg_list.syntax)) + 1));
+#undef DEBUG
 #ifdef DEBUG
   printf ("FUNC = %s\n", evald.f_point->name);
   printf ("up_scope = %s\n", scope->name);
   printf ("up_evald = %s\n", evald.f_point->up->name);
 #endif
-  new_scope->up = evald.f_point->up;
-  new_scope->name = evald.f_point->name;
+  
+  arg_list.syntax       = copy (evald.f_point->args);
+  arg_list.move_forward = better_malloc (sizeof (int) * ((count = count_until_NULL (arg_list.syntax)) + 1));
+  new_scope->up         = evald.f_point->up;
+  new_scope->name       = evald.f_point->name;
   new_scope->extrn_func = evald.f_point->extrn_func;
 
   if (arg_list.syntax[0] != NULL && strcmp (expression.syntax[0], ","))
@@ -152,8 +155,6 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
       expression.move_forward++;
       expression.syntax++;
     }
-
-#undef DEBUG
 
 #ifdef DEBUG
   printf ("FIRST: %s\n", expression.syntax[0]);
@@ -187,23 +188,25 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
 
       if (arg.type == VAR_TYPE)
 	{
-	  hold = passed.v_point->next;
-	  passed.v_point->next = NULL;
-	  temp = clone_var (passed.v_point, arg.v_point->name);
-	  passed.v_point->next = hold;
-	  arg.v_point->array_up = temp->array_up;
-	  mpc_set (&(arg.v_point->data), temp->data);
+	  hold                    = passed.v_point->next;
+	  passed.v_point->next    = NULL;
+	  temp                    = clone_var (passed.v_point, arg.v_point->name);
+	  passed.v_point->next    = hold;
+	  arg.v_point->array_up   = temp->array_up;
 	  arg.v_point->array_size = temp->array_size;
+	  mpc_set (&(arg.v_point->data), temp->data);
 	}
       else if (arg.type == FUNCTION_TYPE)
 	{
 	  arg.f_point->array_size = passed.f_point->array_size;
-	  arg.f_point->args = passed.f_point->args;
-	  arg.f_point->body = passed.f_point->body;
-	  arg.f_point->vars = passed.f_point->vars;
-	  arg.f_point->funcs = passed.f_point->funcs;
-	  arg.f_point->array_up = passed.f_point->array_up;
-	  arg.f_point->up = passed.f_point->up;
+	  arg.f_point->args       = passed.f_point->args;
+	  arg.f_point->body       = passed.f_point->body;
+	  arg.f_point->vars       = passed.f_point->vars;
+	  arg.f_point->funcs      = passed.f_point->funcs;
+	  arg.f_point->array_up   = passed.f_point->array_up;
+	  arg.f_point->up         = passed.f_point->up;
+	  arg.f_point->extrn_func = passed.f_point->extrn_func;
+	  arg.f_point->usr_data   = passed.f_point->usr_data;
 	}
 
       while (arg_list.move_forward[0])
@@ -265,10 +268,9 @@ new_scope (func_t *scope, word_list expression)
   if (prepared.type == ERROR_TYPE)
     return prepared;
 
-  return_value.f_point = new_scope;
-  return_value.type = FUNCTION_TYPE;
-  
-  return_value.isret = false;
+  return_value.f_point      = new_scope;
+  return_value.type         = FUNCTION_TYPE;
+  return_value.isret        = false;
   return_value.break_signal = false;
 
   return return_value;
@@ -283,8 +285,7 @@ run_func (func_t *scope, word_list expression_list)
   FACT_t    prepared;
 
   new_scope = alloc_func ();
-
-  prepared = prepare_function (scope, new_scope, expression_list);
+  prepared  = prepare_function (scope, new_scope, expression_list);
 
   if (prepared.type == ERROR_TYPE)
     return prepared; 
@@ -296,7 +297,7 @@ run_func (func_t *scope, word_list expression_list)
   else
     return_value = expression (new_scope, copied_body);
 
-  return_value.isret = false;
+  return_value.isret        = false;
   return_value.break_signal = false;
 
   return return_value;
@@ -323,9 +324,8 @@ lambda (func_t *scope, word_list expression)
 {
   FACT_t return_value;
 
-  return_value.type = FUNCTION_TYPE;
-
-  return_value.f_point = alloc_func ();
+  return_value.type          = FUNCTION_TYPE;
+  return_value.f_point       = alloc_func ();
   return_value.f_point->name = "lambda";
 
   return return_value;
@@ -351,7 +351,7 @@ this (func_t *scope, word_list expression)
 {
   FACT_t return_value;
 
-  return_value.type = FUNCTION_TYPE;
+  return_value.type    = FUNCTION_TYPE;
   return_value.f_point = scope;
 
   return return_value;

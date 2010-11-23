@@ -23,7 +23,7 @@ defunc_array (func_t *base, func_t *scope, word_list expression)
   if (strcmp (expression.syntax[0], "["))
     {
       expression.move_forward[0] = true;
-      base->name = expression.syntax[0];
+      base->name                 = expression.syntax[0];
     }
   else
     {
@@ -85,9 +85,9 @@ defunc (func_t *scope, word_list expression)
 
       if (temp.type != ERROR_TYPE)
 	{
-	  return_value.f_point = add_func (scope, temp.f_point->array_up->name);
-	  return_value.f_point->array_up = temp.f_point->array_up;
-	  return_value.f_point->up = scope;
+	  return_value.f_point             = add_func (scope, temp.f_point->array_up->name);
+	  return_value.f_point->array_up   = temp.f_point->array_up;
+	  return_value.f_point->up         = scope;
 	  return_value.f_point->array_size = temp.f_point->array_size;
 	  
 	  GC_free (temp.f_point);
@@ -102,7 +102,7 @@ defunc (func_t *scope, word_list expression)
       if (return_value.f_point == NULL)
 	return errorman_throw_reg (scope, "could not define function");
 
-      return_value.f_point->up = scope;
+      return_value.f_point->up         = scope;
       return_value.f_point->array_size = 1;
     }
 
@@ -134,7 +134,7 @@ def_array (var_t *base, func_t *scope, word_list expression)
   if (strcmp (expression.syntax[0], "["))
     {
       expression.move_forward[0] = true;
-      base->name = expression.syntax[0];
+      base->name                 = expression.syntax[0];
     }
   else
     {
@@ -196,8 +196,8 @@ define (func_t *scope, word_list expression)
 
       if (temp.type != ERROR_TYPE)
 	{
-	  return_value.v_point = add_var (scope, temp.v_point->array_up->name);
-	  return_value.v_point->array_up = temp.v_point->array_up;
+	  return_value.v_point             = add_var (scope, temp.v_point->array_up->name);
+	  return_value.v_point->array_up   = temp.v_point->array_up;
 	  return_value.v_point->array_size = temp.v_point->array_size;
 
 	  GC_free (temp.v_point);
@@ -221,12 +221,11 @@ clone_var (var_t *surrogate, char *name)
   if (surrogate == NULL)
     return NULL;
 
-  clone = alloc_var ();
-  clone->name = name;
+  clone             = alloc_var ();
+  clone->name       = name;
   clone->array_size = surrogate->array_size;
-
-  clone->next = clone_var (surrogate->next, name);
-  clone->array_up = clone_var (surrogate->array_up, name);
+  clone->next       = clone_var (surrogate->next, name);
+  clone->array_up   = clone_var (surrogate->array_up, name);
 
   mpc_set (&(clone->data), surrogate->data);
 
@@ -253,14 +252,18 @@ set (func_t *scope, word_list expression)
 	return errorman_throw_reg (scope, "cannot set a var to a function");
       if (arg1.v_point->locked)
 	return arg2;
-      hold = arg2.v_point->next;
+      
+      hold               = arg2.v_point->next;
       arg2.v_point->next = NULL;
-      copy = clone_var (arg2.v_point, arg1.v_point->name);
+      copy               = clone_var (arg2.v_point, arg1.v_point->name);
       arg2.v_point->next = hold;
+      
       free_var (arg1.v_point->array_up);
-      arg1.v_point->array_up = copy->array_up;
-      mpc_set (&(arg1.v_point->data), copy->data);
+
+      arg1.v_point->array_up   = copy->array_up;
       arg1.v_point->array_size = copy->array_size;
+
+      mpc_set (&(arg1.v_point->data), copy->data);
     }
   else if (arg1.type == FUNCTION_TYPE)
     {
@@ -268,14 +271,16 @@ set (func_t *scope, word_list expression)
 	return errorman_throw_reg (scope, "cannot set a function to a var");
       if (arg1.f_point->locked)
 	return arg2;
+
       arg1.f_point->array_size = arg2.f_point->array_size;
-      arg1.f_point->args = arg2.f_point->args;
-      arg1.f_point->body = arg2.f_point->body;
-      arg1.f_point->vars = arg2.f_point->vars;
-      arg1.f_point->funcs = arg2.f_point->funcs;
-      arg1.f_point->array_up = arg2.f_point->array_up;
-      arg1.f_point->up = arg2.f_point->up;
+      arg1.f_point->args       = arg2.f_point->args;
+      arg1.f_point->body       = arg2.f_point->body;
+      arg1.f_point->vars       = arg2.f_point->vars;
+      arg1.f_point->funcs      = arg2.f_point->funcs;
+      arg1.f_point->array_up   = arg2.f_point->array_up;
+      arg1.f_point->up         = arg2.f_point->up;
       arg1.f_point->extrn_func = arg2.f_point->extrn_func;
+      arg1.f_point->usr_data   = arg2.f_point->usr_data;
     }
 
   return arg1;
@@ -294,11 +299,9 @@ get_array_size (func_t *scope, word_list expression)
   else if (expression.syntax[pos - 1][0] != ']')
     return errorman_throw_reg (scope, "syntax error; expected closing ']'");
 
-  expression.syntax[pos - 1] = NULL;
-
-  return_value = eval (scope, expression);
-
-  expression.syntax[pos - 1] = "]";
+  expression.syntax[pos - 1]       = NULL;
+  return_value                     = eval (scope, expression);
+  expression.syntax[pos - 1]       = "]";
   expression.move_forward[pos - 1] = true;
 
   return return_value;
@@ -334,17 +337,16 @@ return_array (func_t *scope, word_list expression)
     {
       values.var_t_value = hold.v_point;
      
-      roots.var_t_root = alloc_var ();
-      roots.var_t_root->name = "result";
+      roots.var_t_root           = alloc_var ();
+      roots.var_t_root->name     = "result";
       roots.var_t_root->array_up = values.var_t_value;
     }
   else if (type == FUNCTION_TYPE)    
     {
-      values.func_t_value = hold.f_point;
-     
-      roots.func_t_root = alloc_func ();
-      roots.func_t_root->name = "result";
-      roots.func_t_root->up = scope;
+      values.func_t_value         = hold.f_point;
+      roots.func_t_root           = alloc_func ();
+      roots.func_t_root->name     = "result";
+      roots.func_t_root->up       = scope;
       roots.func_t_root->array_up = values.func_t_value;
     }
   
@@ -362,11 +364,6 @@ return_array (func_t *scope, word_list expression)
 	return errorman_throw_reg (scope, "expected ',' or closing ']'");
       else
 	expression.move_forward[0] = true;
-      /*while (expression.move_forward[0])
-	{
-	expression.syntax++;
-	expression.move_forward++;
-	}*/
 
       hold = eval (scope, expression);
 
@@ -384,12 +381,12 @@ return_array (func_t *scope, word_list expression)
       if (type == VAR_TYPE)
 	{
 	  values.var_t_value->next = hold.v_point;
-	  values.var_t_value = values.var_t_value->next;
+	  values.var_t_value       = values.var_t_value->next;
 	}
       else if (type == FUNCTION_TYPE)
 	{
 	  values.func_t_value->next = hold.f_point;
-	  values.func_t_value = values.func_t_value->next;
+	  values.func_t_value       = values.func_t_value->next;
 	}
     }
 
@@ -433,7 +430,7 @@ size_of (func_t *scope, word_list expression)
     return evald;
 
   return_value.v_point = alloc_var ();
-  return_value.type = VAR_TYPE;
+  return_value.type    = VAR_TYPE;
 
   if (evald.type == VAR_TYPE)
     mpc_set_si (&(return_value.v_point->data), evald.v_point->array_size);

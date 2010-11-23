@@ -67,12 +67,12 @@ alloc_var ()
 {
   var_t * new;
 
-  new = (var_t *) better_malloc (sizeof (var_t));
+  new             = (var_t *) better_malloc (sizeof (var_t));
   new->array_size = 1;
-  new->array_up = NULL;
-  new->next = NULL;
-  new->name = NULL;
-  new->locked = false;
+  new->array_up   = NULL;
+  new->next       = NULL;
+  new->name       = NULL;
+  new->locked     = false;
   mpc_init (&(new->data));
 
   return new;
@@ -108,10 +108,12 @@ free_var (var_t *dead_man)
 
   if (dead_man == NULL)              /* if no such man exists, do nothing */
     return;
-  
-  hold_up = dead_man->array_up;      /* get his contacts */
+
+  hold_up   = dead_man->array_up;    /* get his contacts */
   hold_next = dead_man->next;
+  
   mpz_clear (dead_man->data.object); /* destroy his data */
+
   free_var (hold_up);                /* now do the same for all his contacts */
   free_var (hold_next);
 }
@@ -128,9 +130,9 @@ free_func (func_t *dead_house)
     return;
 
   hold_funcs = dead_house->funcs;
-  hold_next = dead_house->next;
-  hold_up = dead_house->array_up;
-  hold_vars = dead_house->vars;
+  hold_next  = dead_house->next;
+  hold_up    = dead_house->array_up;
+  hold_vars  = dead_house->vars;
 
   GC_free (dead_house->body);
   GC_free (dead_house->args);
@@ -152,18 +154,18 @@ add_var (func_t *scope, char *name)
 
   if (scope->vars == NULL)
     {
-      scope->vars = alloc_var ();
+      scope->vars       = alloc_var ();
       scope->vars->name = name;
-
+      
       return scope->vars;
     }  
   if (strcmp (scope->vars->name, name) == 0)
     {
-      hold_next = scope->vars->next;
+      hold_next         = scope->vars->next;
       scope->vars->next = NULL;
       free_var (scope->vars);
 
-      scope->vars = alloc_var ();
+      scope->vars       = alloc_var ();
       scope->vars->name = name;
       scope->vars->next = hold_next;
 
@@ -176,7 +178,7 @@ add_var (func_t *scope, char *name)
 	  hold_next = scroller->next->next;
 
 	  scroller->next->next = NULL;
-	  scroller->next = alloc_var ();
+	  scroller->next       = alloc_var ();
 	  scroller->next->name = name;
 	  scroller->next->next = hold_next;
 
@@ -184,7 +186,7 @@ add_var (func_t *scope, char *name)
 	}
     }
   
-  scroller->next = alloc_var ();
+  scroller->next       = alloc_var ();
   scroller->next->name = name;
 
   return scroller->next;
@@ -198,21 +200,21 @@ add_func (func_t *scope, char *name)
 
   if (scope->funcs == NULL)
     {
-      scope->funcs = alloc_func ();
+      scope->funcs       = alloc_func ();
       scope->funcs->name = name;
-      scope->funcs->up = scope;
+      scope->funcs->up   = scope;
 
       return scope->funcs;
     }
   if (strcmp (scope->funcs->name, name) == 0)
     {
-      hold_next = scope->funcs->next;
+      hold_next          = scope->funcs->next;
       scope->funcs->next = NULL;
       free_func (scope->funcs);
 
-      scope->funcs = alloc_func ();
+      scope->funcs       = alloc_func ();
       scope->funcs->name = name;
-      scope->funcs->up = scope;
+      scope->funcs->up   = scope;
       scope->funcs->next = hold_next;
 
       return scope->funcs;
@@ -224,18 +226,18 @@ add_func (func_t *scope, char *name)
 	  hold_next = scroller->next->next;
 
 	  scroller->next->next = NULL;
-	  scroller->next = alloc_func ();
+	  scroller->next       = alloc_func ();
 	  scroller->next->name = name;
-	  scroller->next->up = scope;
+	  scroller->next->up   = scope;
 	  scroller->next->next = hold_next;
 
 	  return scroller->next;
 	}
     }
   
-  scroller->next = alloc_func ();
+  scroller->next       = alloc_func ();
   scroller->next->name = name;
-  scroller->next->up = scope;
+  scroller->next->up   = scope;
 
   return scroller->next;
 }
@@ -252,20 +254,20 @@ resize_var (var_t *resizable, int new_size)
     {
       if (resizable->array_size == 1)
 	{
-	  scroller->array_up = alloc_var ();
+	  scroller->array_up       = alloc_var ();
 	  scroller->array_up->name = scroller->name;
 	}
       
       scroller = scroller->array_up;
-      
+    
       for (count = 1; scroller->next != NULL;
 	   scroller = scroller->next, count++);
 
       while (count < new_size)
 	{
-	  scroller->next = alloc_var ();
+	  scroller->next       = alloc_var ();
 	  scroller->next->name = scroller->name;
-	  scroller = scroller->next;
+	  scroller             = scroller->next;
 	  count++;
 	}
     }
@@ -275,7 +277,6 @@ resize_var (var_t *resizable, int new_size)
 	{
 	  free_var (scroller->array_up);
 	  scroller->array_up = NULL;
-	  
 	}
       else
 	{
@@ -304,7 +305,7 @@ resize_func (func_t *resizable, int new_size)
     {
       if (resizable->array_size == 1)
 	{
-	  scroller->array_up = alloc_func ();
+	  scroller->array_up       = alloc_func ();
 	  scroller->array_up->name = scroller->name;
 	}
       
@@ -315,9 +316,9 @@ resize_func (func_t *resizable, int new_size)
 
       while (count < new_size)
 	{
-	  scroller->next = alloc_func ();
+	  scroller->next       = alloc_func ();
 	  scroller->next->name = scroller->name;
-	  scroller = scroller->next;
+	  scroller             = scroller->next;
 	  count++;
 	}
     }

@@ -74,15 +74,15 @@ num_to_var (char *word)
 {
   FACT_t return_value;
 
-  return_value.type = VAR_TYPE;
+  return_value.type    = VAR_TYPE;
   return_value.v_point = alloc_var ();
 
   /* Need to fix this in order to support decimals */
   mpc_set_str (&(return_value.v_point->data), word, get_prec (word));
   
   return_value.v_point->array_size = 1;
-  return_value.v_point->array_up = NULL;
-  return_value.v_point->next = NULL;
+  return_value.v_point->array_up   = NULL;
+  return_value.v_point->next       = NULL;
   
   return return_value;
 }
@@ -98,7 +98,7 @@ add (FACT_t arg1, FACT_t arg2)
 {
   FACT_t return_value;
   
-  return_value.type = VAR_TYPE;
+  return_value.type    = VAR_TYPE;
   return_value.v_point = alloc_var ();
   
   if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
@@ -121,7 +121,7 @@ sub (FACT_t arg1, FACT_t arg2)
 {
   FACT_t return_value;
 
-  return_value.type = VAR_TYPE;  
+  return_value.type    = VAR_TYPE;  
   return_value.v_point = alloc_var ();
 
   if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
@@ -143,7 +143,7 @@ mult (FACT_t arg1, FACT_t arg2)
 {
   FACT_t return_value;
 
-  return_value.type = VAR_TYPE;
+  return_value.type    = VAR_TYPE;
   return_value.v_point = alloc_var ();
 
   if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
@@ -166,7 +166,7 @@ divide (FACT_t arg1, FACT_t arg2)
 {
   FACT_t return_value;
 
-  return_value.type = VAR_TYPE;
+  return_value.type    = VAR_TYPE;
   return_value.v_point = alloc_var ();
 
   if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
@@ -190,7 +190,7 @@ mod (FACT_t arg1, FACT_t arg2)
 {
   FACT_t return_value;
 
-  return_value.type = VAR_TYPE;
+  return_value.type    = VAR_TYPE;
   return_value.v_point = alloc_var ();
 
   if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
@@ -320,8 +320,7 @@ mod_assignment (FACT_t arg1, FACT_t arg2)
 FACT_t
 paren (func_t *scope, word_list expression)
 {
-  int pos;
-
+  int    pos;
   FACT_t return_value;
   
   pos = get_exp_length (expression.syntax, ')');
@@ -331,11 +330,9 @@ paren (func_t *scope, word_list expression)
   else if (expression.syntax[pos - 1][0] != ')')
     return errorman_throw_reg (scope, "syntax error; expected closing ')'");
 
-  expression.syntax[pos - 1] = NULL;
-
-  return_value = eval (scope, expression);
-
-  expression.syntax[pos - 1] = ")";
+  expression.syntax[pos - 1]       = NULL;
+  return_value                     = eval (scope, expression);
+  expression.syntax[pos - 1]       = ")";
   expression.move_forward[pos - 1] = true;
 
   return return_value;
