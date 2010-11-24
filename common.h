@@ -29,6 +29,9 @@
 #define PARSE_CHECK
 #define DEBUG
 
+/* Define strcmp as deprecated: */
+__attribute__ ((__deprecated__)) int strcmp (const char *, const char *);
+
 /*---------------------------------------------*
  * Library includes: headers that are not part *
  * of the program itself.                      *

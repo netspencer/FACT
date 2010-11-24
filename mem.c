@@ -20,7 +20,7 @@ defunc_array (func_t *base, func_t *scope, word_list expression)
   if (base == NULL)
     base = alloc_func ();
 
-  if (strcmp (expression.syntax[0], "["))
+  if (tokcmp (expression.syntax[0], "["))
     {
       expression.move_forward[0] = true;
       base->name                 = expression.syntax[0];
@@ -79,7 +79,7 @@ defunc (func_t *scope, word_list expression)
 
   return_value.type = FUNCTION_TYPE;
 
-  if (!strcmp (expression.syntax[0], "["))
+  if (!tokcmp (expression.syntax[0], "["))
     {
       temp = defunc_array (NULL, scope, expression);
 
@@ -131,7 +131,7 @@ def_array (var_t *base, func_t *scope, word_list expression)
   if (base == NULL)
     base = alloc_var ();
 
-  if (strcmp (expression.syntax[0], "["))
+  if (tokcmp (expression.syntax[0], "["))
     {
       expression.move_forward[0] = true;
       base->name                 = expression.syntax[0];
@@ -190,7 +190,7 @@ define (func_t *scope, word_list expression)
     
   return_value.type = VAR_TYPE;
 
-  if (!strcmp (expression.syntax[0], "["))
+  if (!tokcmp (expression.syntax[0], "["))
     {
       temp = def_array (NULL, scope, expression);
 
@@ -325,7 +325,7 @@ return_array (func_t *scope, word_list expression)
     func_t * func_t_value;
   } values;
  
-  if (!strcmp (expression.syntax[0], "]"))
+  if (!tokcmp (expression.syntax[0], "]"))
     return errorman_throw_reg (scope, "expected body before ']'");
 
   if ((hold = eval (scope, expression)).type == ERROR_TYPE)
@@ -358,9 +358,9 @@ return_array (func_t *scope, word_list expression)
 	  expression.move_forward++;
 	}
 
-      if (!strcmp (expression.syntax[0], "]"))
+      if (!tokcmp (expression.syntax[0], "]"))
 	break;
-      else if (strcmp (expression.syntax[0], ","))
+      else if (tokcmp (expression.syntax[0], ","))
 	return errorman_throw_reg (scope, "expected ',' or closing ']'");
       else
 	expression.move_forward[0] = true;
@@ -457,7 +457,7 @@ get_array_var (var_t *root, func_t *scope, word_list expression)
       expression.move_forward++;
     }
   
-  if (expression.syntax[0] == NULL || strcmp (expression.syntax[0], "["))
+  if (expression.syntax[0] == NULL || tokcmp (expression.syntax[0], "["))
     {
       return_value.v_point = root;
       return return_value;
@@ -489,7 +489,7 @@ get_array_var (var_t *root, func_t *scope, word_list expression)
 	  expression.move_forward++;
 	}
       
-      if (expression.syntax[0] != NULL && !strcmp (expression.syntax[0], "["))
+      if (expression.syntax[0] != NULL && !tokcmp (expression.syntax[0], "["))
 	return errorman_throw_reg (scope, "array out of bounds");
 
       return_value.v_point = root;
@@ -521,7 +521,7 @@ get_array_func (func_t *root, func_t *scope, word_list expression)
       expression.move_forward++;
     }
 
-  if (expression.syntax[0] == NULL || strcmp (expression.syntax[0], "["))
+  if (expression.syntax[0] == NULL || tokcmp (expression.syntax[0], "["))
     {
       return_value.f_point = root;
       return return_value;
@@ -553,7 +553,7 @@ get_array_func (func_t *root, func_t *scope, word_list expression)
 	  expression.move_forward++;
 	}
 
-      if (expression.syntax[1] != NULL && !strcmp (expression.syntax[1], "["))
+      if (expression.syntax[1] != NULL && !tokcmp (expression.syntax[1], "["))
 	return errorman_throw_reg (scope, "array out of bounds");
 
       return_value.f_point = root;

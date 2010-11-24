@@ -185,6 +185,9 @@ get_words (char *start)
 word_code
 get_block_code (char *block)
 {
+  while (block != NULL && *block == '\n')
+    block++;
+  
   if (block == NULL)
     return END;
   else if (!strcmp (block, "+"))

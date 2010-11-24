@@ -34,6 +34,10 @@ FACT_INTERN_FUNC (FACT_t) FACT_get_si (  signed int op);
   they can be used otherwise.
 */
 
+FACT_INTERN_FUNC (int) tokcmp_safe (const char *, const char *, int, char *);
+
+#define tokcmp(op1, op2) tokcmp_safe (op1, op2, __LINE__, __FILE__)
+
 #define isvar_t(op)   (op.type == VAR_TYPE)
 #define isfunc_t(op)  (op.type == FUNCTION_TYPE)
 #define iserror_t(op) (op.type == ERROR_TYPE)

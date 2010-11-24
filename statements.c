@@ -61,12 +61,11 @@ if_statement (func_t *scope, word_list expression_list, bool *success)
   
   if (mpc_cmp_si (conditional.v_point->data, 0) == 0)
     {
-      return_value.v_point = alloc_var ();
-      return_value.type = VAR_TYPE;
-      return_value.isret = false;
+      return_value.v_point      = alloc_var ();
+      return_value.type         = VAR_TYPE;
+      return_value.isret        = false;
       return_value.break_signal = false;
-      
-      (*success) = false;  
+      *success                  = false;  
       
       return return_value;
     }
@@ -138,18 +137,16 @@ while_loop (func_t *scope, char **words)
   if (words[0] == NULL || words[0][0] != '(')
     return errorman_throw_reg (scope, "expected '(' after while");
 
-  pos_cond = get_exp_length (words + 1, ')');
-
-  conditional_exp.syntax = words;
+  pos_cond                     = get_exp_length (words + 1, ')');
+  conditional_exp.syntax       = words;
   conditional_exp.move_forward = better_malloc (sizeof (int) * (pos_cond));
-
-  pos = pos_cond;
+  pos                          = pos_cond;
 
   if (words[pos_cond] == NULL)
     return errorman_throw_reg (scope, "syntax error in while loop");
 
-  block_evald.type = VAR_TYPE;
-  block_evald.v_point = alloc_var ();
+  block_evald.type         = VAR_TYPE;
+  block_evald.v_point      = alloc_var ();
   block_evald.break_signal = false;
 
   for (;;)
@@ -203,11 +200,10 @@ for_loop (func_t *scope, char **words)
       .next       = NULL,
     };
 
-  index_dest_exp.syntax = words;
+  index_dest_exp.syntax       = words;
   index_dest_exp.move_forward = better_malloc (sizeof (int) *
 					       ((count = count_until_NULL (words)) + 1));
-    
-  index_value = eval (&temp_scope, index_dest_exp);
+  index_value                 = eval (&temp_scope, index_dest_exp);
 
   if (index_value.type == ERROR_TYPE)
     return index_value;
@@ -222,8 +218,7 @@ for_loop (func_t *scope, char **words)
     return errorman_throw_reg (scope, "syntax error in for loop; missing ','");
 
   index_dest_exp.move_forward[0] = true;
-
-  limit_value = eval (&temp_scope, index_dest_exp);
+  limit_value                    = eval (&temp_scope, index_dest_exp);
 
   if (limit_value.type == ERROR_TYPE)
     return limit_value;
@@ -243,10 +238,9 @@ for_loop (func_t *scope, char **words)
   mpc_init (&one);
   mpc_set_ui (&one, 1);
 
-  arr_pos = 0;
-
-  block_evald.type = VAR_TYPE;
-  block_evald.v_point = alloc_var ();
+  arr_pos                  = 0;
+  block_evald.type         = VAR_TYPE;
+  block_evald.v_point      = alloc_var ();
   block_evald.break_signal = false;
 
   for (;;)
@@ -262,9 +256,9 @@ for_loop (func_t *scope, char **words)
 		   pos < arr_pos; pos++)
 		var_t_scroller = var_t_scroller->next;
 
-	      index_value.v_point->array_size = var_t_scroller->array_size;
 	      mpc_set (&(index_value.v_point->data), var_t_scroller->data);
-	      index_value.v_point->array_up = clone_var (var_t_scroller->array_up, index_value.v_point->name);
+	      index_value.v_point->array_size = var_t_scroller->array_size;
+	      index_value.v_point->array_up   = clone_var (var_t_scroller->array_up, index_value.v_point->name);
 	    }
 	  else if (arr_pos != 0)
 	    {
@@ -287,14 +281,14 @@ for_loop (func_t *scope, char **words)
 		   pos < arr_pos; pos++)
 		func_t_scroller = func_t_scroller->next;
 
-	      index_value.f_point->args = limit_value.f_point->args;
-	      index_value.f_point->body = limit_value.f_point->body;
+	      index_value.f_point->args       = limit_value.f_point->args;
+	      index_value.f_point->body       = limit_value.f_point->body;
 	      index_value.f_point->array_size = limit_value.f_point->array_size;
-	      index_value.f_point->vars = limit_value.f_point->vars;
-	      index_value.f_point->funcs = limit_value.f_point->funcs;
-	      index_value.f_point->up = limit_value.f_point->up;
-	      index_value.f_point->array_up = limit_value.f_point->array_up;
-	      index_value.f_point->next = limit_value.f_point->next;
+	      index_value.f_point->vars       = limit_value.f_point->vars;
+	      index_value.f_point->funcs      = limit_value.f_point->funcs;
+	      index_value.f_point->up         = limit_value.f_point->up;
+	      index_value.f_point->array_up   = limit_value.f_point->array_up;
+	      index_value.f_point->next       = limit_value.f_point->next;
 	    }
 	  else
 	    return errorman_throw_reg (scope, "error in for loop; if the destination var_tiable is a function, it must also be an array");

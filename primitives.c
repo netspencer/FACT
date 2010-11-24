@@ -46,7 +46,7 @@ comp_prims (const void *op1, const void *op2)
   p1 = (struct _prims *) op1;
   p2 = (struct _prims *) op2;
 
-  return strcmp (p1->name, p2->name);
+  return tokcmp (p1->name, p2->name);
 }
 
 void
@@ -57,8 +57,7 @@ add_prim (const char * prim_name,
 
   primitives = (struct _prims *) better_realloc (primitives,
 						 sizeof (struct _prims) * num_of_prims);
-
-  primitives[num_of_prims - 1].name = prim_name;
+  primitives[num_of_prims - 1].name     = prim_name;
   primitives[num_of_prims - 1].function = new_function;
 }
 
@@ -136,7 +135,7 @@ ismathcall (char *word)
 
   for (pos = 0; pos < NUM_MATH_PRIMS; pos++)
     {
-      if (strcmp (math_calls[pos].name, word) == 0)
+      if (tokcmp (math_calls[pos].name, word) == 0)
         return pos;
     }
 
@@ -152,7 +151,7 @@ runprim (func_t *scope, word_list expression, int prim_num)
 
   if (prim_num != 2)
     {
-      return_value.isret = false;
+      return_value.isret        = false;
       return_value.break_signal = false;
     }
   
@@ -171,9 +170,9 @@ eval_math (func_t *scope, word_list expression, int call_num)
 
   /* There is a better way to do this and I will implement it eventually. */
   if (call_num == 1 && arg1.type == VAR_TYPE
-      && arg2.type == ERROR_TYPE && (!strcmp (arg2.error.description, "cannot evaluate ;")
-				     || !strcmp (arg2.error.description, "cannot evaluate <-")
-				     || !strcmp (arg2.error.description, "cannot evaluate empty expression")))
+      && arg2.type == ERROR_TYPE && (!tokcmp (arg2.error.description, "cannot evaluate ;")
+				     || !tokcmp (arg2.error.description, "cannot evaluate <-")
+				     || !tokcmp (arg2.error.description, "cannot evaluate empty expression")))
     {
       mpc_neg (&(arg1.v_point->data), arg1.v_point->data);
       return arg1;

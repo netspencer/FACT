@@ -44,7 +44,7 @@ liven_func (func_t *scope, word_list expression)
       expression.move_forward++;
     }
 
-  if (expression.syntax[0] == NULL || strcmp (expression.syntax[0], "("))
+  if (expression.syntax[0] == NULL || tokcmp (expression.syntax[0], "("))
     return errorman_throw_reg (scope, "expected '(' after function");
 
   pos_args                     = get_exp_length (expression.syntax + 1, ')');
@@ -103,7 +103,7 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
   FACT_t      passed;
   word_list   arg_list;
 
-  if (strcmp (expression.syntax[0], "("))
+  if (tokcmp (expression.syntax[0], "("))
     return errorman_throw_reg (scope, "expected '(' after function call");
   else
     {
@@ -147,7 +147,7 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
   new_scope->name       = evald.f_point->name;
   new_scope->extrn_func = evald.f_point->extrn_func;
 
-  if (arg_list.syntax[0] != NULL && strcmp (expression.syntax[0], ","))
+  if (arg_list.syntax[0] != NULL && tokcmp (expression.syntax[0], ","))
     return errorman_throw_reg (scope, "expected more arguments");
   else
     {
@@ -164,7 +164,7 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
 
   if (arg_list.syntax[0] == NULL)
     {
-      if (strcmp (expression.syntax[-1], ")"))
+      if (tokcmp (expression.syntax[-1], ")"))
 	return errorman_throw_reg (scope, "expected fewer arguments");
       return evald;
     }
@@ -173,7 +173,7 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
     {
       arg = eval (new_scope, arg_list);
 
-      if (!strcmp (expression.syntax[0], ")"))
+      if (!tokcmp (expression.syntax[0], ")"))
 	return errorman_throw_reg (scope, "expected more arguments");
 
       passed = eval (scope, expression);
@@ -221,15 +221,15 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
 	}
       if (arg_list.syntax[0] == NULL)
         {
-          if (strcmp (expression.syntax[0], ")")
-	      && strcmp (expression.syntax[0], ",") == 0)
+          if (tokcmp (expression.syntax[0], ")")
+	      && tokcmp (expression.syntax[0], ",") == 0)
 	    return errorman_throw_reg (scope, "expected fewer arguments");
 	  else
 	    break;
         }
-      else if (strcmp (arg_list.syntax[0], ",") == 0)
+      else if (tokcmp (arg_list.syntax[0], ",") == 0)
 	{
-	  if (strcmp (expression.syntax[0], ",") != 0)
+	  if (tokcmp (expression.syntax[0], ",") != 0)
 	    return errorman_throw_reg (scope, "expected more arguments");
 	  else
 	    arg_list.move_forward[0] = expression.move_forward[0] = true;

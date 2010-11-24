@@ -216,6 +216,9 @@ statement_length (char **words)
 	  */
 	case FUNC_RET:
 	case FUNC_OBJ:
+	  arguments_left++;
+	  break;
+	  
 	case SET:
 	case PLUS:
 	case MINUS:
@@ -272,7 +275,7 @@ statement_length (char **words)
 	  break;
 
 	case UNKNOWN:
-	  if (!strcmp (words[pos], "?")
+	  if (!tokcmp (words[pos], "?")
 	      || get_block_code (words[pos + 1]) == OP_BRACKET)
 	    arguments_left++;
 	  break;
@@ -299,9 +302,8 @@ statement_length (char **words)
 FACT_t
 and (func_t *scope, word_list expression)
 {
-  int pos;
-  int len;
-
+  int    pos;
+  int    len;
   FACT_t arg1;
   FACT_t arg2;
   FACT_t return_value;

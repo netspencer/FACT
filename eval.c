@@ -9,7 +9,7 @@
 FACT_t
 expression (func_t *scope, char **words)
 {
-  int           position;             /* current position in "words" */                 
+  int           position;             /* current position in "words" */                
   int           hold;
   bool          isreturn;             /* if the block starts with a return or not */
   bool          isbreak;
@@ -50,7 +50,7 @@ expression (func_t *scope, char **words)
   for (formatted_expression[position] = NULL, position--; position >= 0; position--)
     formatted_expression[position] = words[position];
 
-  if (strcmp (formatted_expression[0], "if") == 0)
+  if (tokcmp (formatted_expression[0], "if") == 0)
     {
       expression.syntax = formatted_expression + 1;
       return_value      = if_statement (scope, expression, &getif);
@@ -75,7 +75,7 @@ expression (func_t *scope, char **words)
 	    }
 	}
     }
-  else if (strcmp (formatted_expression[0], "else") == 0)
+  else if (tokcmp (formatted_expression[0], "else") == 0)
     {
       for (position = MAX_RECURSION - 1; position >= 0; position--)
 	{
@@ -106,24 +106,24 @@ expression (func_t *scope, char **words)
       for (position = MAX_RECURSION - 1; position >= depth; position--)
 	ifopen[position] = CLOSED;
        
-      if (strcmp (formatted_expression[0], "while") == 0)
+      if (tokcmp (formatted_expression[0], "while") == 0)
 	return_value = while_loop (scope, formatted_expression + 1);
-      else if (strcmp (formatted_expression[0], "for") == 0)
+      else if (tokcmp (formatted_expression[0], "for") == 0)
 	return_value = for_loop (scope, formatted_expression + 1);
-      else if (strcmp (formatted_expression[0], "{") == 0)
+      else if (tokcmp (formatted_expression[0], "{") == 0)
 	{
 	  expression.syntax = formatted_expression + 1;
 	  return_value      = lambda_proc (scope, expression);
 	  for (position = depth + 1; position < MAX_RECURSION; position++) 
 	    ifopen[position] = CLOSED;
 	}
-      else if (strcmp (formatted_expression[0], "return") == 0)
+      else if (tokcmp (formatted_expression[0], "return") == 0)
 	{
 	  expression.syntax = formatted_expression + 1;
 	  return_value      = eval (scope, expression);
 	  isreturn          = true;
 	}
-      else if (strcmp (formatted_expression[0], "break") == 0)
+      else if (tokcmp (formatted_expression[0], "break") == 0)
 	isbreak = true;
       else
 	{
@@ -147,9 +147,9 @@ procedure (func_t *scope, char **words)
   int    len_to_move;  /* length moved each time */  
   FACT_t return_value; /* value returned */
 
-  while (*words != NULL && strcmp (*words, "}"))
+  while (*words != NULL && tokcmp (*words, "}"))
     {
-      len_to_move = get_exp_length_first (words, ';');
+      len_to_move  = get_exp_length_first (words, ';');
       return_value = expression (scope, words);
 
       if (return_value.type == ERROR_TYPE
@@ -160,7 +160,7 @@ procedure (func_t *scope, char **words)
       words += len_to_move;
     }
     
-  if (*words == NULL || !strcmp(*words, "}"))
+  if (*words == NULL || !tokcmp(*words, "}"))
     {
       return_value.isret        = false;
       return_value.break_signal = false;
@@ -217,8 +217,12 @@ eval (func_t *scope, word_list expression)
 
   if (word == NULL)
     return errorman_throw_reg (scope, "cannot evaluate empty expression");
+
+  /*
+    something in here moving the newline # forward.
+  */
   
-  if (strcmp (word, "list") == 0)
+  if (tokcmp (word, "list") == 0)
     {
       scroll (scope);
       return_value = num_to_var ("1");

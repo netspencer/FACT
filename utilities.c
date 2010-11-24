@@ -71,7 +71,7 @@ array_to_string (var_t *convertable)
   var_t * scroller;
   
   return_value = (char *) better_malloc (sizeof (char) * convertable->array_size);
-  setter = return_value;
+  setter       = return_value;
 
   if (convertable->array_size > 1)
     {
@@ -93,15 +93,14 @@ string_to_array (char *convertable, char *name)
   var_t * scroller;
 
   length = strlen (convertable) + 1;
-
-  root = alloc_var ();
+  root   = alloc_var ();
 
   for (scroller = root, pos = 1; pos < length; pos++)
     {
-      scroller->name = name;
       mpc_set_si (&(scroller->data), (int) (convertable [pos - 1]));
+      scroller->name = name;
       scroller->next = alloc_var ();
-      scroller = scroller->next;
+      scroller       = scroller->next;
     }
 
   scroller->name = name;
@@ -116,7 +115,7 @@ string_array_to_var_t (char **strings, char *var_t_name, int array_size)
   var_t * root;
   var_t * scroller;
   
-  root = alloc_var ();
+  root       = alloc_var ();
   root->name = var_t_name;
 
   for (scroller = root, pos = 0; pos < array_size; pos++)
@@ -124,11 +123,11 @@ string_array_to_var_t (char **strings, char *var_t_name, int array_size)
       if (pos != 0)
 	{
 	  scroller->next = alloc_var ();
-	  scroller = scroller->next;
+	  scroller       = scroller->next;
 	}
 
-      scroller->name = var_t_name;
-      scroller->array_up = string_to_array (strings[pos], var_t_name);
+      scroller->name       = var_t_name;
+      scroller->array_up   = string_to_array (strings[pos], var_t_name);
       scroller->array_size = strlen (strings[pos]) + 1;
     }
 
@@ -140,10 +139,10 @@ FACT_get_ui (unsigned int op)
 {
   FACT_t ret;
 
-  ret.type = VAR_TYPE;
-  ret.isret = false;
+  ret.type         = VAR_TYPE;
+  ret.isret        = false;
   ret.break_signal = false;
-  ret.v_point = alloc_var ();
+  ret.v_point      = alloc_var ();
   mpc_set_ui (&(ret.v_point->data), op);
 
   return ret;
@@ -154,12 +153,32 @@ FACT_get_si (signed int op)
 {
   FACT_t ret;
 
-  ret.type = VAR_TYPE;
-  ret.isret = false;
+  ret.type         = VAR_TYPE;
+  ret.isret        = false;
   ret.break_signal = false;
-  ret.v_point = alloc_var ();
+  ret.v_point      = alloc_var ();
   mpc_set_si (&(ret.v_point->data), op);
 
   return ret;
 }
   
+int
+tokcmp_safe (const char *str1, const char *str2, int line, char *file)
+{
+  if (str1 == NULL)
+    {
+      fprintf (stderr, "Call to tokcmp_safe with NULL as first argument at %s:%d. Aborting...\n", file, line);
+      abort ();
+    }
+  if (str2 == NULL)
+    {
+      fprintf (stderr, "Call to tokcmp_safe with NULL as second argument at %s:%d. Aborting...\n", file, line);
+      abort ();
+    }
+  /* Move the pointers forward until there are no more newlines. */
+  while (*str1 == '\n')
+    str1++;
+  while (*str2 == '\n')
+    str2++;
+  return strcmp (str1, str2);
+}

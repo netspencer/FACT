@@ -16,8 +16,11 @@
 bool
 isnum (char *word)
 {
+  bool         flp;
   unsigned int pos;
-  bool flp;
+
+  while (*word == '\n')
+    word++;
 
   for (pos = 0, flp = false; word[pos] != '\0'; pos++)
     {
@@ -44,9 +47,12 @@ isnum (char *word)
 unsigned int
 get_prec (char *word)
 {
+  bool         is_decimal;
   unsigned int pos;
   unsigned int precision;
-  bool is_decimal;
+
+  while (*word == '\n')
+    word++;
 
   for (pos = precision = 0, is_decimal = false; word[pos] != '\0'; pos++)
     {

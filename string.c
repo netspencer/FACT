@@ -3,25 +3,21 @@
 FACT_t
 new_string (func_t *scope, word_list expression)
 {
-  int length;
-  int count;
-  int character;
+  int      length;
+  int      count;
+  int      character;
+  var_t  * string;
+  var_t  * scroller;
+  FACT_t   return_value;
 
-  FACT_t return_value;
-
-  var_t *string;
-  var_t *scroller;
-
-  string = alloc_var ();
-
+  string            = alloc_var ();
   return_value.type = VAR_TYPE;
 
-  if (strcmp (expression.syntax[0], "\"") == 0)
+  if (tokcmp (expression.syntax[0], "\"") == 0)
     return_value.v_point = string;
   else
     {
-      scroller = string;
-
+      scroller                   = string;
       expression.move_forward[0] = true;
 
       for (length = 1, count = 0; expression.syntax[0][count] != '\0'; length++, count++, scroller = scroller->next)
@@ -67,7 +63,7 @@ new_string (func_t *scope, word_list expression)
 	  scroller->next = alloc_var ();
 	}
       
-      if (expression.syntax[2] != NULL && !strcmp (expression.syntax[2], "\""))
+      if (expression.syntax[2] != NULL && !tokcmp (expression.syntax[2], "\""))
 	{
 	  expression.move_forward[1] = true;
 	  expression.move_forward[2] = true;
@@ -109,8 +105,7 @@ input_character (func_t *scope, word_list expression)
 {
   FACT_t return_value;
 
-  return_value.type = VAR_TYPE;
-
+  return_value.type    = VAR_TYPE;
   return_value.v_point = alloc_var ();
 
   mpc_set_si (&(return_value.v_point->data), fgetc (stdin));
