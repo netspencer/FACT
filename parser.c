@@ -134,8 +134,8 @@ get_words (char *start)
   char *  end;
   char ** return_string;
 
-  return_string = (char **) better_malloc (sizeof (char *));
-  // return_string = NULL;
+  //return_string = (char **) better_malloc (sizeof (char *));
+  return_string = NULL;
   
   for (count = 0, end = start, isstring = false; *end != '\0'; count++)
     {

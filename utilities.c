@@ -28,7 +28,7 @@ combine_strs (char *str1, char *str2)
   char * new_string;
 
   new_length = strlen (str1) + strlen (str2);
-  new_string = (char *) better_malloc (sizeof (char) * new_length);
+  new_string = (char *) better_malloc (sizeof (char) * (new_length + 1));
 
   for (scroll1 = 0; str1[scroll1] != '\0'; scroll1++)
     new_string[scroll1] = str1[scroll1];
