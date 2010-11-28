@@ -16,22 +16,26 @@
 bool
 isnum (char *word)
 {
+  bool         hex;
   bool         flp;
   unsigned int pos;
 
-  while (*word == '\n')
-    word++;
-
-  for (pos = 0, flp = false; word[pos] != '\0'; pos++)
+  if (word[0] == '0' && tolower (word[1]) == 'x')
+    hex = true;
+  else
+    hex = false;
+  
+  for (pos = (hex) ? 2 : 0, flp = false; word[pos] != '\0'; pos++)
     {
       if (word[pos] == '.')
 	{
-	  if (flp)
+	  if (flp || word[pos + 1] == '\0')
 	    return false;
 	  flp = true;
 	}
       else if (!isdigit ((int) word[pos]))
-	return false;
+	if (!hex || tolower (word[pos]) < 'a' || tolower (word[pos]) > 'f')
+	  return false;
     }
 
   return true;
@@ -50,9 +54,6 @@ get_prec (char *word)
   bool         is_decimal;
   unsigned int pos;
   unsigned int precision;
-
-  while (*word == '\n')
-    word++;
 
   for (pos = precision = 0, is_decimal = false; word[pos] != '\0'; pos++)
     {
@@ -79,13 +80,15 @@ FACT_t
 num_to_var (char *word)
 {
   FACT_t return_value;
-
+  
   return_value.type    = VAR_TYPE;
   return_value.v_point = alloc_var ();
 
-  /* Need to fix this in order to support decimals */
-  mpc_set_str (&(return_value.v_point->data), word, get_prec (word));
-  
+  if (word[0] == '0' && tolower (word[1]) == 'x')
+    mpc_set_str (&(return_value.v_point->data), word + 2, get_prec (word), 16);
+  else
+    mpc_set_str (&(return_value.v_point->data), word, get_prec (word), 10);
+
   return_value.v_point->array_size = 1;
   return_value.v_point->array_up   = NULL;
   return_value.v_point->next       = NULL;
@@ -206,6 +209,54 @@ mod (FACT_t arg1, FACT_t arg2)
     return errorman_throw_reg (NULL, "mod by zero error");
   
   mpc_mod (&(return_value.v_point->data), arg1.v_point->data, arg2.v_point->data);
+
+  return return_value;
+}
+
+FACT_t
+bit_and (FACT_t arg1, FACT_t arg2)
+{
+  FACT_t return_value;
+
+  return_value.type    = VAR_TYPE;
+  return_value.v_point = alloc_var ();
+
+  if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
+    return errorman_throw_reg (NULL, "both arguments to & need to be vars");
+  
+  mpc_and (&(return_value.v_point->data), arg1.v_point->data, arg2.v_point->data);
+
+  return return_value;
+}
+
+FACT_t
+bit_ior (FACT_t arg1, FACT_t arg2)
+{
+  FACT_t return_value;
+
+  return_value.type    = VAR_TYPE;
+  return_value.v_point = alloc_var ();
+
+  if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
+    return errorman_throw_reg (NULL, "both arguments to & need to be vars");
+  
+  mpc_ior (&(return_value.v_point->data), arg1.v_point->data, arg2.v_point->data);
+
+  return return_value;
+}
+
+FACT_t
+bit_xor (FACT_t arg1, FACT_t arg2)
+{
+  FACT_t return_value;
+
+  return_value.type    = VAR_TYPE;
+  return_value.v_point = alloc_var ();
+
+  if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
+    return errorman_throw_reg (NULL, "both arguments to & need to be vars");
+  
+  mpc_xor (&(return_value.v_point->data), arg1.v_point->data, arg2.v_point->data);
 
   return return_value;
 }

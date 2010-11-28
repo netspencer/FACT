@@ -1,5 +1,10 @@
 #include "common.h"
 
+/*
+  I think I should remove the way primitives (not math calls)
+  are handled. It is rather silly.
+*/
+
 struct          _MATH_PRIMS
 { 
   const char * name;
@@ -8,11 +13,15 @@ struct          _MATH_PRIMS
 
 static struct _MATH_PRIMS math_calls[] =
   {
+    {"~" , combine_arrays },   
     {"+" , add            },
     {"-" , sub            },
     {"*" , mult           },
     {"/" , divide         },
     {"%" , mod            },
+    {"`" , bit_and        },
+    {"^" , bit_xor        },
+    {"|" , bit_ior        },
     {"+=", add_assignment },
     {"-=", sub_assignment },
     {"*=", mult_assignment},
@@ -83,11 +92,13 @@ init_std_prims (func_t *scope)
   add_prim ("else", invalid_else);
   add_prim ("for", invalid_for);
   add_prim ("if", invalid_if);
+  add_prim ("on_error", invalid_on_error);
   add_prim ("sizeof", size_of);
   add_prim ("while", invalid_while);
   add_prim ("lambda", lambda);
   add_prim ("up", up);
   add_prim ("this", this);
+  add_prim ("NULL", NULL_func);
   add_prim ("lib.std.getchar", input_character); 
   add_prim ("lib.std.putchar", print_character);
   add_prim ("lib.std.putvar", print_var);

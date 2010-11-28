@@ -11,6 +11,9 @@ FACT_INTERN_FUNC (FACT_t) sub    (FACT_t, FACT_t);  /* subtracts two numbers    
 FACT_INTERN_FUNC (FACT_t) mult   (FACT_t, FACT_t);  /* multiplies two numbers        */
 FACT_INTERN_FUNC (FACT_t) divide (FACT_t, FACT_t);  /* divides two numbers           */
 FACT_INTERN_FUNC (FACT_t) mod    (FACT_t, FACT_t);  /* modulos two numbers           */
+FACT_INTERN_FUNC (FACT_t) bit_and (FACT_t, FACT_t); 
+FACT_INTERN_FUNC (FACT_t) bit_ior (FACT_t, FACT_t);
+FACT_INTERN_FUNC (FACT_t) bit_xor (FACT_t, FACT_t);
 
 FACT_INTERN_FUNC (FACT_t) add_assignment  (FACT_t, FACT_t);
 FACT_INTERN_FUNC (FACT_t) sub_assignment  (FACT_t, FACT_t);

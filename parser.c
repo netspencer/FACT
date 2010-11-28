@@ -12,53 +12,57 @@ lookup_word (int code)
 {
   static char * lookup_table [] =
     {
-      "+"     ,
-      "-"     ,
-      "*"     ,
-      "/"     ,
-      "%"     ,
-      "+="    ,
-      "-="    ,
-      "*="    ,
-      "/="    ,
-      "%="    ,
-      "@"     ,
-      "="     ,
-      "def"   ,
-      "defunc",
-      "$"     ,
-      "&"     ,
-      ","     ,
-      ":"     ,
-      "{"     ,
-      "}"     ,
-      "["     ,
-      "!["    ,
-      "]"     ,
-      "("     ,
-      ")"     ,
-      "\""    ,
-      "&&"    ,
-      "||"    ,
-      "=="    ,
-      "!="    ,
-      "<"     ,
-      ">"     ,
-      "<="    ,
-      ">="    ,
-      "sizeof",
-      "if"    ,
-      "while" ,
-      "for"   ,
-      "then"  ,
-      "else"  ,
-      ";"     ,
-      "return",
+      "~"       ,
+      "+"       ,
+      "-"       ,
+      "*"       ,
+      "/"       ,
+      "%"       ,
+      "+="      ,
+      "-="      ,
+      "*="      ,
+      "/="      ,
+      "%="      ,
+      "@"       ,
+      "="       ,
+      "def"     ,
+      "defunc"  ,
+      "$"       ,
+      "&"       ,
+      ","       ,
+      ":"       ,
+      "{"       ,
+      "}"       ,
+      "["       ,
+      "!["      ,
+      "]"       ,
+      "("       ,
+      ")"       ,
+      "\""      ,
+      "&&"      ,
+      "||"      ,
+      "`"       , 
+      "|"       ,
+      "^"       , 
+      "=="      ,
+      "!="      , 
+      "<"       ,
+      ">"       ,
+      "<="      ,
+      ">="      ,
+      "sizeof"  ,
+      "if"      ,
+      "on_error",
+      "while"   ,
+      "for"     ,
+      "then"    ,
+      "else"    , 
+      ";"       ,
+      "return"  ,
     };
 
   return lookup_table[code];
 }
-
 
 static bool
 is_in_quotes (int character)
@@ -131,6 +135,7 @@ get_words (char *start)
   char ** return_string;
 
   return_string = (char **) better_malloc (sizeof (char *));
+  // return_string = NULL;
   
   for (count = 0, end = start, isstring = false; *end != '\0'; count++)
     {
@@ -157,7 +162,7 @@ get_words (char *start)
 	  while (isopt ((int) *end))
 	    end++;
 	}
-      else if (ispunct ((int) *end))
+      else if (ispunct ((int) *end) && *end != '.')
 	end++;
       else
 	{
@@ -185,11 +190,10 @@ get_words (char *start)
 word_code
 get_block_code (char *block)
 {
-  while (block != NULL && *block == '\n')
-    block++;
-  
   if (block == NULL)
     return END;
+  else if (!strcmp (block, "~"))
+    return COMB_ARR;
   else if (!strcmp (block, "+"))
     return PLUS;
   else if (!strcmp (block, "-"))
@@ -222,10 +226,6 @@ get_block_code (char *block)
     return FUNC_RET;
   else if (!strcmp (block, "&"))
     return FUNC_OBJ;
-  /*
-  else if (!strcmp (block, "<-"))
-    return FUNC_END;
-  */
   else if (!strcmp (block, ":"))
     return IN_SCOPE;
   else if (!strcmp (block, ","))
@@ -250,6 +250,12 @@ get_block_code (char *block)
     return AND;
   else if (!strcmp (block, /*"or"*/ "||"))
     return OR;
+  else if (!strcmp (block, "`"))
+    return BIT_AND;
+  else if (!strcmp (block, "|"))
+    return BIT_IOR;
+  else if (!strcmp (block, "^"))
+    return BIT_XOR;
   else if (!strcmp (block, /*"eq"*/ "=="))
     return EQ;
   else if (!strcmp (block, /*"nq"*/ "!="))
@@ -266,6 +272,8 @@ get_block_code (char *block)
     return SIZE;
   else if (!strcmp (block, "if"))
     return IF;
+  else if (!strcmp (block, "on_error"))
+    return ON_ERROR;
   else if (!strcmp (block, "while"))
     return WHILE;
   else if (!strcmp (block, "for"))
@@ -448,7 +456,7 @@ swap (linked_word *swapping)
 }
 
 #define isnotMDM(op) (op != MULTIPLY && op != DIVIDE && op != MOD)
-#define isnotAS(op)  (op != PLUS && op != MINUS)
+#define isnotAS(op)  (op != COMB_ARR && op != PLUS && op != MINUS)
 #define isnotSE(op)  (op != SET)
 #define isnotOPC(op) (op != OP_CURLY)
 #define isnotASN(op) (op < ADD_ASSIGN || op > MOD_ASSIGN)
@@ -470,7 +478,8 @@ parsing_error_set_get (char *new)
   else
     return (error = new);
 }
-  
+
+
 bool
 parsing_error (linked_word *scan, bool comma_ok,
 	       unsigned char inside) // 0 = none, 1 = in paren, 2 = in bracket, 3 = in curly, 4 = in definition.
@@ -478,25 +487,28 @@ parsing_error (linked_word *scan, bool comma_ok,
   typedef enum
   {
     NON_OPT ,
-    OPT     , /* also START */
+    OPT     , // also START
     FUNC    ,
     NEG     ,
     MKFUNC  ,
   } _prev_type;
   _prev_type prev_link;
 
-  /*
-    This function does not work. It needs to be fixed.
-    Not only does it not really work all that well, it
-    has yet to be golfed.
-  */
+  return false;
 
+  
+     //  This function does not work. It needs to be fixed.
+    //  Not only does it not really work all that well, it
+   // has yet to be golfed.
+  
+
+  /*
   for (prev_link = OPT; scan != NULL; scan = scan->next)
     {
       if (scan->code == UNKNOWN)
 	parsing_error_set_get (combine_strs ("unexpected ", scan->physical));
       else if (scan->code != END)
-	parsing_error_set_get (combine_strs ("unexpected ", lookup_word (scan->code - PLUS)));	
+	parsing_error_set_get (combine_strs ("unexpected ", lookup_word (scan->code - COMB_ARR)));	
 
       if (scan->code == AT)
 	{
@@ -621,6 +633,7 @@ parsing_error (linked_word *scan, bool comma_ok,
 	return false;
     }
   return false;
+  */
 }
 	  
 static void
@@ -731,6 +744,9 @@ precedence_level2 (linked_word *scan)
 	  hold = scan->next;
 	  while (scan->previous != NULL
 		 && scan->previous->code != IN_SCOPE
+		 && scan->previous->code != BIT_AND
+		 && scan->previous->code != BIT_IOR
+		 && scan->previous->code != BIT_XOR
 		 && isnotMDM (scan->previous->code)
 		 && isnotAS  (scan->previous->code)
 		 && isnotSE  (scan->previous->code)
@@ -801,11 +817,15 @@ precedence_level4 (linked_word *scan)
 	case CL_CURLY:
 	case SEMI:
 	  return;
-	  
+
+	case COMB_ARR:
 	case PLUS:
 	case MINUS:
 	  hold = scan->next;
 	  while (scan->previous != NULL
+		 && scan->previous->code != BIT_AND
+		 && scan->previous->code != BIT_IOR
+		 && scan->previous->code != BIT_XOR
 		 && isnotAS (scan->previous->code)
 		 && isnotSE (scan->previous->code)
 		 && isnotOPC (scan->previous->code)
@@ -854,6 +874,9 @@ precedence_level5 (linked_word *scan)
 	case MORE_EQ:
 	  hold = scan->next;
 	  while (scan->previous != NULL
+		 && scan->previous->code != BIT_AND
+		 && scan->previous->code != BIT_IOR
+		 && scan->previous->code != BIT_XOR
 		 && isnotSE (scan->previous->code)
 		 && isnotOPC (scan->previous->code)
 		 && isnotASN (scan->previous->code)
@@ -896,6 +919,57 @@ precedence_level6 (linked_word *scan)
 	case NEQ:
 	  hold = scan->next;
 	  while (scan->previous != NULL
+		 && scan->previous->code != BIT_AND
+		 && scan->previous->code != BIT_IOR
+		 && scan->previous->code != BIT_XOR
+		 && isnotSE (scan->previous->code)
+		 && isnotOPC (scan->previous->code)
+		 && isnotASN (scan->previous->code)
+		 && (scan->previous->code < AND
+		     || scan->previous->code > NEQ))
+	    swap (scan);
+	  
+	  scan = hold;
+	  break;
+
+	default:
+	  break;
+	}
+
+      scan = scan->next;
+    }
+}
+
+/* IT'S SO ANNOYING HOW EACH BITWISE OPERATION HAS IT'S OWN PRECEDENCE LEVEL.
+   JESUS. */
+
+void
+precedence_level7 (linked_word *scan)
+{
+  linked_word *hold;
+
+  while (scan->next != NULL)
+    {
+      switch (scan->code)
+	{
+	case IF:
+	case WHILE:
+	case FOR:
+	case THEN:
+	case ELSE:
+	case IN_SCOPE:
+	case COMMA:
+	case RETURN_STAT:
+	case CL_CURLY:
+	case SEMI:
+	  return;
+	  
+	case BIT_AND:
+	  hold = scan->next;
+	  while (scan->previous != NULL
+		 && scan->previous->code != BIT_AND
+		 && scan->previous->code != BIT_IOR
+		 && scan->previous->code != BIT_XOR
 		 && isnotSE (scan->previous->code)
 		 && isnotOPC (scan->previous->code)
 		 && isnotASN (scan->previous->code)
@@ -915,7 +989,94 @@ precedence_level6 (linked_word *scan)
 }
 
 void
-precedence_level7 (linked_word *scan)
+precedence_level8 (linked_word *scan)
+{
+  linked_word *hold;
+
+  while (scan->next != NULL)
+    {
+      switch (scan->code)
+	{
+	case IF:
+	case WHILE:
+	case FOR:
+	case THEN:
+	case ELSE:
+	case IN_SCOPE:
+	case COMMA:
+	case RETURN_STAT:
+	case CL_CURLY:
+	case SEMI:
+	  return;
+	  
+	case BIT_XOR:
+	  hold = scan->next;
+	  while (scan->previous != NULL
+		 && scan->previous->code != BIT_XOR
+		 && scan->previous->code != BIT_IOR
+		 && isnotSE (scan->previous->code)
+		 && isnotOPC (scan->previous->code)
+		 && isnotASN (scan->previous->code)
+		 && (scan->previous->code < AND
+		     || scan->previous->code > NEQ))
+	    swap (scan);
+	  
+	  scan = hold;
+	  break;
+
+	default:
+	  break;
+	}
+
+      scan = scan->next;
+    }
+}
+
+void
+precedence_level9 (linked_word *scan)
+{
+  linked_word *hold;
+
+  while (scan->next != NULL)
+    {
+      switch (scan->code)
+	{
+	case IF:
+	case WHILE:
+	case FOR:
+	case THEN:
+	case ELSE:
+	case IN_SCOPE:
+	case COMMA:
+	case RETURN_STAT:
+	case CL_CURLY:
+	case SEMI:
+	  return;
+	  
+	case BIT_IOR:
+	  hold = scan->next;
+	  while (scan->previous != NULL
+		 && scan->previous->code != BIT_IOR
+		 && isnotSE (scan->previous->code)
+		 && isnotOPC (scan->previous->code)
+		 && isnotASN (scan->previous->code)
+		 && (scan->previous->code < AND
+		     || scan->previous->code > NEQ))
+	    swap (scan);
+	  
+	  scan = hold;
+	  break;
+
+	default:
+	  break;
+	}
+
+      scan = scan->next;
+    }
+}
+
+void
+precedence_level10 (linked_word *scan)
 {
   linked_word *hold;
 
@@ -957,7 +1118,7 @@ precedence_level7 (linked_word *scan)
 }
 
 void
-precedence_level8 (linked_word *scan)
+precedence_level11 (linked_word *scan)
 {
   linked_word *hold;
 
@@ -998,7 +1159,7 @@ precedence_level8 (linked_word *scan)
 }
 
 void
-precedence_level9 (linked_word *scan)
+precedence_level12 (linked_word *scan)
 {
   linked_word *hold;
 
@@ -1045,15 +1206,18 @@ precedence_level9 (linked_word *scan)
 void
 rev_shunting_yard (linked_word *scan)
 {
-  precedence_level1 (scan);
-  precedence_level2 (scan);
-  precedence_level3 (scan);
-  precedence_level4 (scan);
-  precedence_level5 (scan);
-  precedence_level6 (scan);
-  precedence_level7 (scan);
-  precedence_level8 (scan);
-  precedence_level9 (scan);
+  precedence_level1  (scan);
+  precedence_level2  (scan);
+  precedence_level3  (scan);
+  precedence_level4  (scan);
+  precedence_level5  (scan);
+  precedence_level6  (scan);
+  precedence_level7  (scan);
+  precedence_level8  (scan);
+  precedence_level9  (scan);
+  precedence_level10 (scan);
+  precedence_level11 (scan);
+  precedence_level12 (scan);
 }
   
 void
@@ -1102,7 +1266,7 @@ convert_link (linked_word *list)
       if (list->code == UNKNOWN)
 	result[position] = list->physical;
       else if (list->code > UNKNOWN)
-	result[position] = lookup_word(list->code - PLUS);
+	result[position] = lookup_word(list->code - COMB_ARR);
       /*
       switch (list->code)
 	{

@@ -3,8 +3,13 @@
 FACT_t
 ft_putchar (func_t *scope)
 {
-  // putchar
-  // def char
+  /**
+   * Name: putchar
+   * Arguments: def char
+   * Returns: 0
+   * On error: None
+   */
+  
   var_t * to_put;
 
   to_put = get_var (scope, "char");
@@ -16,8 +21,12 @@ ft_putchar (func_t *scope)
 FACT_t
 throw_error (func_t *scope)
 {
-  // throw
-  // def description
+  /**
+   * Name: throw
+   * Arguments: def description
+   * Returns: A constructed error.
+   * On error: None, I guess?
+   */
   char   * description;
   var_t  * to_throw;
   FACT_t   return_value;
@@ -38,8 +47,8 @@ struct elements MOD_MAP [] =
     { "fopen"   , "def filename, def mode" , &open_file     },
     { "fclose"  , "defunc file_object"     , &close_file    },
     { "fgetc"   , "defunc file_object"     , &get_char_file },
-    { "run"     , "def filename"           , &run_file_soft },
-    { "run_loud", "def filename"           , &run_file_loud },
+    { "run"     , "def filename, defunc in", &run_file_soft },
+    { "run_loud", "def filename, defunc in", &run_file_loud },
     { "putchar" , "def char"               , &ft_putchar    },
     { "lock"    , "defunc search, def name", &lock_object   },
     { "throw"   , "def description"        , &throw_error   },

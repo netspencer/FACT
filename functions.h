@@ -19,5 +19,6 @@ FACT_INTERN_FUNC (FACT_t) in_scope   (func_t *, word_list);
 FACT_INTERN_FUNC (FACT_t) lambda     (func_t *, word_list);
 FACT_INTERN_FUNC (FACT_t) up         (func_t *, word_list);
 FACT_INTERN_FUNC (FACT_t) this       (func_t *, word_list);
+FACT_INTERN_FUNC (FACT_t) NULL_func  (func_t *, word_list);
 
 #endif

@@ -32,7 +32,11 @@ FACT_API_FUNC (void) mpc_sub (mpc_t *, mpc_t, mpc_t);
 FACT_API_FUNC (void) mpc_neg (mpc_t *, mpc_t);
 FACT_API_FUNC (void) mpc_mul (mpc_t *, mpc_t, mpc_t);
 FACT_API_FUNC (void) mpc_div (mpc_t *, mpc_t, mpc_t);
-FACT_API_DEPRECATED (void) mpc_mod (mpc_t *, mpc_t, mpc_t);
+FACT_API_FUNC (void) mpc_mod (mpc_t *, mpc_t, mpc_t);
+
+FACT_API_FUNC (void) mpc_and (mpc_t *, mpc_t, mpc_t);
+FACT_API_FUNC (void) mpc_ior (mpc_t *, mpc_t, mpc_t);
+FACT_API_FUNC (void) mpc_xor (mpc_t *, mpc_t, mpc_t);
 
 FACT_API_FUNC (int) mpc_cmp (mpc_t, mpc_t);
 FACT_API_FUNC (int) mpc_cmp_ui (mpc_t, unsigned long int);

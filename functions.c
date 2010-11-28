@@ -356,4 +356,14 @@ this (func_t *scope, word_list expression)
 
   return return_value;
 }
-  
+
+FACT_t
+NULL_func (func_t *scope, word_list expression)
+{
+  FACT_t return_value;
+
+  return_value.type    = FUNCTION_TYPE;
+  return_value.f_point = alloc_func (); /* So that every value in the returned function is NULL */
+
+  return return_value;
+}

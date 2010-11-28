@@ -569,3 +569,50 @@ get_array_func (func_t *root, func_t *scope, word_list expression)
 
   return return_value;
 }
+
+FACT_t
+combine_arrays (FACT_t op1, FACT_t op2)
+{
+  var_t  * result;
+  var_t  * temp1;
+  var_t  * temp2;
+  var_t  * hold;
+  FACT_t   return_value;
+
+  if (op1.type == ERROR_TYPE)
+    return op1;
+  else if (op2.type == ERROR_TYPE)
+    return op2;
+
+  if (op1.type == FUNCTION_TYPE
+      || op2.type == FUNCTION_TYPE)
+    return errorman_throw_reg (NULL, "both arguments to ~ must be variables");
+
+  hold               = op1.v_point->next;
+  op1.v_point->next  = NULL;
+  temp1              = clone_var (op1.v_point, "temp1");
+  op1.v_point->next  = hold;
+  hold               = op2.v_point->next;
+  op2.v_point->next  = NULL;
+  temp2              = clone_var (op2.v_point, "temp2");
+  op2.v_point->next  = hold;
+  result             = alloc_var ();
+  result->array_size = temp1->array_size + temp2->array_size;
+
+  if (temp1->array_size == 1)
+    result->array_up = temp1;
+  else
+    result->array_up = temp1->array_up;
+
+  for (hold = result->array_up; hold->next != NULL; hold = hold->next);
+
+  if (temp2->array_size == 1)
+    hold->next = temp2;
+  else
+    hold->next = temp2->array_up;
+
+  return_value.type    = VAR_TYPE;
+  return_value.v_point = result;
+
+  return return_value;
+}

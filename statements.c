@@ -7,6 +7,12 @@ invalid_if (func_t *scope, word_list expression)
 }
 
 FACT_t
+invalid_on_error (func_t *scope, word_list expression)
+{
+  return errorman_throw_reg (scope, "invalid syntax, on_error statements must start at the beginning of the expression");
+}
+
+FACT_t
 invalid_else (func_t *scope, word_list expression)
 {
   return errorman_throw_reg (scope, "invalid syntax, else statements must follow if statements at the beginning of the expression");
@@ -57,7 +63,7 @@ if_statement (func_t *scope, word_list expression_list, bool *success)
     }
 
   if (conditional.type == FUNCTION_TYPE)
-    return errorman_throw_reg (scope, "if statement conditional must return a var_t");
+    return errorman_throw_reg (scope, "if statement conditional must return a var");
   
   if (mpc_cmp_si (conditional.v_point->data, 0) == 0)
     {
@@ -75,6 +81,92 @@ if_statement (func_t *scope, word_list expression_list, bool *success)
       expression_list.syntax++;
       expression_list.move_forward++;
     }
+  
+  return_value = expression (&temp_scope, expression_list.syntax);
+
+  if (return_value.type == ERROR_TYPE)
+    return_value.error.scope = scope;
+    
+  return return_value;
+}
+
+FACT_t
+on_error (func_t *scope, word_list expression_list, bool *success)
+{
+  /*
+    Since on_error statements act pretty much the same way as
+    if statements, this function is basically a facsimile of
+    the function if_statement.
+  */
+
+  var_t  * message;
+  FACT_t   return_value;
+  FACT_t   conditional;
+  func_t * ERROR;
+  func_t   temp_scope =
+    {
+      .name       = scope->name,
+      .args       = NULL,
+      .body       = NULL,
+      .array_size = 1,
+      .extrn_func = NULL,
+      .vars       = NULL,
+      .funcs      = NULL,
+      .up         = scope,
+      .array_up   = NULL,
+      .next       = NULL,
+    };
+  
+  *success = true;
+  
+  if (strcmp (expression_list.syntax[0], "(") != 0)
+    return errorman_throw_reg (scope, "expected '(' after on_error statement");
+
+  conditional = eval (&temp_scope, expression_list);
+
+  if (conditional.type == ERROR_TYPE && !conditional.error.thrown)
+    {
+      conditional.error.scope = scope;
+      return conditional;
+    }
+  
+  if (conditional.type != ERROR_TYPE)
+    {
+      return_value.v_point      = alloc_var ();
+      return_value.type         = VAR_TYPE;
+      return_value.isret        = false;
+      return_value.break_signal = false;
+      *success                  = false;  
+      
+      return return_value;
+    }
+
+  while (expression_list.move_forward[0])
+    {
+      expression_list.syntax++;
+      expression_list.move_forward++;
+    }
+
+  
+  /*
+   * This adds a local object called 'ERROR', which only
+   * Can be accessed in the on_error's scope.
+   *
+   * ERROR:
+   *  - locked => true
+   *  - name   => 'ERROR'
+   *  - vars   =>
+   *  | - message => the error message of the caught exception.
+   *  | | - locked => true
+   *  - up     => the scope of the caught exception.
+   */
+  ERROR               = add_func (&temp_scope, "ERROR");
+  ERROR->locked       = true;
+  ERROR->up           = conditional.error.scope;
+  message             = add_var (ERROR, "message");
+  message->array_up   = string_to_array (conditional.error.description, "message");
+  message->array_size = strlen (conditional.error.description);
+  message->locked     = true;
   
   return_value = expression (&temp_scope, expression_list.syntax);
 

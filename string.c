@@ -62,7 +62,11 @@ new_string (func_t *scope, word_list expression)
 	  mpc_set_si (&(scroller->data), character);
 	  scroller->next = alloc_var ();
 	}
-      
+
+      /*
+	I'm removing this because it conflicts with some stuff.
+	Plus no one really uses it.
+	
       if (expression.syntax[2] != NULL && !tokcmp (expression.syntax[2], "\""))
 	{
 	  expression.move_forward[1] = true;
@@ -73,10 +77,11 @@ new_string (func_t *scope, word_list expression)
 	  count = 0;
 	  goto stringer;
 	}
+      */
       
-      return_value.v_point = alloc_var ();
+      return_value.v_point             = alloc_var ();
       return_value.v_point->array_size = length;
-      return_value.v_point->array_up = string;
+      return_value.v_point->array_up   = string;
     }
 
   expression.move_forward[0] = expression.move_forward[1] = true;

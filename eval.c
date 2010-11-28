@@ -50,10 +50,15 @@ expression (func_t *scope, char **words)
   for (formatted_expression[position] = NULL, position--; position >= 0; position--)
     formatted_expression[position] = words[position];
 
-  if (tokcmp (formatted_expression[0], "if") == 0)
+  if (!tokcmp (formatted_expression[0], "if")
+      || !tokcmp (formatted_expression[0], "on_error"))
     {
       expression.syntax = formatted_expression + 1;
-      return_value      = if_statement (scope, expression, &getif);
+      
+      if (!tokcmp (formatted_expression[0], "if"))
+	return_value = if_statement (scope, expression, &getif);
+      else
+	return_value = on_error (scope, expression, &getif);
 
       if (getif)
 	ifopen[depth] = OPEN_SUCCESS;

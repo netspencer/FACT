@@ -175,10 +175,5 @@ tokcmp_safe (const char *str1, const char *str2, int line, char *file)
       fprintf (stderr, "Call to tokcmp_safe with NULL as second argument at %s:%d. Aborting...\n", file, line);
       abort ();
     }
-  /* Move the pointers forward until there are no more newlines. */
-  while (*str1 == '\n')
-    str1++;
-  while (*str2 == '\n')
-    str2++;
   return strcmp (str1, str2);
 }

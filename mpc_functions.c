@@ -52,11 +52,11 @@ mpc_set_si (mpc_t *rop, signed long int op)
 }
 
 void
-mpc_set_str (mpc_t *rop, char *str, unsigned int precision)
+mpc_set_str (mpc_t *rop, char *str, unsigned int precision, int base)
 {
   /* This function does not take in a string with a decimal point. */
   rop->precision = precision;
-  mpz_set_str (rop->object, str, 10);
+  mpz_set_str (rop->object, str, base);
 }
 
 void
@@ -142,28 +142,15 @@ void
 mpc_div (mpc_t *rop, mpc_t op1, mpc_t op2)  /* Division by zero is not checked for in this function. */
 {
   mpc_t temp;
-  //  mpz_t temp_div;
   mpz_t temp_res;
 
-  //temp.precision = (op1.precision < op2.precision) ? op2.precision : op1.precision;
   mpz_init (temp.object);
   mpz_init (temp_res);
-  //mpz_init_set (temp_div, op2.object);
-  //power_of_ten (temp_div, op2.precision);
 
   if (op1.precision == 0)
     temp.precision = default_prec;
   else
     temp.precision = op1.precision;
-
-  /*
-  if (temp.precision == 0)
-    temp.precision = default_prec;
-  else if (op1.precision > op2.precision)
-    temp.precision = op1.precision;
-  else
-    temp.precision = op2.precision;
-  */
   
   mpz_set (temp.object, op1.object);
   power_of_ten (temp.object, temp.precision + op2.precision);  
@@ -179,11 +166,11 @@ mpc_mod (mpc_t *rop, mpc_t op1, mpc_t op2)
   /* Division by zero is not checked, and this function
      literally doesn't even work. It's just filler because
      I'm tired. HAHAHA DISREGARD THAT I FIXED IT. */
-   mpc_t temp;
+  mpc_t temp;
   
   temp.precision = (op1.precision < op2.precision) ? op2.precision : op1.precision;
   mpz_init (temp.object);
-
+  
   if (op1.precision == op2.precision)
     mpz_mod (temp.object, op1.object, op2.object);
   else if (op1.precision > op2.precision)
@@ -201,7 +188,87 @@ mpc_mod (mpc_t *rop, mpc_t op1, mpc_t op2)
 
   rop->precision = temp.precision;
   mpz_set (rop->object, temp.object);
-  // mpz_mod (rop->object, op1.object, op2.object);
+}
+
+void
+mpc_and (mpc_t *rop, mpc_t op1, mpc_t op2)
+{
+  mpc_t temp;
+  
+  temp.precision = (op1.precision < op2.precision) ? op2.precision : op1.precision;
+  mpz_init (temp.object);
+
+  if (op1.precision == op2.precision)
+    mpz_and (temp.object, op1.object, op2.object);
+  else if (op1.precision > op2.precision)
+    {
+      mpz_set (temp.object, op2.object);
+      power_of_ten (temp.object, op1.precision - op2.precision);
+      mpz_and (temp.object, op1.object, temp.object);
+    }
+  else
+    {
+      mpz_set (temp.object, op1.object);
+      power_of_ten (temp.object, op2.precision - op1.precision);
+      mpz_and (temp.object, temp.object, op2.object);
+    }
+
+  rop->precision = temp.precision;
+  mpz_set (rop->object, temp.object);
+}
+
+void
+mpc_ior (mpc_t *rop, mpc_t op1, mpc_t op2)
+{
+  mpc_t temp;
+  
+  temp.precision = (op1.precision < op2.precision) ? op2.precision : op1.precision;
+  mpz_init (temp.object);
+
+  if (op1.precision == op2.precision)
+    mpz_ior (temp.object, op1.object, op2.object);
+  else if (op1.precision > op2.precision)
+    {
+      mpz_set (temp.object, op2.object);
+      power_of_ten (temp.object, op1.precision - op2.precision);
+      mpz_ior (temp.object, op1.object, temp.object);
+    }
+  else
+    {
+      mpz_set (temp.object, op1.object);
+      power_of_ten (temp.object, op2.precision - op1.precision);
+      mpz_ior (temp.object, temp.object, op2.object);
+    }
+
+  rop->precision = temp.precision;
+  mpz_set (rop->object, temp.object);
+}
+
+void
+mpc_xor (mpc_t *rop, mpc_t op1, mpc_t op2)
+{
+  mpc_t temp;
+  
+  temp.precision = (op1.precision < op2.precision) ? op2.precision : op1.precision;
+  mpz_init (temp.object);
+
+  if (op1.precision == op2.precision)
+    mpz_xor (temp.object, op1.object, op2.object);
+  else if (op1.precision > op2.precision)
+    {
+      mpz_set (temp.object, op2.object);
+      power_of_ten (temp.object, op1.precision - op2.precision);
+      mpz_xor (temp.object, op1.object, temp.object);
+    }
+  else
+    {
+      mpz_set (temp.object, op1.object);
+      power_of_ten (temp.object, op2.precision - op1.precision);
+      mpz_xor (temp.object, temp.object, op2.object);
+    }
+
+  rop->precision = temp.precision;
+  mpz_set (rop->object, temp.object);
 }
 
 int
