@@ -37,6 +37,7 @@ if_statement (func_t *scope, word_list expression_list, bool *success)
   FACT_t conditional;
   func_t temp_scope =
     {
+      .line       = scope->line,
       .name       = scope->name,
       .args       = NULL,
       .body       = NULL,
@@ -58,6 +59,7 @@ if_statement (func_t *scope, word_list expression_list, bool *success)
 
   if (conditional.type == ERROR_TYPE)
     {
+      scope->line             = temp_scope.line;
       conditional.error.scope = scope;
       return conditional;
     }
@@ -71,7 +73,8 @@ if_statement (func_t *scope, word_list expression_list, bool *success)
       return_value.type         = VAR_TYPE;
       return_value.isret        = false;
       return_value.break_signal = false;
-      *success                  = false;  
+      *success                  = false;
+      scope->line               = temp_scope.line;
       
       return return_value;
     }
@@ -83,7 +86,8 @@ if_statement (func_t *scope, word_list expression_list, bool *success)
     }
   
   return_value = expression (&temp_scope, expression_list.syntax);
-
+  scope->line  = temp_scope.line;
+  
   if (return_value.type == ERROR_TYPE)
     return_value.error.scope = scope;
     
@@ -146,7 +150,6 @@ on_error (func_t *scope, word_list expression_list, bool *success)
       expression_list.syntax++;
       expression_list.move_forward++;
     }
-
   
   /*
    * This adds a local object called 'ERROR', which only
@@ -212,6 +215,7 @@ while_loop (func_t *scope, char **words)
   word_list conditional_exp;
   func_t    temp_scope =
     {
+      .line       = scope->line,
       .name       = scope->name,
       .args       = NULL,
       .body       = NULL,
@@ -231,7 +235,8 @@ while_loop (func_t *scope, char **words)
 
   pos_cond                     = get_exp_length (words + 1, ')');
   conditional_exp.syntax       = words;
-  conditional_exp.move_forward = better_malloc (sizeof (int) * (pos_cond));
+  conditional_exp.move_forward = better_malloc (sizeof (bool) * pos_cond);
+  conditional_exp.lines        = better_malloc (sizeof (int ) * pos_cond);
   pos                          = pos_cond;
 
   if (words[pos_cond] == NULL)

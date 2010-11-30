@@ -9,7 +9,8 @@ defunc_array (func_t *base, func_t *scope, word_list expression)
   FACT_t   array_size;
   FACT_t   checker;
   func_t * scroller;
-  
+
+  scope->line         += expression.lines[0];
   return_value.f_point = alloc_func ();
 
   if (expression.syntax[0] == NULL)
@@ -29,13 +30,16 @@ defunc_array (func_t *base, func_t *scope, word_list expression)
     {
       expression.syntax++;
       expression.move_forward++;
-      
-      array_size = get_array_size (scope, expression);
+      expression.lines++;
+
+      scope->line += expression.lines[0];
+      array_size   = get_array_size (scope, expression);
 
       while (expression.move_forward[0])
 	{
 	  expression.syntax++;
 	  expression.move_forward++;
+	  expression.lines++;
 	}
 
       if (array_size.type == ERROR_TYPE)
@@ -51,6 +55,7 @@ defunc_array (func_t *base, func_t *scope, word_list expression)
 
       for (scroller = base->array_up, pos = 0; pos < size; pos++, scroller = scroller->next)
 	{
+	  scope->line -= expression.lines[0];
 	  set_array (expression.move_forward, count_until_NULL (expression.syntax));
 	  checker = defunc_array (scroller, scope, expression);
 	  
@@ -140,6 +145,7 @@ def_array (var_t *base, func_t *scope, word_list expression)
     {
       expression.syntax++;
       expression.move_forward++;
+      expression.lines++;
 
       array_size = get_array_size (scope, expression);
 
@@ -147,6 +153,7 @@ def_array (var_t *base, func_t *scope, word_list expression)
 	{
 	  expression.syntax++;
 	  expression.move_forward++;
+	  expression.lines++;
 	}
 
       if (array_size.type == ERROR_TYPE)
@@ -356,6 +363,7 @@ return_array (func_t *scope, word_list expression)
 	{
 	  expression.syntax++;
 	  expression.move_forward++;
+	  expression.lines++;
 	}
 
       if (!tokcmp (expression.syntax[0], "]"))
@@ -455,6 +463,7 @@ get_array_var (var_t *root, func_t *scope, word_list expression)
     {
       expression.syntax++;
       expression.move_forward++;
+      expression.lines++;
     }
   
   if (expression.syntax[0] == NULL || tokcmp (expression.syntax[0], "["))
@@ -467,6 +476,7 @@ get_array_var (var_t *root, func_t *scope, word_list expression)
   
   expression.syntax++;
   expression.move_forward++;
+  expression.lines++;
 
   array_size = get_array_size (scope, expression);
 
@@ -519,6 +529,7 @@ get_array_func (func_t *root, func_t *scope, word_list expression)
     {
       expression.syntax++;
       expression.move_forward++;
+      expression.lines++;
     }
 
   if (expression.syntax[0] == NULL || tokcmp (expression.syntax[0], "["))
@@ -531,6 +542,7 @@ get_array_func (func_t *root, func_t *scope, word_list expression)
 
   expression.syntax++;
   expression.move_forward++;
+  expression.lines++;
 
   array_size = get_array_size (scope, expression);
 
@@ -551,6 +563,7 @@ get_array_func (func_t *root, func_t *scope, word_list expression)
 	{
 	  expression.syntax++;
 	  expression.move_forward++;
+	  expression.lines++;
 	}
 
       if (expression.syntax[1] != NULL && !tokcmp (expression.syntax[1], "["))

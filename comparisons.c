@@ -322,6 +322,7 @@ and (func_t *scope, word_list expression)
     {
       expression.syntax++;
       expression.move_forward++;
+      expression.lines++;
     }
 
   len = statement_length (expression.syntax) + 1;
@@ -381,6 +382,7 @@ or
     {
       expression.syntax++;
       expression.move_forward++;
+      expression.lines++;
     }
 
   len = statement_length (expression.syntax) + 1;

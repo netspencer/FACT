@@ -23,6 +23,9 @@ get_input (FILE *fp, unsigned int *line_number)
   bool   in_quotes;  
   char * input;
 
+  if (fp == stdin)
+    puts ("% ");
+
   for (count = 1, input = NULL, in_quotes = false,
 	 paren_count = bracket_count = curly_count = 0; (c = fgetc (fp)) != EOF; count++)
     {
@@ -36,14 +39,18 @@ get_input (FILE *fp, unsigned int *line_number)
 	  continue;
 	}
 
-      if (c != '\n' || in_quotes)
- 	input[count - 1] = c;
-      else
+      if (c == '\n')
 	{
-	  ungetc (' ', fp);
-	  count--;
-	  (*line_number)++;
+	  *line_number++;
+	  if (count > 1
+	      && (((in_quotes || paren_count || bracket_count || curly_count) && fp == stdin)
+		  || (input[count - 2] != ';' || input[count - 2] != '}')))
+	    puts (": ");
 	}
+	      
+      // if (c != '\n' || in_quotes)
+      input[count - 1] = c;
+      // else
 
       if (!in_quotes)
 	{
@@ -69,10 +76,11 @@ get_input (FILE *fp, unsigned int *line_number)
 	  input[count] = '\0';
 
 	  if (paren_count == 0 && bracket_count == 0 && curly_count == 0 && !in_quotes
-	      && (input[count - 1] == ';' || input[count - 1] == '}'))
+	      /*&& (input[count - 1] == ';' || input[count - 1] == '}')*/)
 	    break; 
 	}      
     }
+
   
   if (input != NULL)
     {
@@ -108,7 +116,11 @@ shell (func_t *main_scope)
   for (;;)
     {
       input = get_input (stdin, &line_num);
-
+      
+#ifdef DEBUG
+      printf (":RAW:\n%s\n:END RAW:\n", input);
+#endif
+      
       /* Check 1... */
       if (input == NULL)
         {
@@ -117,6 +129,13 @@ shell (func_t *main_scope)
         }
       
       parsed_input = get_words (input);
+
+#ifdef DEBUG
+      puts ("WORDS: ");
+      for (print_parsed = 0; parsed_input[print_parsed]; print_parsed++)
+	printf ("'%s' ", parsed_input[print_parsed]);
+      putchar ('\n');
+#endif
 
       /* Check 2... */
       if (parsed_input == NULL)
@@ -143,17 +162,34 @@ shell (func_t *main_scope)
       returned = expression (main_scope, parsed_input);
       if (returned.type == ERROR_TYPE)
         {
+#ifdef DEBUG
+	  puts ("REGULAR ERROR:\n");
+#endif
           errorman_dump (returned.error, line_num, "stdin");
+#ifdef DEBUG
+	  puts ("BETTER NEWLINES:\n");
+	  errorman_dump (returned.error, returned.error.scope->line, "stdin");
+#endif
           continue;
         }
       if (returned.type == VAR_TYPE)
 	printf ("Returned value: %s\n", mpc_get_str (returned.v_point->data));
       else
-        printf ("Returned object [%s]\n", returned.f_point->name);
+#ifdef DEBUG
+	{
+#endif
+	  printf ("Returned object [%s]\n", returned.f_point->name);
+#ifdef DEBUG
+	  printf ("Object starts at line [%d]\n", returned.f_point->line);
+	}
+#endif
       if (returned.isret == true)
         {
           printf ("Exiting...\n");
 	  return;
         }
+#ifdef DEBUG
+      printf ("Now on line [scope:%d], [flat:%d]\n", main_scope->line, line_num);
+#endif
     }
 }

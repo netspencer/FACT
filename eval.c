@@ -9,6 +9,7 @@
 FACT_t
 expression (func_t *scope, char **words)
 {
+  int           line;
   int           position;             /* current position in "words" */                
   int           hold;
   bool          isreturn;             /* if the block starts with a return or not */
@@ -31,10 +32,12 @@ expression (func_t *scope, char **words)
     {
       depth--;
       return errorman_throw_reg (scope, "reached the maximum recursion depth");
-    }  
+    }
   if (position < 1
-      || (words[position - 1][0] != ';'
-	  && words[position - 1][0] != '}'))
+      || (tokcmp (words[position - 1], ";")
+	  && tokcmp (words[position - 1], "}")))
+      //(words[position - 1][line] != ';'
+      //&& words[position - 1][line] != '}'))
     {
       depth--;
       return errorman_throw_reg (scope, "syntax error; expected closing ';' or '}'");
@@ -46,14 +49,26 @@ expression (func_t *scope, char **words)
   // After:
   formatted_expression    = better_malloc (sizeof (char *) * (position + 1));
   expression.move_forward = better_malloc (sizeof (bool  ) * (position + 1));
+  expression.lines        = better_malloc (sizeof (int   ) * (position + 1));
 
   for (formatted_expression[position] = NULL, position--; position >= 0; position--)
-    formatted_expression[position] = words[position];
+    {
+      for (line = 0; words[position][line] == '\n'; line++);
+      if (words[position] + line == '\0')
+	formatted_expression[position] = NULL;
+      else
+	formatted_expression[position] = words[position] + line;
+      expression.lines[position] = line;
+    }
 
+  scope->line += expression.lines[0];
+      
   if (!tokcmp (formatted_expression[0], "if")
       || !tokcmp (formatted_expression[0], "on_error"))
     {
       expression.syntax = formatted_expression + 1;
+      expression.move_forward++;
+      expression.lines++;
       
       if (!tokcmp (formatted_expression[0], "if"))
 	return_value = if_statement (scope, expression, &getif);
@@ -68,14 +83,16 @@ expression (func_t *scope, char **words)
 	  for (position = 1; formatted_expression[position] != NULL; position++)
 	    {
 	      int temp_depth = depth + 1;
+	      scope->line   += expression.lines[position];
 
 	      if (temp_depth >= MAX_RECURSION)
 		return errorman_throw_reg (scope, "You have too many nested if loops. They exceed the maximum recursion depth");
 	      
-	      if (!strcmp (formatted_expression[position], "if"))
+	      if (!strcmp (formatted_expression[position], "if")
+		  || !strcmp (formatted_expression[position], "on_error"))
 		ifopen[temp_depth++] = OPEN_FAILED;
 	      else if (!strcmp (formatted_expression[position], ";")
-		       || !strcmp (formatted_expression[position], ";"))
+		       || !strcmp (formatted_expression[position], "}"))
 		break;
 	    }
 	}
@@ -94,6 +111,7 @@ expression (func_t *scope, char **words)
 	    }
 	  else if (ifopen[position] == OPEN_SUCCESS)
 	    {
+	      /* Is see a major problem here. */
 	      if (strcmp (formatted_expression[1], "if") != 0)
 		ifopen[position] = CLOSED;
 	      depth--;
@@ -132,6 +150,7 @@ expression (func_t *scope, char **words)
 	isbreak = true;
       else
 	{
+	  scope->line      -= expression.lines[0];
 	  expression.syntax = formatted_expression;
 	  return_value      = eval (scope, expression);
 	}
@@ -181,8 +200,10 @@ procedure (func_t *scope, char **words)
 FACT_t
 lambda_proc (func_t *scope, word_list expression)
 {
+  FACT_t return_value;
   func_t temp_local = 
     {
+      .line       = scope->line,
       .name       = scope->name,
       .args       = NULL,
       .body       = NULL,
@@ -201,7 +222,10 @@ lambda_proc (func_t *scope, word_list expression)
      lambda functions. A lot.
    */
 
-  return procedure (&temp_local, expression.syntax);
+  return_value = procedure (&temp_local, expression.syntax);
+  scope->line  = temp_local.line;
+
+  return return_value;
 }
 
 FACT_t
@@ -215,10 +239,12 @@ eval (func_t *scope, word_list expression)
     {
       expression.syntax++;
       expression.move_forward++;
+      expression.lines++;
     }
 
   word                       = expression.syntax[0];
   expression.move_forward[0] = true;
+  scope->line += (expression.lines != NULL) ? expression.lines[0] : 0;
 
   if (word == NULL)
     return errorman_throw_reg (scope, "cannot evaluate empty expression");
@@ -238,6 +264,7 @@ eval (func_t *scope, word_list expression)
     {
       expression.syntax++;
       expression.move_forward++;
+      expression.lines++;
       
       if ((call_num = isprim (word)) > -1)
 	return runprim (scope, expression, call_num);

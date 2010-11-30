@@ -386,7 +386,7 @@ paren (func_t *scope, word_list expression)
     return errorman_throw_reg (scope, "parenthesis has no body");
   else if (expression.syntax[pos - 1][0] != ')')
     return errorman_throw_reg (scope, "syntax error; expected closing ')'");
-
+ 
   expression.syntax[pos - 1]       = NULL;
   return_value                     = eval (scope, expression);
   expression.syntax[pos - 1]       = ")";

@@ -7,8 +7,28 @@
 
 #include "parser.h"
 
+char *
+add_newlines (char *word, int newlines)
+{
+  int    i;
+  int    word_len;
+  char * new_str;
+
+  word_len = strlen (word);
+  new_str  = better_malloc (sizeof (char) * (word_len + newlines + 1));
+
+  for (i = 0; i < newlines; i++)
+    new_str[i] = '\n';
+
+  while (i < word_len + newlines)
+    new_str[i++] = word[i - newlines];
+  new_str[i] = '\0';
+
+  return new_str;
+}
+
 static char *
-lookup_word (int code)
+lookup_word (int code, int newlines)
 {
   static char * lookup_table [] =
     {
@@ -61,7 +81,7 @@ lookup_word (int code)
       "return"  ,
     };
 
-  return lookup_table[code];
+  return add_newlines (lookup_table[code], newlines);
 }
 
 static bool
@@ -141,10 +161,15 @@ get_words (char *start)
     {
       return_string = (char **) better_realloc (return_string, (count + 1) * sizeof (char *));
 
-      while (isspace ((int) *end) && !is_in_quotes ((int) *end))
+      while (isspace ((int) *end) && !is_in_quotes ((int) *end) && *end != '\n')
 	start = ++end;
 
-      if (isstring)
+      if (*end == '\n')
+	{
+	  while (*end == '\n')
+	    end++;
+	}
+      else if (isstring)
 	{
 	  isstring = false;
 	  end++;
@@ -190,8 +215,10 @@ get_words (char *start)
 word_code
 get_block_code (char *block)
 {
-  if (block == NULL)
+  if (block == NULL || *block == '\0')
     return END;
+  else if (*block == '\n')
+    return NEWLINE;
   else if (!strcmp (block, "~"))
     return COMB_ARR;
   else if (!strcmp (block, "+"))
@@ -296,6 +323,7 @@ alloc_word (linked_word *set_prev)
   linked_word * temp;
 
   temp              = (linked_word *) better_malloc (sizeof (linked_word));
+  temp->newlines    = 0;
   temp->code        = UNKNOWN;
   temp->is_negative = false;
   temp->physical    = NULL;
@@ -315,12 +343,19 @@ create_list (char **words)
 
   for (base = alloc_word (NULL); (w_code = get_block_code (words[0])) != END; words++)
     {
+
+      if (w_code == NEWLINE)
+	{
+	  base->newlines = strlen (words[0]);
+	  continue;
+	}
+
       if (w_code == UNKNOWN)
 	base->physical = words[0];
 
-      base->code = w_code;
-      base->next = alloc_word (base);
-      base       = base->next;
+      base->code     = w_code;
+      base->next     = alloc_word (base);
+      base           = base->next;
     }
 
   base->code = END;
@@ -1264,9 +1299,9 @@ convert_link (linked_word *list)
   for (position = 0; list != NULL; list = list->next, position++)
     {
       if (list->code == UNKNOWN)
-	result[position] = list->physical;
+	result[position] = add_newlines (list->physical, list->newlines);
       else if (list->code > UNKNOWN)
-	result[position] = lookup_word(list->code - COMB_ARR);
+	result[position] = lookup_word (list->code - COMB_ARR, list->newlines);
       /*
       switch (list->code)
 	{
@@ -1456,12 +1491,16 @@ convert_link (linked_word *list)
 int
 get_exp_length (char **words, int block)
 {
+  int lines;
   int pos;
 
   for (pos = 0; words[pos] != NULL
          && words[pos][0] != block; pos++)
     {
-      switch (words[pos][0])
+      for (lines = 0; words[pos][lines] == '\n'; lines++);
+      if (words[pos][lines] == '\0')
+	break;
+      switch (words[pos][lines])
         {
         case '(':
           pos += get_exp_length (words + pos + 1, ')');
@@ -1483,12 +1522,16 @@ get_exp_length (char **words, int block)
 int
 get_exp_length_first (char **words, int block)
 {
+  int lines;
   int pos;
 
   for (pos = 0; words[pos] != NULL
          && words[pos][0] != block; pos++)
     {
-      switch (words[pos][0])
+      for (lines = 0; words[pos][lines] == '\n'; lines++);
+      if (words[pos][lines] == '\0')
+	break;
+      switch (words[pos][lines])
         {
         case '(':
           pos += get_exp_length (words + pos + 1, ')');

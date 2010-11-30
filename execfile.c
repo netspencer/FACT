@@ -4,6 +4,7 @@ FACT_t
 run_file (func_t *scope, const char *filename, bool silent)
 {
   int             print_parsed;
+  int             hold_line;
   char         *  hold_fn;
   char         *  input;
   char         ** parsed_input;
@@ -15,9 +16,10 @@ run_file (func_t *scope, const char *filename, bool silent)
   if (!silent)
     printf ("Opening file <%s>\n", filename);
 
-  fp = fopen (filename, "r");
-
-  hold_fn = scope->name;
+  fp          = fopen (filename, "r");
+  hold_line   = scope->line;
+  scope->line = 1;
+  hold_fn     = scope->name;
   scope->name = (char *) filename;
 
   if (fp == NULL)
@@ -31,6 +33,10 @@ run_file (func_t *scope, const char *filename, bool silent)
   for (;;)
     {
       input = get_input (fp, &line_num);
+      
+#ifdef DEBUG
+      printf (":RAW:\n%s\n:END RAW:\n", input);
+#endif
 
       if (input == NULL)
 	{
@@ -39,13 +45,23 @@ run_file (func_t *scope, const char *filename, bool silent)
 	  if (!silent)
 	    printf ("Closing file <%s>.\n", filename);
 
-	  returned.type = VAR_TYPE;
+	  returned.type  = VAR_TYPE;
 	  returned.isret = false;
-	  scope->name = hold_fn;
+	  scope->name    = hold_fn;
+	  scope->line    = hold_line;
 	  return returned;
 	}
 
       parsed_input = get_words (input);
+
+      
+#ifdef DEBUG
+      puts ("WORDS: ");
+      for (print_parsed = 0; parsed_input[print_parsed]; print_parsed++)
+	printf ("'%s' ", parsed_input[print_parsed]);
+      putchar ('\n');
+#endif
+
 
       if (parsed_input == NULL)
 	{
@@ -55,7 +71,8 @@ run_file (func_t *scope, const char *filename, bool silent)
 	    printf ("Closing file <%s>.\n", filename);
 
 	  returned.type = VAR_TYPE;
-	  scope->name = hold_fn;
+	  scope->name   = hold_fn;
+	  scope->line   = hold_line;
 	  return returned;
 	}
 
@@ -91,6 +108,7 @@ run_file (func_t *scope, const char *filename, bool silent)
 	  if (!silent)
 	    printf ("Closing file <%s>.\n", filename);
 	  scope->name = hold_fn;
+	  scope->line = hold_line;
 	  return returned;
         }
     }
