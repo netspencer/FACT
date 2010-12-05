@@ -145,8 +145,9 @@ eval_expression (func_t *scope, word_list expression)
 	  if_open[depth] = OPEN_FAILED;
 	  for (index = 1; expression.syntax[index] != NULL; index++)
 	    {
-	      int temp_depth = depth + 1;
-	      scope->line   += expression.lines[index];
+	      int temp_depth                 = depth + 1;
+	      scope->line                   += expression.lines[index];
+	      expression.move_forward[index] = true;
 
 	      if (temp_depth >= MAX_RECURSION)
 		return errorman_throw_reg (scope, "You have too many nested if loops. They exceed the maximum recursion depth");
@@ -165,6 +166,20 @@ eval_expression (func_t *scope, word_list expression)
 	      else if (!strcmp (expression.syntax[index], ";")
 		       || !strcmp (expression.syntax[index], "{"))
 		break;
+	    }
+	  /*---- Make the expression irrelevent ---- */
+	  if (!tokcmp (expression.syntax[index], "{"))
+	    {
+	      do
+		{
+		  int jndex                      = 1;
+		  expression.move_forward[index] = true;
+		  if (!tokcmp (expression.syntax[index], "{"))
+		    jndex++;
+		  else if (!tokcmp (expression.syntax[index], "}"))
+		    jndex--;
+		}
+	      while (jndex);
 	    }
 	}
     }
@@ -208,6 +223,20 @@ eval_expression (func_t *scope, word_list expression)
 			   || !tokcmp (expression.syntax[index], "{"))
 		    break;
 		}
+	      /*---- Make the expression irrelevent ---- */
+	      if (!tokcmp (expression.syntax[index], "{"))
+		{
+		  do
+		    {
+		      int jndex                      = 1;
+		      expression.move_forward[index] = true;
+		      if (!tokcmp (expression.syntax[index], "{"))
+			jndex++;
+		      else if (!tokcmp (expression.syntax[index], "}"))
+			jndex--;
+		    }
+		  while (jndex);
+		}
 	      depth--;
 	      return FACT_get_ui (0);
 	    }
@@ -242,12 +271,23 @@ eval_expression (func_t *scope, word_list expression)
     }
   else
     return_value = eval (scope, expression);
-
+  /* ---- Get to the last end of the expression ---- */
+  while (expression.move_forward[0])
+    {
+      expression.syntax++;
+      expression.move_forward++;
+      expression.lines++;
+    }
+  /* ---- Check if ';' terminates the expression ---- */
+  if (expression.syntax[0] != NULL
+      && !tokcmp (expression.syntax[0], ";"))
+    expression.move_forward[0] = true;
+  /* ---- Set the signals to their correct values ---- */
   if (!return_value.return_signal)
     return_value.return_signal = return_signal;
   if (!return_value.break_signal)
     return_value.break_signal = break_signal;
-
+  /* ---- Get out of this depth and exit ---- */
   depth--;
   return return_value;
 }
@@ -263,6 +303,9 @@ procedure (func_t *scope, word_list expression)
       /*
       len_to_move  = get_exp_length_first (words, ';');
       */
+#ifdef DEBUG
+      //      printf ("FIRST EVAL'D: %s\n", expression.syntax[0]);
+#endif
       return_value = eval_expression (scope, expression);
 
       if (return_value.type == ERROR_TYPE
@@ -277,10 +320,16 @@ procedure (func_t *scope, word_list expression)
 	  expression.syntax++;
 	  expression.lines++;
 	}
+#ifdef DEBUG
+      //      printf ("LAST - 1 EVAL'd: %s\n", expression.syntax[-1]); 
+      //      printf ("LAST EVAL'D: %s\n", expression.syntax[0]);
+#endif
+      /*
       scope->line += expression.lines[0];
       expression.move_forward++;
       expression.syntax++;
       expression.lines++;
+      */
     }
 
   return_value.return_signal = false;
@@ -338,7 +387,7 @@ eval (func_t *scope, word_list expression)
 
   word                       = expression.syntax[0];
   expression.move_forward[0] = true;
-  scope->line               += expression.lines[0];
+  scope->line               += (expression.lines != NULL) ? expression.lines[0] : 0;
 
   if (word == NULL)
     return errorman_throw_reg (scope, "cannot evaluate empty expression");
