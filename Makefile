@@ -19,7 +19,7 @@ $(PROG):	$(SRCS)
 	$(CC) $(CFLAGS) -D PARSING=$(PARSERV) -o $(PROG) $(SRCS) $(LIBS)
 
 install:
-	cp ./FACT-GCC /usr/bin/FACT-BETA
+	cp ./$(PROG) /usr/bin/$(PROG)
 	chmod +x /usr/bin/FACT-BETA                   # this is to make sure that FACT is an executable
 	rm -r /usr/include/FACT/                      # clear them out
 	rm -r /etc/FACT

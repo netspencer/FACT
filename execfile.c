@@ -45,10 +45,10 @@ run_file (func_t *scope, const char *filename, bool silent)
 	  if (!silent)
 	    printf ("Closing file <%s>.\n", filename);
 
-	  returned.type  = VAR_TYPE;
-	  returned.isret = false;
-	  scope->name    = hold_fn;
-	  scope->line    = hold_line;
+	  returned.type          = VAR_TYPE;
+	  returned.return_signal = false;
+	  scope->name            = hold_fn;
+	  scope->line            = hold_line;
 	  return returned;
 	}
 
@@ -93,7 +93,7 @@ run_file (func_t *scope, const char *filename, bool silent)
       putchar ('\n');
 #endif
       
-      returned = expression (scope, parsed_input);
+      returned = eval_expression (scope, make_word_list (parsed_input));
 
       if (returned.type == ERROR_TYPE)
         {
@@ -101,7 +101,7 @@ run_file (func_t *scope, const char *filename, bool silent)
           continue;
         }
 
-      if (returned.isret == true)
+      if (returned.return_signal == true)
         {
 	  fclose (fp);
 

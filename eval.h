@@ -11,9 +11,11 @@
  * than that.
  */
 
-FACT_INTERN_FUNC (FACT_t) eval        (func_t *, word_list);
-FACT_INTERN_FUNC (FACT_t) expression  (func_t *, char **  );
-FACT_INTERN_FUNC (FACT_t) procedure   (func_t *, char **  );
-FACT_INTERN_FUNC (FACT_t) lambda_proc (func_t *, word_list);
+FACT_INTERN_FUNC (word_list) make_word_list (char **);
+
+FACT_INTERN_FUNC (FACT_t) eval_expression (func_t *, word_list);
+FACT_INTERN_FUNC (FACT_t) eval            (func_t *, word_list);
+FACT_INTERN_FUNC (FACT_t) procedure       (func_t *, word_list);
+FACT_INTERN_FUNC (FACT_t) lambda_proc     (func_t *, word_list);
 
 #endif

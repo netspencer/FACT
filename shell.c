@@ -24,7 +24,7 @@ get_input (FILE *fp, unsigned int *line_number)
   char * input;
 
   if (fp == stdin)
-    puts ("% ");
+    printf ("%% ");
 
   for (count = 1, input = NULL, in_quotes = false,
 	 paren_count = bracket_count = curly_count = 0; (c = fgetc (fp)) != EOF; count++)
@@ -42,10 +42,10 @@ get_input (FILE *fp, unsigned int *line_number)
       if (c == '\n')
 	{
 	  *line_number++;
-	  if (count > 1
-	      && (((in_quotes || paren_count || bracket_count || curly_count) && fp == stdin)
+	  if (count > 1 && fp == stdin
+	      && ((in_quotes || paren_count || bracket_count || curly_count)
 		  || (input[count - 2] != ';' || input[count - 2] != '}')))
-	    puts (": ");
+	    printf (": ");
 	}
 	      
       // if (c != '\n' || in_quotes)
@@ -159,7 +159,7 @@ shell (func_t *main_scope)
 	printf ("'%s' ", parsed_input[print_parsed]);
       putchar ('\n');
 #endif
-      returned = expression (main_scope, parsed_input);
+      returned = eval_expression (main_scope, make_word_list (parsed_input));
       if (returned.type == ERROR_TYPE)
         {
 #ifdef DEBUG
@@ -183,7 +183,7 @@ shell (func_t *main_scope)
 	  printf ("Object starts at line [%d]\n", returned.f_point->line);
 	}
 #endif
-      if (returned.isret == true)
+      if (returned.return_signal == true)
         {
           printf ("Exiting...\n");
 	  return;

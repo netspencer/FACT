@@ -810,6 +810,8 @@ precedence_level3 (linked_word *scan)
 	{
 	case IF:
 	case WHILE:
+	case FOR:
+	case THEN:
 	case ELSE:
 	case IN_SCOPE:
 	case COMMA:

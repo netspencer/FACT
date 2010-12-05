@@ -162,8 +162,8 @@ runprim (func_t *scope, word_list expression, int prim_num)
 
   if (prim_num != 2)
     {
-      return_value.isret        = false;
-      return_value.break_signal = false;
+      return_value.return_signal = false;
+      return_value.break_signal  = false;
     }
   
   return return_value;
@@ -199,8 +199,8 @@ eval_math (func_t *scope, word_list expression, int call_num)
   if (return_value.type == ERROR_TYPE)
     return_value.error.scope = scope;
 
-  return_value.isret = false;
-  return_value.break_signal = false;
+  return_value.return_signal = false;
+  return_value.break_signal  = false;
 
   return return_value;
 }
