@@ -102,8 +102,6 @@ init_std_prims (func_t *scope)
   add_prim ("lib.std.getchar", input_character); 
   add_prim ("lib.std.putchar", print_character);
   add_prim ("lib.std.putvar", print_var);
-  // add_prim ("import", load_lib);
-  /* All primitives that are functions */
   import = add_func (scope, "import");
   import->args = get_words ("def path "); /* the extra space is required for parsing reasons. */
   import->extrn_func = (void * (*) (struct _FUNC *)) load_lib;

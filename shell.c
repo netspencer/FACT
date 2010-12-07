@@ -159,7 +159,7 @@ shell (func_t *main_scope)
 	printf ("'%s' ", parsed_input[print_parsed]);
       putchar ('\n');
 #endif
-      returned = eval_expression (main_scope, make_word_list (parsed_input));
+      returned = eval_expression (main_scope, make_word_list (parsed_input, true));
       if (returned.type == ERROR_TYPE)
         {
 #ifdef DEBUG

@@ -7,23 +7,31 @@
 #define MAX_RECURSION 500
 
 word_list
-make_word_list (char **words)
+make_word_list (char **words, bool len_check)
 {
   int       index;
   int       jndex;
   word_list expression;
 
-  /* ---- Find the length of the statement ---- */
-  index = get_exp_length_first (words, ';');
-  /* ---- Check if there were any end-statement syntax errors ----
-     This will be removed in the near future as soon as I add
-     (and fix ;) the parser's error checker. */
-  if (index < 1
-      || (tokcmp (words[index - 1], ";")
-	  && tokcmp (words[index - 1], "}")))
+  if (len_check)
     {
-      expression.syntax = NULL;
-      return expression;
+      /* ---- Find the length of the statement ---- */
+      index = get_exp_length_first (words, ';');
+      /* ---- Check if there were any end-statement syntax errors ----
+	 This will be removed in the near future as soon as I add
+	 (and fix ;) the parser's error checker. */
+      if (index < 1
+	  || (tokcmp (words[index - 1], ";")
+	      && tokcmp (words[index - 1], "}")))
+	{
+	  expression.syntax = NULL;
+	  return expression;
+	}
+    }
+  else
+    {
+      /* ---- Get the length until the NULL terminater ---- */
+      for (index = 0; words[index] != NULL; index++);
     }
   /* ---- Allocate the memory for the expression ---- */
   expression.syntax       = better_malloc (sizeof (char *) * (index + 1));
@@ -145,9 +153,8 @@ eval_expression (func_t *scope, word_list expression)
 	  if_open[depth] = OPEN_FAILED;
 	  for (index = 1; expression.syntax[index] != NULL; index++)
 	    {
-	      int temp_depth                 = depth + 1;
-	      scope->line                   += expression.lines[index];
-	      expression.move_forward[index] = true;
+	      int temp_depth = depth + 1;
+	      scope->line   += expression.lines[index];
 
 	      if (temp_depth >= MAX_RECURSION)
 		return errorman_throw_reg (scope, "You have too many nested if loops. They exceed the maximum recursion depth");
@@ -166,20 +173,6 @@ eval_expression (func_t *scope, word_list expression)
 	      else if (!strcmp (expression.syntax[index], ";")
 		       || !strcmp (expression.syntax[index], "{"))
 		break;
-	    }
-	  /*---- Make the expression irrelevent ---- */
-	  if (!tokcmp (expression.syntax[index], "{"))
-	    {
-	      do
-		{
-		  int jndex                      = 1;
-		  expression.move_forward[index] = true;
-		  if (!tokcmp (expression.syntax[index], "{"))
-		    jndex++;
-		  else if (!tokcmp (expression.syntax[index], "}"))
-		    jndex--;
-		}
-	      while (jndex);
 	    }
 	}
     }
@@ -222,20 +215,6 @@ eval_expression (func_t *scope, word_list expression)
 		  else if (!tokcmp (expression.syntax[index], ";")
 			   || !tokcmp (expression.syntax[index], "{"))
 		    break;
-		}
-	      /*---- Make the expression irrelevent ---- */
-	      if (!tokcmp (expression.syntax[index], "{"))
-		{
-		  do
-		    {
-		      int jndex                      = 1;
-		      expression.move_forward[index] = true;
-		      if (!tokcmp (expression.syntax[index], "{"))
-			jndex++;
-		      else if (!tokcmp (expression.syntax[index], "}"))
-			jndex--;
-		    }
-		  while (jndex);
 		}
 	      depth--;
 	      return FACT_get_ui (0);
@@ -295,41 +274,33 @@ eval_expression (func_t *scope, word_list expression)
 FACT_t
 procedure (func_t *scope, word_list expression)
 {
-  FACT_t return_value; /* value returned */
+  int    index;
+  int    len_to_move;
+  FACT_t return_value; 
 
-  while (expression.syntax[0] != NULL //words != NULL && tokcmp (*words, "}"))
+  while (expression.syntax[0] != NULL
 	 && tokcmp (expression.syntax[0], "}"))
     {
-      /*
-      len_to_move  = get_exp_length_first (words, ';');
-      */
-#ifdef DEBUG
-      //      printf ("FIRST EVAL'D: %s\n", expression.syntax[0]);
-#endif
+      
+      len_to_move  = get_exp_length_first (expression.syntax, ';');
       return_value = eval_expression (scope, expression);
 
       if (return_value.type == ERROR_TYPE
 	  || return_value.return_signal
 	  || return_value.break_signal)
 	return return_value;
-
-      while (expression.move_forward[0])
+      /*
+	I would like to note something here:
+	Instead of just using one variable (len_to_move)
+	and subtracting it, I use two (index + len_to_move).
+	Why? I find it cleaner. Deal with it.
+      */
+      for (index = 0; index < len_to_move; index++)
 	{
-	  expression.move_forward[0] = false;
 	  expression.move_forward++;
 	  expression.syntax++;
 	  expression.lines++;
 	}
-#ifdef DEBUG
-      //      printf ("LAST - 1 EVAL'd: %s\n", expression.syntax[-1]); 
-      //      printf ("LAST EVAL'D: %s\n", expression.syntax[0]);
-#endif
-      /*
-      scope->line += expression.lines[0];
-      expression.move_forward++;
-      expression.syntax++;
-      expression.lines++;
-      */
     }
 
   return_value.return_signal = false;

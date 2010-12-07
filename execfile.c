@@ -93,7 +93,7 @@ run_file (func_t *scope, const char *filename, bool silent)
       putchar ('\n');
 #endif
       
-      returned = eval_expression (scope, make_word_list (parsed_input));
+      returned = eval_expression (scope, make_word_list (parsed_input, true));
 
       if (returned.type == ERROR_TYPE)
         {

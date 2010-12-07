@@ -25,7 +25,6 @@ liven_func (func_t *scope, word_list expression)
   int       pos_args;
   int       pos_block;
   int       position;
-  int     * arg_lines;
   char   ** args_formatted;
   char   ** block_formatted;
   FACT_t    func;
@@ -52,15 +51,14 @@ liven_func (func_t *scope, word_list expression)
   func.f_point->line           = scope->line;
   pos_args                     = get_exp_length (expression.syntax + 1, ')');
   args_formatted               = better_malloc (sizeof (char *) * pos_args);
-  arg_lines                    = better_malloc (sizeof (int   ) * pos_args); 
   args_formatted[pos_args - 1] = NULL;
   position                     = pos_args - 1;
     
   while (position > 0)
     {
       position--;
-      args_formatted[position]              = expression.syntax[position + 1];
-      arg_lines[position]                   = expression.lines[position + 1];
+      args_formatted[position]              = add_newlines (expression.syntax[position + 1], expression.lines[position + 1]);
+      // arg_lines[position]                   = expression.lines[position + 1];
       scope->line                          += expression.lines[position + 1];
       expression.move_forward[position + 1] = true;
     }
@@ -76,15 +74,14 @@ liven_func (func_t *scope, word_list expression)
   while (position > 0)
     {
       position--;
+      /* Seperateing these two out for clarity: */
       block_formatted[position]                        = expression.syntax[position + pos_args + 1];
-      // Seperateing these two out for clarity
       block_formatted[position]                        = add_newlines (block_formatted[position], expression.lines[position + pos_args + 1]);
       scope->line                                     += expression.lines[position + pos_args + 1];
       expression.move_forward[position + pos_args + 1] = true;
     }
   
   func.f_point->args       = args_formatted;
-  func.f_point->arg_lines  = arg_lines;
   func.f_point->body       = block_formatted;
   func.f_point->up         = scope;
   
@@ -138,10 +135,8 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
       expression.move_forward++;
       expression.lines++;
     }
-  
-  arg_list.syntax       = copy (evald.f_point->args);
-  arg_list.move_forward = better_malloc (sizeof (bool) * ((count = count_until_NULL (arg_list.syntax)) + 1));
-  arg_list.lines        = evald.f_point->arg_lines;
+
+  arg_list              = make_word_list (evald.f_point->args, false);
   new_scope->line       = evald.f_point->line;
   new_scope->up         = evald.f_point->up;
   new_scope->name       = evald.f_point->name;
@@ -260,7 +255,7 @@ new_scope (func_t *scope, word_list expression)
   else
     {
       copy_body = copy (prepared.f_point->body + 1);
-      prepared = procedure (new_scope, make_word_list (copy_body));
+      prepared = procedure (new_scope, make_word_list (copy_body, false));
     }
 
   if (prepared.type == ERROR_TYPE)
@@ -293,7 +288,7 @@ run_func (func_t *scope, word_list expression_list)
   if (new_scope->extrn_func != NULL)
     return_value = (((FACT_t (*)(func_t *)) new_scope->extrn_func) (new_scope));
   else
-    return_value = eval_expression (new_scope, make_word_list (copied_body));
+    return_value = eval_expression (new_scope, make_word_list (copied_body, false));
 
   return_value.return_signal = false;
   return_value.break_signal  = false;

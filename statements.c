@@ -216,6 +216,7 @@ while_loop (func_t *scope, word_list expression)
   //int       pos;
   int       jump_len;
   int       index;
+  int       exp_len;
   FACT_t    conditional_evald;
   FACT_t    block_evald;
   word_list conditional_exp;
@@ -258,7 +259,8 @@ while_loop (func_t *scope, word_list expression)
   block_evald.type         = VAR_TYPE;
   block_evald.v_point      = alloc_var ();
   block_evald.break_signal = false;
-  jump_len = 0;
+  jump_len                 = 0;
+  exp_len                  = 0;
 
   for (;;)
     {
@@ -300,11 +302,31 @@ while_loop (func_t *scope, word_list expression)
 
       if (block_evald.type == ERROR_TYPE || block_evald.return_signal == true || block_evald.break_signal == true)
 	break;
+      /*
+#ifdef DEBUG
+      printf ("exp_len : before = %d\n", exp_len);
+#endif
+      for (exp_len = 0; expression.move_forward[exp_len]; exp_len++);
+#ifdef DEBUG
+      exp_len += jump_len;
+      printf ("exp_len : after  = %d\n", exp_len);
+#endif
+      */
 
        //set_array (conditional_exp.move_forward, pos_cond + 1);
     }
   scope->line = temp_scope.line;
 
+  /* Something needs to go here in order to move the expression forward.
+     I am not so sure as to if this works or not:
+  */
+  /*
+#ifdef DEBUG
+  printf ("exp_len = %d\n", exp_len);
+#endif
+  for (index = 0; index < exp_len; index++)
+    expression.move_forward[index] = true;
+  */
   return block_evald;
 }
 
