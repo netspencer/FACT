@@ -274,33 +274,24 @@ eval_expression (func_t *scope, word_list expression)
 FACT_t
 procedure (func_t *scope, word_list expression)
 {
-  int    index;
-  int    len_to_move;
+  int    length_to_move;
   FACT_t return_value; 
 
   while (expression.syntax[0] != NULL
 	 && tokcmp (expression.syntax[0], "}"))
     {
       
-      len_to_move  = get_exp_length_first (expression.syntax, ';');
+      length_to_move  = get_exp_length_first (expression.syntax, ';');
       return_value = eval_expression (scope, expression);
 
       if (return_value.type == ERROR_TYPE
 	  || return_value.return_signal
 	  || return_value.break_signal)
 	return return_value;
-      /*
-	I would like to note something here:
-	Instead of just using one variable (len_to_move)
-	and subtracting it, I use two (index + len_to_move).
-	Why? I find it cleaner. Deal with it.
-      */
-      for (index = 0; index < len_to_move; index++)
-	{
-	  expression.move_forward++;
-	  expression.syntax++;
-	  expression.lines++;
-	}
+
+      expression.move_forward += length_to_move;
+      expression.syntax       += length_to_move;
+      expression.lines        += length_to_move;
     }
 
   return_value.return_signal = false;
