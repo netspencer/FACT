@@ -21,6 +21,7 @@ FACT_INTERN_FUNC (FACT_t) mult_assignment (FACT_t, FACT_t);
 FACT_INTERN_FUNC (FACT_t) div_assignment  (FACT_t, FACT_t);
 FACT_INTERN_FUNC (FACT_t) mod_assignment  (FACT_t, FACT_t);
 
-FACT_INTERN_FUNC (FACT_t) paren (func_t *, word_list);
+FACT_INTERN_FUNC (FACT_t) negative  (func_t *, word_list);
+FACT_INTERN_FUNC (FACT_t) paren     (func_t *, word_list);
 
 #endif

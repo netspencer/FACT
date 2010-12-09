@@ -365,6 +365,27 @@ mod_assignment (FACT_t arg1, FACT_t arg2)
   mpc_mod (&(arg1.v_point->data), arg1.v_point->data, arg2.v_point->data);
 
   return arg1;
+
+}
+
+FACT_t
+negative (func_t *scope, word_list expression)
+{
+  FACT_t op;
+  FACT_t return_value;
+  
+  op = eval (scope, expression);
+
+  if (op.type == ERROR_TYPE)
+    return op;
+  if (op.type == FUNCTION_TYPE)
+    return errorman_throw_reg (NULL, "cannot make a function negative.");
+
+  return_value.type    = VAR_TYPE;
+  return_value.v_point = alloc_var ();
+  mpc_neg (&(return_value.v_point->data), op.v_point->data);
+
+  return return_value;
 }
 
 /* * * * * * * * * * * * * * * * * * * * * * * *

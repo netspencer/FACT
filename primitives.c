@@ -73,9 +73,9 @@ add_prim (const char * prim_name,
 void
 init_std_prims (func_t *scope)
 {
-  func_t *import;
+  func_t * import;
   
-  /* All primitives that are symbols */
+  add_prim ("--", negative);
   add_prim ("=", set);
   add_prim ("(", paren);
   add_prim ("{", lambda_proc);
@@ -99,6 +99,7 @@ init_std_prims (func_t *scope)
   add_prim ("up", up);
   add_prim ("this", this);
   add_prim ("NULL", NULL_func);
+  /* These next three will be replaced by standard library functions: */
   add_prim ("lib.std.getchar", input_character); 
   add_prim ("lib.std.putchar", print_character);
   add_prim ("lib.std.putvar", print_var);

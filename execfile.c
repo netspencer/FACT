@@ -79,8 +79,10 @@ run_file (func_t *scope, const char *filename, bool silent)
       formatted = create_list (parsed_input);
       for (formatted = set_list (formatted, END); formatted->previous != NULL; formatted = formatted->previous);
 #ifdef PARSE_CHECK
+      /*
       if (parsing_error (formatted, false, 0))
 	printf ("Parsing error: %s.\n", parsing_get_error ());
+      */
 #endif
       for (rev_shunting_yard (formatted); formatted->previous != NULL; formatted = formatted->previous);
       set_link (formatted);

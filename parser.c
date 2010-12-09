@@ -38,6 +38,7 @@ lookup_word (int code, int newlines)
       "*"       ,
       "/"       ,
       "%"       ,
+      "--"      ,
       "+="      ,
       "-="      ,
       "*="      ,
@@ -79,6 +80,7 @@ lookup_word (int code, int newlines)
       "else"    , 
       ";"       ,
       "return"  ,
+      "break"   ,
     };
 
   return add_newlines (lookup_table[code], newlines);
@@ -112,42 +114,33 @@ is_in_quotes (int character)
   return is_quote;
 }
 
-static int
-isopt (int character)
+static bool
+isopt (int op1, int op2)
 {
-  /*
-    need to fix this one up a bit.
-    Probably would be a good idea to
-    split up the operators into categories.
-  */
-  static int times = 0;
-  
-  switch (character)
-    {
-    case '+':
-    case '-':
-    case '*':
-    case '/':
-    case '%':
-    case '=':
-    case '&':
-    case '|':
-    case '>':
-    case '<':
-    case '!':
-    case '[':
-      if (++times > 3)
-	return (times = 0);
-      return true;
-
-    default:
-      return (times = 0);
-    }
+  /* This is going to be a doozy. */
+  if ((op2 == '=' && (op1 == '='
+		      || op1 == '+'
+		      || op1 == '-'
+		      || op1 == '*'
+		      || op1 == '/'
+		      || op1 == '%'
+		      || op1 == '<'
+		      || op1 == '>'
+		      || op1 == '!'))
+      || (op1 == '!' && op2 == ']')
+      || (op1 == '&' && op2 == '&')
+      || (op1 == '|' && op2 == '|'))
+    return true;
+  return false;
 }
 
 char **
 get_words (char *start)
 {
+  /*
+    I need to clean this up.
+    Blarg.
+  */
   int     count;
   int     count2;
   bool    isstring;
@@ -182,11 +175,14 @@ get_words (char *start)
 	  end--;
 	  isstring = true;
 	}
-      else if (isopt ((int) *end))
-	{
+      else if (isopt ((int) *end, (int) *(end + 1)))
+	//{
+	end += 2;
+	  /*
 	  while (isopt ((int) *end))
 	    end++;
-	}
+	  */
+      //}
       else if (ispunct ((int) *end) && *end != '.')
 	end++;
       else
@@ -325,7 +321,6 @@ alloc_word (linked_word *set_prev)
   temp              = (linked_word *) better_malloc (sizeof (linked_word));
   temp->newlines    = 0;
   temp->code        = UNKNOWN;
-  temp->is_negative = false;
   temp->physical    = NULL;
   temp->hidden      = NULL;
   temp->hidden_up   = NULL;
@@ -463,6 +458,7 @@ set_list (linked_word *start, word_code stopper)
 void
 swap (linked_word *swapping)
 {
+  int           hold_prev_lines;
   linked_word * temp_next;
   linked_word * temp_prev;
 
@@ -476,6 +472,10 @@ swap (linked_word *swapping)
       swapping->previous->hidden_up = NULL;
     }
 
+  hold_prev_lines                 = swapping->previous->newlines;
+  swapping->previous->newlines    = swapping->newlines;
+  swapping->newlines              = hold_prev_lines;
+  
   temp_next                    = swapping->next;
   temp_prev                    = swapping->previous->previous;
   swapping->previous->next     = temp_next;
@@ -498,178 +498,26 @@ swap (linked_word *swapping)
 #define isnotCMP(op) (op < AND || op > MORE_EQ)
 #define isFACTop(op) ((op >= PLUS && op <= MOD_ASSIGN) || op == SET || (op >= AND && op <= MORE_EQ) || op == IN_SCOPE)
 
-char *
-parsing_error_set_get (char *new)
+static void
+set_neg (linked_word *scan)
 {
-  /*
-    If passed NULL, this function will
-    return the last string. Else, it will
-    set it to the one passed
-  */
-  static char * error = NULL;
-
-  if (new == NULL)
-    return error;
-  else
-    return (error = new);
-}
-
-
-bool
-parsing_error (linked_word *scan, bool comma_ok,
-	       unsigned char inside) // 0 = none, 1 = in paren, 2 = in bracket, 3 = in curly, 4 = in definition.
-{
-  typedef enum
-  {
-    NON_OPT ,
-    OPT     , // also START
-    FUNC    ,
-    NEG     ,
-    MKFUNC  ,
-  } _prev_type;
-  _prev_type prev_link;
-
-  return false;
-
-  
-     //  This function does not work. It needs to be fixed.
-    //  Not only does it not really work all that well, it
-   // has yet to be golfed.
-  
-
-  /*
-  for (prev_link = OPT; scan != NULL; scan = scan->next)
+  while (scan->next != NULL)
     {
-      if (scan->code == UNKNOWN)
-	parsing_error_set_get (combine_strs ("unexpected ", scan->physical));
-      else if (scan->code != END)
-	parsing_error_set_get (combine_strs ("unexpected ", lookup_word (scan->code - COMB_ARR)));	
-
-      if (scan->code == AT)
-	{
-	  if (prev_link != OPT)
-	    return true;
-	  prev_link = MKFUNC;
-	}
-      else if (scan->code == FUNC_RET
-	       || scan->code == FUNC_OBJ)
-	{
-	  if (prev_link != OPT && prev_link != NEG)
-	    return true;
-	  prev_link = FUNC;
-	}
-      else if (scan->code == DEF || scan->code == DEFUNC)
-	{
-	  if ((prev_link != OPT && prev_link != NEG && prev_link != MKFUNC)
-	      || (parsing_error (scan->hidden, false, 4)))
-	    return true;
-	  prev_link = (prev_link == MKFUNC) ? MKFUNC : NON_OPT;
-	}
-      else if (scan->code == CL_CURLY)
-	{
-	  if (inside == 3 && prev_link == OPT)
-	    return false;
-	  else
-	    return true;
-	}
-      else if (scan->code == CL_BRACKET)
-	{
-	  if (inside == 2 && prev_link == NON_OPT)
-	    return false;
-	  else
-	    return true;
-	}
-      else if (scan->code == CL_PAREN)
-	{
-	  if (inside == 1 && prev_link == NON_OPT)
-	    return false;
-	  else
-	    return true;
-	}   
-      else if (scan->code == UNKNOWN || scan->code == QUOTE)
-	{
-	  if (prev_link == NON_OPT || prev_link == FUNC)
-	    return true;
-	  if (inside == 4)
-	    return false;
-	  prev_link = NON_OPT;
-	}
-      else if (isFACTop (scan->code))
-	{
-	  if (prev_link == OPT)
-	    {
-	      if (scan->code == MINUS)
-		prev_link = NEG;
-	      else
-		return true;
-	    }
-	  else if (prev_link == NEG || inside == 4)
-	    return true;
-	  else
-	    prev_link = OPT;
-	}
-      else if (scan->code == OP_CURLY)
-	{
-	  if ((prev_link != NON_OPT && prev_link != MKFUNC)
-	      || parsing_error (scan->hidden, false, 3))
-	    return true;
-	  prev_link = NON_OPT;
-	}
-      else if (scan->code == OP_BRACKET)
-	{
-	  if (parsing_error (scan->hidden, false, 2))
-	    return true;
-	  if (inside != 4)
-	    prev_link = OPT;	    
-	}
-      else if (scan->code == NOP_BRACKET)
-	{
-	  if (prev_link != NEG
-	      || parsing_error (scan->hidden, true, 2))
-	    return true;
-	  prev_link = NON_OPT;
-	}
-      else if (scan->code == OP_PAREN)
-	{
-	  if (prev_link == MKFUNC)
-	    {
-	      if (parsing_error (scan->hidden, true, 1))
-		return true;
-	    }
-	  else if (prev_link == FUNC)
-	    {
-	      if (parsing_error (scan->hidden, true, 1))
-		return true;
-	      prev_link = NON_OPT;
-	    }
-	  else if (prev_link != OPT && prev_link != NEG)
-	    return true; 
-	  else if (parsing_error (scan->hidden, false, 1))
-	    return true;
-	  else
-	    prev_link = NON_OPT;
-	}
-      else if (scan->code == COMMA)
-	{
-	  if (!comma_ok || prev_link == OPT || prev_link == NEG)
-	    return true;
-	  prev_link = OPT;
-	}
-      else if (scan->code == SEMI)
-	{
-	  if (prev_link == OPT || prev_link == NEG || inside == 1 || inside == 2)
-	    return true;
-	  else if (inside == 0)
-	    return false;
-	  else
-	    prev_link = OPT;
-	}
-      else if (scan->code == END)
-	return false;
+      if (scan->code == MINUS
+	  && (scan->previous == NULL
+	      || (scan->previous->code >= PLUS
+		  && scan->previous->code <= MOD_ASSIGN)
+	      || scan->previous->code == SET
+	      || scan->previous->code == COMMA
+	      || scan->previous->code == IN_SCOPE
+	      || (scan->previous->code >= AND
+		  && scan->previous->code <= MORE_EQ)
+	      || scan->previous->code == THEN))
+	scan->code = NEG;
+      scan = scan->next;
     }
-  return false;
-  */
 }
+	
 	  
 static void
 precedence_level1 (linked_word *scan)
@@ -1243,6 +1091,7 @@ precedence_level12 (linked_word *scan)
 void
 rev_shunting_yard (linked_word *scan)
 {
+  set_neg (scan);
   precedence_level1  (scan);
   precedence_level2  (scan);
   precedence_level3  (scan);
