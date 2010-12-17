@@ -8,7 +8,7 @@ SRCS = main.c malloc_replacements.c functions.c string.c \
 	management.c scroll.c math.c mem.c shell.c \
 	comparisons.c parser.c primitives.c eval.c \
 	errorman.c statements.c utilities.c execfile.c \
-	mpc_functions.c modules.c
+	mpc_functions.c modules.c error_check.c
 
 LIBS = -lgc -lgmp -ldl
 

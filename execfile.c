@@ -12,6 +12,7 @@ run_file (func_t *scope, const char *filename, bool silent)
   FACT_t          returned;
   linked_word  *  formatted;
   unsigned int    line_num;
+  unsigned int    end_line;
 
   if (!silent)
     printf ("Opening file <%s>\n", filename);
@@ -29,10 +30,12 @@ run_file (func_t *scope, const char *filename, bool silent)
     }
 
   line_num = 1;
+  end_line = 1;
 
   for (;;)
     {
-      input = get_input (fp, &line_num);
+      scope->line = end_line;
+      input       = get_input (fp, &end_line);
       
 #ifdef DEBUG
       printf (":RAW:\n%s\n:END RAW:\n", input);
@@ -53,7 +56,6 @@ run_file (func_t *scope, const char *filename, bool silent)
 	}
 
       parsed_input = get_words (input);
-
       
 #ifdef DEBUG
       puts ("WORDS: ");
@@ -61,7 +63,6 @@ run_file (func_t *scope, const char *filename, bool silent)
 	printf ("'%s' ", parsed_input[print_parsed]);
       putchar ('\n');
 #endif
-
 
       if (parsed_input == NULL)
 	{
@@ -79,10 +80,9 @@ run_file (func_t *scope, const char *filename, bool silent)
       formatted = create_list (parsed_input);
       for (formatted = set_list (formatted, END); formatted->previous != NULL; formatted = formatted->previous);
 #ifdef PARSE_CHECK
-      /*
-      if (parsing_error (formatted, false, 0))
-	printf ("Parsing error: %s.\n", parsing_get_error ());
-      */
+      line_num = scope->line;
+      if (check_for_errors (formatted, 0, &line_num))
+	printf ("PARSING ERROR [%d]: %s.\n", line_num, get_error ());
 #endif
       for (rev_shunting_yard (formatted); formatted->previous != NULL; formatted = formatted->previous);
       set_link (formatted);
@@ -113,5 +113,8 @@ run_file (func_t *scope, const char *filename, bool silent)
 	  scope->line = hold_line;
 	  return returned;
         }
+#ifdef DEBUG
+      printf ("Now on line [scope:%d]\n", scope->line);
+#endif
     }
 }

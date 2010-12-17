@@ -127,7 +127,7 @@ isopt (int op1, int op2)
 		      || op1 == '<'
 		      || op1 == '>'
 		      || op1 == '!'))
-      || (op1 == '!' && op2 == ']')
+      || (op1 == '!' && op2 == '[')
       || (op1 == '&' && op2 == '&')
       || (op1 == '|' && op2 == '|'))
     return true;
@@ -338,7 +338,6 @@ create_list (char **words)
 
   for (base = alloc_word (NULL); (w_code = get_block_code (words[0])) != END; words++)
     {
-
       if (w_code == NEWLINE)
 	{
 	  base->newlines = strlen (words[0]);

@@ -35,22 +35,21 @@ get_input (FILE *fp, unsigned int *line_number)
 	{
 	  while ((c = fgetc (fp)) != EOF && c != '\n')
 	    ;
+	  ungetc (c, fp);
 	  count--;
 	  continue;
 	}
 
       if (c == '\n')
 	{
-	  *line_number++;
+	  ++*line_number;
 	  if (count > 1 && fp == stdin
 	      && ((in_quotes || paren_count || bracket_count || curly_count)
 		  || (input[count - 2] != ';' || input[count - 2] != '}')))
 	    printf (": ");
 	}
 	      
-      // if (c != '\n' || in_quotes)
       input[count - 1] = c;
-      // else
 
       if (!in_quotes)
 	{
@@ -106,16 +105,19 @@ shell (func_t *main_scope)
   char         ** parsed_input;
   FACT_t          returned;
   linked_word  *  formatted;
+  unsigned int    end_line;
   unsigned int    line_num;
 
   /* Print out the disclaimer and logo. */
   printf ("The FACT programming language interactive shell\n(c) 2010 Matthew Plant, under the GPL version 3.\n");
   print_logo ();
   line_num = 1;
+  end_line = 1;
 
   for (;;)
     {
-      input = get_input (stdin, &line_num);
+      main_scope->line = end_line;
+      input            = get_input (stdin, &end_line);
       
 #ifdef DEBUG
       printf (":RAW:\n%s\n:END RAW:\n", input);
@@ -147,9 +149,9 @@ shell (func_t *main_scope)
       formatted = create_list (parsed_input);
       for (formatted = set_list (formatted, END); formatted->previous != NULL; formatted = formatted->previous);
 #ifdef PARSE_CHECK
-      /*      if (parsing_error (formatted, false, 0))
-	printf ("Parsing error: %s.\n", parsing_get_error ());
-      */
+      line_num = main_scope->line;
+      if (check_for_errors (formatted, 0, &line_num))
+	printf ("PARSING ERROR [%d]: %s.\n", line_num, get_error ());
 #endif
       for (rev_shunting_yard (formatted); formatted->previous != NULL; formatted = formatted->previous);
       set_link (formatted);
@@ -163,14 +165,7 @@ shell (func_t *main_scope)
       returned = eval_expression (main_scope, make_word_list (parsed_input, true));
       if (returned.type == ERROR_TYPE)
         {
-#ifdef DEBUG
-	  puts ("REGULAR ERROR:\n");
-#endif
-          errorman_dump (returned.error, line_num, "stdin");
-#ifdef DEBUG
-	  puts ("BETTER NEWLINES:\n");
 	  errorman_dump (returned.error, returned.error.scope->line, "stdin");
-#endif
           continue;
         }
       if (returned.type == VAR_TYPE)

@@ -91,6 +91,7 @@ defunc (func_t *scope, word_list expression)
       if (temp.type != ERROR_TYPE)
 	{
 	  return_value.f_point             = add_func (scope, temp.f_point->array_up->name);
+	  return_value.f_point->line       = scope->line;
 	  return_value.f_point->array_up   = temp.f_point->array_up;
 	  return_value.f_point->up         = scope;
 	  return_value.f_point->array_size = temp.f_point->array_size;
@@ -107,6 +108,7 @@ defunc (func_t *scope, word_list expression)
       if (return_value.f_point == NULL)
 	return errorman_throw_reg (scope, "could not define function");
 
+      return_value.f_point->line       = scope->line;
       return_value.f_point->up         = scope;
       return_value.f_point->array_size = 1;
     }
@@ -279,6 +281,7 @@ set (func_t *scope, word_list expression)
       if (arg1.f_point->locked)
 	return arg2;
 
+      arg1.f_point->line       = arg2.f_point->line;
       arg1.f_point->array_size = arg2.f_point->array_size;
       arg1.f_point->args       = arg2.f_point->args;
       arg1.f_point->body       = arg2.f_point->body;

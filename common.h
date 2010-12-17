@@ -60,6 +60,7 @@
 #include "malloc_replacements.h"
 #include "errorman.h"
 #include "management.h"
+#include "error_check.h"
 #include "shell.h"
 #include "parser.h"
 #include "eval.h"

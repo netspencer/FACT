@@ -137,6 +137,8 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
     }
 
   arg_list              = make_word_list (evald.f_point->args, false);
+  new_scope->args       = evald.f_point->args;
+  new_scope->body       = evald.f_point->body;
   new_scope->line       = evald.f_point->line;
   new_scope->up         = evald.f_point->up;
   new_scope->name       = evald.f_point->name;
@@ -188,6 +190,7 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
 	}
       else if (arg.type == FUNCTION_TYPE)
 	{
+	  arg.f_point->line       = passed.f_point->line;
 	  arg.f_point->array_size = passed.f_point->array_size;
 	  arg.f_point->args       = passed.f_point->args;
 	  arg.f_point->body       = passed.f_point->body;
@@ -319,6 +322,7 @@ lambda (func_t *scope, word_list expression)
 
   return_value.type          = FUNCTION_TYPE;
   return_value.f_point       = alloc_func ();
+  return_value.f_point->line = scope->line;
   return_value.f_point->name = "lambda";
 
   return return_value;

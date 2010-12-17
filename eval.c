@@ -30,7 +30,7 @@ make_word_list (char **words, bool len_check)
     }
   else
     {
-      /* ---- Get the length until the NULL terminater ---- */
+      /* ---- Get the length until the NULL terminator ---- */
       for (index = 0; words[index] != NULL; index++);
     }
   /* ---- Allocate the memory for the expression ---- */
@@ -281,8 +281,8 @@ procedure (func_t *scope, word_list expression)
 	 && tokcmp (expression.syntax[0], "}"))
     {
       
-      length_to_move  = get_exp_length_first (expression.syntax, ';');
-      return_value = eval_expression (scope, expression);
+      length_to_move = get_exp_length_first (expression.syntax, ';');
+      return_value   = eval_expression (scope, expression);
 
       if (return_value.type == ERROR_TYPE
 	  || return_value.return_signal
@@ -326,8 +326,11 @@ lambda_proc (func_t *scope, word_list expression)
      lambda procedures. Note, these are different from
      lambda functions. A lot.
    */
-
+  
   return_value = procedure (&temp_local, expression);
+#ifdef DEBUG
+  printf ("scope: %d, local: %d\n", scope->line, temp_local.line);
+#endif
   scope->line  = temp_local.line;
 
   return return_value;
