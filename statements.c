@@ -1,34 +1,4 @@
-#include "common.h"
-
-FACT_t
-invalid_if (func_t *scope, word_list expression)
-{
-  return errorman_throw_reg (scope, "invalid syntax, if statements must start at the beginning of the expression");
-}
-
-FACT_t
-invalid_on_error (func_t *scope, word_list expression)
-{
-  return errorman_throw_reg (scope, "invalid syntax, on_error statements must start at the beginning of the expression");
-}
-
-FACT_t
-invalid_else (func_t *scope, word_list expression)
-{
-  return errorman_throw_reg (scope, "invalid syntax, else statements must follow if statements at the beginning of the expression");
-}
-
-FACT_t
-invalid_while (func_t *scope, word_list expression)
-{
-  return errorman_throw_reg (scope, "invalid syntax, while loops must start at the beginning of the expression");
-}
-
-FACT_t
-invalid_for (func_t *scope, word_list expression)
-{
-  return errorman_throw_reg (scope, "invalid syntax, for loops must start at the beginning of the expression");
-}
+#include "statements.h"
 
 FACT_t
 if_statement (func_t *scope, word_list expression_list, bool *success)
@@ -159,19 +129,20 @@ on_error (func_t *scope, word_list expression_list, bool *success)
    *
    * ERROR:
    *  - locked => true
-   *  - name   => 'ERROR'
-   *  - vars   =>
+   *  - name => 'ERROR'
+   *  - vars =>
    *  | - message => the error message of the caught exception.
    *  | | - locked => true
-   *  - up     => the scope of the caught exception.
+   *  - up => the scope of the caught exception.
    */
+  
   ERROR               = add_func (&temp_scope, "ERROR");
   ERROR->locked       = true;
   ERROR->up           = conditional.error.scope;
   message             = add_var (ERROR, "message");
   message->array_up   = string_to_array (conditional.error.description, "message");
-  message->array_size = strlen (conditional.error.description);
   message->locked     = true;
+  mpz_set_si (message->array_size, strlen (conditional.error.description));
   
   return_value = eval_expression (&temp_scope, expression_list);
 
@@ -212,8 +183,6 @@ else_clause (func_t *scope, word_list expression)
 FACT_t
 while_loop (func_t *scope, word_list expression)
 {
-  //int       pos_cond;
-  //int       pos;
   int       jump_len;
   int       index;
   int       exp_len;
@@ -235,26 +204,8 @@ while_loop (func_t *scope, word_list expression)
       .next       = NULL,
     };
 
-  extern void set_array (bool *, int);
-
-  /*
-  if (words[0] == NULL || words[0][0] != '(')
-  */
   if (expression.syntax[0] == NULL || expression.syntax[0][0] != '(')
     return errorman_throw_reg (scope, "expected '(' after while");
-
-  /*
-  pos_cond                     = get_exp_length (words + 1, ')');
-  conditional_exp.syntax       = words;
-  conditional_exp.move_forward = better_malloc (sizeof (bool) * pos_cond);
-  conditional_exp.lines        = better_malloc (sizeof (int ) * pos_cond);
-  pos                          = pos_cond;
-  */
-
-  /*
-  if (words[pos_cond] == NULL)
-    return errorman_throw_reg (scope, "syntax error in while loop");
-  */
 
   block_evald.type         = VAR_TYPE;
   block_evald.v_point      = alloc_var ();
@@ -302,31 +253,9 @@ while_loop (func_t *scope, word_list expression)
 
       if (block_evald.type == ERROR_TYPE || block_evald.return_signal == true || block_evald.break_signal == true)
 	break;
-      /*
-#ifdef DEBUG
-      printf ("exp_len : before = %d\n", exp_len);
-#endif
-      for (exp_len = 0; expression.move_forward[exp_len]; exp_len++);
-#ifdef DEBUG
-      exp_len += jump_len;
-      printf ("exp_len : after  = %d\n", exp_len);
-#endif
-      */
-
-       //set_array (conditional_exp.move_forward, pos_cond + 1);
     }
   scope->line = temp_scope.line;
 
-  /* Something needs to go here in order to move the expression forward.
-     I am not so sure as to if this works or not:
-  */
-  /*
-#ifdef DEBUG
-  printf ("exp_len = %d\n", exp_len);
-#endif
-  for (index = 0; index < exp_len; index++)
-    expression.move_forward[index] = true;
-  */
   return block_evald;
 }
 
@@ -364,9 +293,6 @@ for_loop (func_t *scope, word_list expression)//char **words)
       .next       = NULL,
     };
 
-  //index_dest_exp.syntax       = words;
-  //index_dest_exp.move_forward = better_malloc (sizeof (int) *
-  //					       ((count = count_until_NULL (words)) + 1));
   index_value = eval (&temp_scope, expression);
 
   if (index_value.type == ERROR_TYPE)
@@ -382,11 +308,13 @@ for_loop (func_t *scope, word_list expression)//char **words)
       expression.lines++;
     }
 
+  /*
   if (tokcmp (expression.syntax[0], ","))
     {
       scope->line = temp_scope.line;
       return errorman_throw_reg (scope, "syntax error in for loop; missing ','");
     }
+  */
 
   temp_scope.line           += expression.lines[0];
   expression.move_forward[0] = true;
@@ -437,9 +365,9 @@ for_loop (func_t *scope, word_list expression)//char **words)
       temp_scope.line = hold_lines;
       if (index_value.type == VAR_TYPE)
 	{
-	  if (limit_value.v_point->array_size > 1)
+	  if (mpz_cmp_ui (limit_value.v_point->array_size, 1) > 0)
 	    {
-	      if (arr_pos >= limit_value.v_point->array_size)
+	      if (mpz_cmp_ui (limit_value.v_point->array_size, arr_pos) <= 0)
 		break;
 
 	      for (var_t_scroller = limit_value.v_point->array_up, pos = 0;
@@ -447,7 +375,7 @@ for_loop (func_t *scope, word_list expression)//char **words)
 		var_t_scroller = var_t_scroller->next;
 
 	      mpc_set (&(index_value.v_point->data), var_t_scroller->data);
-	      index_value.v_point->array_size = var_t_scroller->array_size;
+	      mpz_set (index_value.v_point->array_size, var_t_scroller->array_size);
 	      index_value.v_point->array_up   = clone_var (var_t_scroller->array_up, index_value.v_point->name);
 	    }
 	  else if (arr_pos != 0)
@@ -462,9 +390,10 @@ for_loop (func_t *scope, word_list expression)//char **words)
 	}
       else
 	{
-	  if (limit_value.f_point->array_size > 1)
+	  if (mpz_cmp_ui (limit_value.f_point->array_size, 1) > 0)
 	    {
-	      if (arr_pos >= limit_value.f_point->array_size)
+	      if (mpz_cmp_ui (limit_value.v_point->array_size, arr_pos) <= 0)
+	      // if (arr_pos >= limit_value.f_point->array_size)
 		break;
 
 	      for (func_t_scroller = limit_value.f_point->array_up, pos = 1;
@@ -473,12 +402,14 @@ for_loop (func_t *scope, word_list expression)//char **words)
 
 	      index_value.f_point->args       = limit_value.f_point->args;
 	      index_value.f_point->body       = limit_value.f_point->body;
-	      index_value.f_point->array_size = limit_value.f_point->array_size;
 	      index_value.f_point->vars       = limit_value.f_point->vars;
 	      index_value.f_point->funcs      = limit_value.f_point->funcs;
 	      index_value.f_point->up         = limit_value.f_point->up;
 	      index_value.f_point->array_up   = limit_value.f_point->array_up;
 	      index_value.f_point->next       = limit_value.f_point->next;
+
+	      mpz_set (index_value.f_point->array_size, limit_value.f_point->array_size);
+
 	    }
 	  else
 	    {

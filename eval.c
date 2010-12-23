@@ -138,10 +138,10 @@ eval_expression (func_t *scope, word_list expression)
 	if_open[jndex] = CLOSED;
     }
   /* ---- If it's an if or an on_error statement ---- */
-  if (statements[index].id == IF)
+  if (statements[index].id == IF || statements[index].id == ON_ERROR)
     {
       /* ---- Check if it's an on_error or if statement ---- */
-      if (!tokcmp (expression.syntax[-1], "if"))
+      if (statements[index].id == IF)
 	return_value = if_statement (scope, expression, &getif);
       else
 	return_value = on_error (scope, expression, &getif);
@@ -328,9 +328,6 @@ lambda_proc (func_t *scope, word_list expression)
    */
   
   return_value = procedure (&temp_local, expression);
-#ifdef DEBUG
-  printf ("scope: %d, local: %d\n", scope->line, temp_local.line);
-#endif
   scope->line  = temp_local.line;
 
   return return_value;
@@ -340,48 +337,47 @@ FACT_t
 eval (func_t *scope, word_list expression)
 {
   int      call_num;
-  char   * word;
+  char   * current_token;
   FACT_t   return_value;
 
+  /* ---- Move the expression forward to the next unevaluated token ---- */
   while (expression.move_forward[0])
     {
       expression.syntax++;
       expression.move_forward++;
       expression.lines++;
     }
-
-  word                       = expression.syntax[0];
+  /* ---- Set the current token ---- */
+  current_token              = expression.syntax[0];
+  /* ---- Set the current token to evaluated and move the current line number forward ---- */
   expression.move_forward[0] = true;
   scope->line               += (expression.lines != NULL) ? expression.lines[0] : 0;
-
+  /*
   if (word == NULL)
     return errorman_throw_reg (scope, "cannot evaluate empty expression");
-  
-  if (tokcmp (word, "list") == 0)
-    {
-      scroll (scope);
-      return_value = num_to_var ("1");
-    }
-  else if (isnum (word))
-    return_value = num_to_var (word);
+  */
+  /* ---- Check if the current token is a number ---- */
+  if (isnum (current_token))
+    return_value = num_to_var (current_token);
   else
     {
+      /* ---- Move the expression forward one ---- */
       expression.syntax++;
       expression.move_forward++;
       expression.lines++;
-      
-      if ((call_num = isprim (word)) > -1)
+      /* ---- Check for primitives, math calls, variables and functions, in that order ---- */
+      if ((call_num = isprim (current_token)) != -1)
 	return runprim (scope, expression, call_num);
-      else if ((call_num = ismathcall (word)) > -1)
+      else if ((call_num = ismathcall (current_token)) != -1)
 	return eval_math (scope, expression, call_num);
-      else if (get_var (scope, word) != NULL)
-	return_value = get_array_var (get_var (scope, word), scope, expression);
-      else if (get_func (scope, word) != NULL)
-	return_value = get_array_func (get_func (scope, word), scope, expression);
+      else if (get_var (scope, current_token) != NULL)
+	return_value = get_array_var (get_var (scope, current_token), scope, expression);
+      else if (get_func (scope, current_token) != NULL)
+	return_value = get_array_func (get_func (scope, current_token), scope, expression);
       else
-	return errorman_throw_reg (scope, combine_strs ("cannot evaluate ", word));
+	return errorman_throw_reg (scope, combine_strs ("cannot evaluate ", current_token));
     }
-  
+  /* ---- Set the signals to off ---- */
   return_value.return_signal = false;
   return_value.break_signal  = false;
 

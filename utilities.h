@@ -18,11 +18,15 @@ FACT_INTERN_FUNC (char * ) combine_strs    (char  * , char *);
 FACT_INTERN_FUNC (char * ) array_to_string (var_t *         );
 FACT_INTERN_FUNC (char **) copy            (char  **        );
 
-FACT_INTERN_FUNC (var_t *) string_to_array       (char * , char *     );
-FACT_INTERN_FUNC (var_t *) string_array_to_var_t (char **, char *, int);
+FACT_INTERN_FUNC (var_t *) string_to_array     (char * , char *     );
+FACT_INTERN_FUNC (var_t *) string_array_to_var (char **, char *, int);
 
 FACT_INTERN_FUNC (FACT_t) FACT_get_ui (unsigned int op);
 FACT_INTERN_FUNC (FACT_t) FACT_get_si (  signed int op);
+			  
+FACT_INTERN_FUNC (int         ) tokcmp_safe (const char *, const char *, int, char *);
+FACT_INTERN_FUNC (unsigned int) strcount    (const char, const char *);
+
 
 /*
   Macro conditional tests:
@@ -33,8 +37,6 @@ FACT_INTERN_FUNC (FACT_t) FACT_get_si (  signed int op);
   conditionals, e.x. if (isvar_t (x)), however
   they can be used otherwise.
 */
-
-FACT_INTERN_FUNC (int) tokcmp_safe (const char *, const char *, int, char *);
 
 #define tokcmp(op1, op2) tokcmp_safe (op1, op2, __LINE__, __FILE__)
 

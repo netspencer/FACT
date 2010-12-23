@@ -3,11 +3,11 @@
 FACT_t
 defunc_array (func_t *base, func_t *scope, word_list expression)
 {
-  int      size;
-  int      pos;
-  FACT_t   return_value;
-  FACT_t   array_size;
+  mpz_t    size;
+  mpz_t    index;
   FACT_t   checker;
+  FACT_t   array_size;
+  FACT_t   return_value;
   func_t * scroller;
 
   scope->line         += expression.lines[0];
@@ -48,16 +48,19 @@ defunc_array (func_t *base, func_t *scope, word_list expression)
       if (array_size.type != VAR_TYPE)
 	return errorman_throw_reg (scope, "array size needs to be a variable");
 
-      if (((size = (mpc_get_si (array_size.v_point->data))) > 1000 || size < 1))
-	return errorman_throw_reg (scope, "array size give is invalid");
+      mpc_get_mpz (size, array_size.v_point->data);
+      //if (((size = (mpc_get_si (array_size.v_point->data))) > 1000 || size < 1))
+      if (mpz_cmp_ui (size, 1) < 0)
+	return errorman_throw_reg (scope, "invalid array size");
 
       base = resize_func (base, size);
 
-      for (scroller = base->array_up, pos = 0; pos < size; pos++, scroller = scroller->next)
+      mpz_init (index);
+      for (scroller = base->array_up, mpz_init (index);  mpz_cmp (index, size) < 0; mpz_add_ui (index, index, 1), scroller = scroller->next)
 	{
-	  scope->line -= expression.lines[0];
 	  set_array (expression.move_forward, count_until_NULL (expression.syntax));
-	  checker = defunc_array (scroller, scope, expression);
+	  checker      = defunc_array (scroller, scope, expression);
+	  scope->line -= expression.lines[0];
 	  
 	  if (checker.type == ERROR_TYPE)
 	    return checker;
@@ -65,9 +68,7 @@ defunc_array (func_t *base, func_t *scope, word_list expression)
 	
       base->name = base->array_up->name;
     }
-
   return_value.f_point = base;
-
   return return_value;
 }     
 
@@ -94,8 +95,8 @@ defunc (func_t *scope, word_list expression)
 	  return_value.f_point->line       = scope->line;
 	  return_value.f_point->array_up   = temp.f_point->array_up;
 	  return_value.f_point->up         = scope;
-	  return_value.f_point->array_size = temp.f_point->array_size;
 	  
+	  mpz_set (return_value.f_point->array_size, temp.f_point->array_size);
 	  GC_free (temp.f_point);
 	}
       else
@@ -110,7 +111,7 @@ defunc (func_t *scope, word_list expression)
 
       return_value.f_point->line       = scope->line;
       return_value.f_point->up         = scope;
-      return_value.f_point->array_size = 1;
+      mpz_set_ui (return_value.f_point->array_size, 1);
     }
 
   expression.move_forward[0] = true;
@@ -121,13 +122,14 @@ defunc (func_t *scope, word_list expression)
 FACT_t
 def_array (var_t *base, func_t *scope, word_list expression)
 {
-  int      size;
-  int      pos;
-  FACT_t   return_value;
-  FACT_t   array_size;
-  FACT_t   checker;
+  mpz_t    size;
+  mpz_t    index;
   var_t  * scroller;
-
+  FACT_t   checker;
+  FACT_t   array_size;
+  FACT_t   return_value;
+ 
+  scope->line         += expression.lines[0];
   return_value.v_point = alloc_var ();
 
   if (expression.syntax[0] == NULL)
@@ -149,7 +151,8 @@ def_array (var_t *base, func_t *scope, word_list expression)
       expression.move_forward++;
       expression.lines++;
 
-      array_size = get_array_size (scope, expression);
+      scope->line += expression.lines[0];
+      array_size   = get_array_size (scope, expression);
 
       while (expression.move_forward[0])
 	{
@@ -163,16 +166,21 @@ def_array (var_t *base, func_t *scope, word_list expression)
 
       if (array_size.type != VAR_TYPE)
 	return errorman_throw_reg (scope, "array size needs to be a variable");
-      
-      if ((size = (mpc_get_si (array_size.v_point->data))) > 1000 || size < 2)
+
+      mpc_get_mpz (size, array_size.v_point->data);
+      //if (((size = (mpc_get_si (array_size.v_point->data))) > 1000 || size < 1))
+      if (mpz_cmp_ui (size, 1) < 0)
 	return errorman_throw_reg (scope, "invalid array size");
       
       base = resize_array (base, size);
 
-      for (scroller = base->array_up, pos = 0; pos < size; pos++, scroller = scroller->next)
+      mpz_init (index);
+      for (scroller = base->array_up, mpz_init (index);  mpz_cmp (index, size) < 0; mpz_add_ui (index, index, 1), scroller = scroller->next)
+	// for (scroller = base->array_up, pos = 0; pos < size; pos++, scroller = scroller->next)
 	{
 	  set_array (expression.move_forward, count_until_NULL (expression.syntax));
-	  checker = def_array (scroller, scope, expression);
+	  checker      = def_array (scroller, scope, expression);
+	  scope->line -= expression.lines[0];
 	  
 	  if (checker.type == ERROR_TYPE)
 	    return checker;
@@ -207,8 +215,8 @@ define (func_t *scope, word_list expression)
 	{
 	  return_value.v_point             = add_var (scope, temp.v_point->array_up->name);
 	  return_value.v_point->array_up   = temp.v_point->array_up;
-	  return_value.v_point->array_size = temp.v_point->array_size;
-
+	  
+	  mpz_set (return_value.v_point->array_size, temp.v_point->array_size);
 	  GC_free (temp.v_point);
 	}
       else
@@ -232,10 +240,11 @@ clone_var (var_t *surrogate, char *name)
 
   clone             = alloc_var ();
   clone->name       = name;
-  clone->array_size = surrogate->array_size;
+  
   clone->next       = clone_var (surrogate->next, name);
   clone->array_up   = clone_var (surrogate->array_up, name);
 
+  mpz_set (clone->array_size, surrogate->array_size);
   mpc_set (&(clone->data), surrogate->data);
 
   return clone;
@@ -269,9 +278,9 @@ set (func_t *scope, word_list expression)
       
       free_var (arg1.v_point->array_up);
 
-      arg1.v_point->array_up   = copy->array_up;
-      arg1.v_point->array_size = copy->array_size;
-
+      arg1.v_point->array_up = copy->array_up;
+      
+      mpz_set (arg1.v_point->array_size, copy->array_size);
       mpc_set (&(arg1.v_point->data), copy->data);
     }
   else if (arg1.type == FUNCTION_TYPE)
@@ -282,7 +291,6 @@ set (func_t *scope, word_list expression)
 	return arg2;
 
       arg1.f_point->line       = arg2.f_point->line;
-      arg1.f_point->array_size = arg2.f_point->array_size;
       arg1.f_point->args       = arg2.f_point->args;
       arg1.f_point->body       = arg2.f_point->body;
       arg1.f_point->vars       = arg2.f_point->vars;
@@ -291,6 +299,8 @@ set (func_t *scope, word_list expression)
       arg1.f_point->up         = arg2.f_point->up;
       arg1.f_point->extrn_func = arg2.f_point->extrn_func;
       arg1.f_point->usr_data   = arg2.f_point->usr_data;
+
+      mpz_set (arg1.f_point->array_size, arg2.f_point->array_size);
     }
 
   return arg1;
@@ -320,7 +330,7 @@ get_array_size (func_t *scope, word_list expression)
 FACT_t
 return_array (func_t *scope, word_list expression)
 {
-  int         size;
+  mpz_t       size;
   FACT_t      return_value;
   FACT_t      hold;
   type_define type;
@@ -359,8 +369,9 @@ return_array (func_t *scope, word_list expression)
       roots.func_t_root->up       = scope;
       roots.func_t_root->array_up = values.func_t_value;
     }
-  
-  for (size = 1; size <= 1000; size++)
+
+  mpz_init_set_ui (size, 1);
+  for (;;)
     {
       while (expression.move_forward[0])
 	{
@@ -405,23 +416,22 @@ return_array (func_t *scope, word_list expression)
 
   if (type == VAR_TYPE)
     {
-      if (size == 1)
+      if (!mpz_cmp_ui (size, 1))
 	return_value.v_point = roots.var_t_root->array_up;
       else
 	return_value.v_point = roots.var_t_root;
 
-      return_value.v_point->array_size = size;
+      mpz_set (return_value.v_point->array_size, size);
     }
   else if (type == FUNCTION_TYPE)
     {
-      if (size == 1)
+      if (!mpz_cmp_ui (size, 1))
 	return_value.f_point = roots.func_t_root->array_up;
       else
 	return_value.f_point = roots.func_t_root;
 
-      return_value.f_point->array_size = size;
+      mpz_set (return_value.f_point->array_size, size);
     }
-  // return errorman_throw_reg (scope, "experimental");
 
   return return_value;
 }
@@ -442,25 +452,27 @@ size_of (func_t *scope, word_list expression)
 
   return_value.v_point = alloc_var ();
   return_value.type    = VAR_TYPE;
+  
 
   if (evald.type == VAR_TYPE)
-    mpc_set_si (&(return_value.v_point->data), evald.v_point->array_size);
+    mpz_set (return_value.v_point->data.object, evald.v_point->array_size);
   else
-    mpc_set_si (&(return_value.v_point->data), evald.f_point->array_size);
+    mpz_set (return_value.v_point->data.object, evald.f_point->array_size);
 
+  return_value.v_point->data.precision = 0;
+  
   return return_value;
 }
 
 FACT_t
 get_array_var (var_t *root, func_t *scope, word_list expression)
 {
-  int    size;
-  int    position;
+  mpz_t  size;
+  mpz_t  index;
   FACT_t return_value;
   FACT_t array_size;
 
   return_value.type = VAR_TYPE;
-
   
   while (expression.move_forward[0])
     {
@@ -489,12 +501,14 @@ get_array_var (var_t *root, func_t *scope, word_list expression)
   if (array_size.type != VAR_TYPE)
     return errorman_throw_reg (scope, "array position cannot be a function");
 
-  size = mpc_get_si (array_size.v_point->data);
+  mpc_get_mpz (size, array_size.v_point->data);
 
-  if (size >= root->array_size || size < 0)
+  // if (size >= root->array_size || size < 0)
+  if (mpz_cmp (size, root->array_size) >= 0 || mpz_cmp_ui (size, 0) < 0)
     return errorman_throw_reg (scope, "array out of bounds");
 
-  if (root->array_size == 1)
+  //if (root->array_size == 1)
+  if (!mpz_cmp_ui (root->array_size, 1))
     {
       while (expression.move_forward[0])
 	{
@@ -510,19 +524,19 @@ get_array_var (var_t *root, func_t *scope, word_list expression)
       return return_value;
     }
 
-  for (root = root->array_up, position = 0; position < size; position++)
+  for (root = root->array_up,
+	 mpz_init (index); mpz_cmp (index, size) < 0; mpz_add_ui (index, index, 1))
     root = root->next;
 
   return_value = get_array_var (root, scope, expression);
-
   return return_value;
 }
 
 FACT_t
 get_array_func (func_t *root, func_t *scope, word_list expression)
 {
-  int    size;
-  int    position;
+  mpz_t  size;
+  mpz_t  index;
   FACT_t return_value;
   FACT_t array_size;
 
@@ -555,12 +569,14 @@ get_array_func (func_t *root, func_t *scope, word_list expression)
   if (array_size.type != VAR_TYPE)
     return errorman_throw_reg (scope, "array position cannot be a function");
 
-  size = mpc_get_si (array_size.v_point->data);
+  mpc_get_mpz (size, array_size.v_point->data);
 
-  if (size >= root->array_size || size < 0)
+  //  if (size >= root->array_size || size < 0)
+  if (mpz_cmp (size, root->array_size) >= 0 || mpz_cmp_ui (size, 0) < 0)
     return errorman_throw_reg (scope, "array out of bounds");
 
-  if (root->array_size == 1)
+  //  if (root->array_size == 1)
+  if (!mpz_cmp_ui (root->array_size, 1))
     {
       while (expression.move_forward[0])
 	{
@@ -578,7 +594,7 @@ get_array_func (func_t *root, func_t *scope, word_list expression)
     }
 
   for (root = root->array_up,
-	 position = 0; position < size; position++)
+	 mpz_init (index); mpz_cmp (index, size) < 0; mpz_add_ui (index, index, 1))
     root = root->next;
 
   return_value = get_array_func (root, scope, expression);
@@ -613,16 +629,17 @@ combine_arrays (FACT_t op1, FACT_t op2)
   temp2              = clone_var (op2.v_point, "temp2");
   op2.v_point->next  = hold;
   result             = alloc_var ();
-  result->array_size = temp1->array_size + temp2->array_size;
 
-  if (temp1->array_size == 1)
+  mpz_add (result->array_size, temp1->array_size, temp2->array_size);
+
+  if (!mpz_cmp_ui (temp1->array_size, 1))
     result->array_up = temp1;
   else
     result->array_up = temp1->array_up;
 
   for (hold = result->array_up; hold->next != NULL; hold = hold->next);
 
-  if (temp2->array_size == 1)
+  if (!mpz_cmp_ui (temp1->array_size, 1))
     hold->next = temp2;
   else
     hold->next = temp2->array_up;

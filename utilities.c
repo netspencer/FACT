@@ -70,10 +70,10 @@ array_to_string (var_t *convertable)
   char  * setter;
   var_t * scroller;
   
-  return_value = (char *) better_malloc (sizeof (char) * convertable->array_size);
+  return_value = (char *) better_malloc (sizeof (char) * mpz_get_ui (convertable->array_size));
   setter       = return_value;
 
-  if (convertable->array_size > 1)
+  if (mpz_cmp_ui (convertable->array_size, 1) > 0)
     {
       for (scroller = convertable->array_up; scroller != NULL; scroller = scroller->next, setter++)
 	setter[0] = mpc_get_si (scroller->data);
@@ -109,14 +109,14 @@ string_to_array (char *convertable, char *name)
 }
 
 var_t *
-string_array_to_var_t (char **strings, char *var_t_name, int array_size)
+string_array_to_var (char **strings, char *var_name, int array_size)
 {
   int     pos;
   var_t * root;
   var_t * scroller;
   
   root       = alloc_var ();
-  root->name = var_t_name;
+  root->name = var_name;
 
   for (scroller = root, pos = 0; pos < array_size; pos++)
     {
@@ -126,9 +126,9 @@ string_array_to_var_t (char **strings, char *var_t_name, int array_size)
 	  scroller       = scroller->next;
 	}
 
-      scroller->name       = var_t_name;
-      scroller->array_up   = string_to_array (strings[pos], var_t_name);
-      scroller->array_size = strlen (strings[pos]) + 1;
+      scroller->name       = var_name;
+      scroller->array_up   = string_to_array (strings[pos], var_name);
+      mpz_set_si (scroller->array_size, strlen (strings[pos]) + 1);
     }
 
   return root;
@@ -182,4 +182,17 @@ tokcmp_safe (const char *str1, const char *str2, int line, char *file)
     str2++;
   
   return strcmp (str1, str2);
+}
+
+unsigned int
+strcount (const char op1, const char *op2)
+{
+  int index;
+  
+  for (index = 0; *op2 != '\0'; op2++)
+    {
+      if (op1 == *op2)
+	index++;
+    }
+  return 0;
 }

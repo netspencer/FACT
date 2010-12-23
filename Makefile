@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS =  -ggdb -m64 -rdynamic
+CFLAGS = -ggdb -m64 -rdynamic
 PFLAGS = -pg
 PROG = FACT-BETA
 PARSERV = 3
@@ -20,7 +20,7 @@ $(PROG):	$(SRCS)
 
 install:
 	cp ./$(PROG) /usr/bin/$(PROG)
-	chmod +x /usr/bin/FACT-BETA                   # this is to make sure that FACT is an executable
+	chmod +x /usr/bin/$(PROG)                     # this is to make sure that FACT is an executable
 	rm -r /usr/include/FACT/                      # clear them out
 	rm -r /etc/FACT
 	cp -r ./includes /usr/include/FACT/           # install the development headers

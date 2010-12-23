@@ -122,12 +122,7 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
     return errorman_throw_reg (scope, "cannot run a non-function");
 
   if (evald.f_point->args == NULL)
-    {
-#ifdef DEBUG    
-      printf (":%s\n", evald.f_point->name);
-#endif
-      return errorman_throw_reg (scope, "given function has no body");
-    }
+    return errorman_throw_reg (scope, "given function has no body");
 
   while (expression.move_forward[0])
     {
@@ -185,13 +180,12 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
 	  temp                    = clone_var (passed.v_point, arg.v_point->name);
 	  passed.v_point->next    = hold;
 	  arg.v_point->array_up   = temp->array_up;
-	  arg.v_point->array_size = temp->array_size;
+	  mpz_set (arg.v_point->array_size, temp->array_size);
 	  mpc_set (&(arg.v_point->data), temp->data);
 	}
       else if (arg.type == FUNCTION_TYPE)
 	{
 	  arg.f_point->line       = passed.f_point->line;
-	  arg.f_point->array_size = passed.f_point->array_size;
 	  arg.f_point->args       = passed.f_point->args;
 	  arg.f_point->body       = passed.f_point->body;
 	  arg.f_point->vars       = passed.f_point->vars;
@@ -200,6 +194,7 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
 	  arg.f_point->up         = passed.f_point->up;
 	  arg.f_point->extrn_func = passed.f_point->extrn_func;
 	  arg.f_point->usr_data   = passed.f_point->usr_data;
+	  mpz_set (arg.f_point->array_size, passed.f_point->array_size);
 	}
 
       while (arg_list.move_forward[0])
@@ -240,14 +235,12 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
 FACT_t
 new_scope (func_t *scope, word_list expression)
 {
-  char   ** copy_body;
-  func_t *  new_scope;
-  FACT_t    prepared;
-  FACT_t    return_value;
+  func_t * new_scope;
+  FACT_t   prepared;
+  FACT_t   return_value;
 
   new_scope = alloc_func ();
-  
-  prepared = prepare_function (scope, new_scope, expression);
+  prepared  = prepare_function (scope, new_scope, expression);
 
   if (prepared.type == ERROR_TYPE) 
     return prepared; /* ha ha, that makes me chortle */
@@ -257,8 +250,8 @@ new_scope (func_t *scope, word_list expression)
     prepared = (((FACT_t (*)(func_t *)) new_scope->extrn_func) (new_scope));
   else
     {
-      copy_body = copy (prepared.f_point->body + 1);
-      prepared = procedure (new_scope, make_word_list (copy_body, false));
+      new_scope->line += strcount ('\n', prepared.f_point->body[0]);
+      prepared         = procedure (new_scope, make_word_list (prepared.f_point->body + 1, false));
     }
 
   if (prepared.type == ERROR_TYPE)
@@ -275,23 +268,22 @@ new_scope (func_t *scope, word_list expression)
 FACT_t
 run_func (func_t *scope, word_list expression_list)
 {
-  char   ** copied_body;
-  func_t *  new_scope;
-  FACT_t    return_value;
-  FACT_t    prepared;
+  func_t * new_scope;
+  FACT_t   return_value;
+  FACT_t   prepared;
 
   new_scope = alloc_func ();
   prepared  = prepare_function (scope, new_scope, expression_list);
 
   if (prepared.type == ERROR_TYPE)
     return prepared; 
-  
-  copied_body = copy (prepared.f_point->body);
-
   if (new_scope->extrn_func != NULL)
     return_value = (((FACT_t (*)(func_t *)) new_scope->extrn_func) (new_scope));
   else
-    return_value = eval_expression (new_scope, make_word_list (copied_body, false));
+    {
+      new_scope->line += strcount ('\n', prepared.f_point->body[0]); 
+      return_value     = procedure (new_scope, make_word_list (prepared.f_point->body + 1, false));
+    }
 
   return_value.return_signal = false;
   return_value.break_signal  = false;

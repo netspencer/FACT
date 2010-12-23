@@ -41,8 +41,9 @@ FACT_INTERN_FUNC (int) mpc_cmp    (mpc_t, mpc_t            );
 FACT_INTERN_FUNC (int) mpc_cmp_ui (mpc_t, unsigned long int);
 FACT_INTERN_FUNC (int) mpc_cmp_si (mpc_t, signed long int  );
 
-FACT_INTERN_FUNC (unsigned long int) mpc_get_ui (mpc_t);
-FACT_INTERN_FUNC (signed long int  ) mpc_get_si (mpc_t);
-FACT_INTERN_FUNC (char *           ) mpc_get_str (mpc_t);
+FACT_INTERN_FUNC (unsigned long int) mpc_get_ui  (mpc_t       );
+FACT_INTERN_FUNC (signed long int  ) mpc_get_si  (mpc_t       );
+FACT_INTERN_FUNC (char *           ) mpc_get_str (mpc_t       );
+FACT_INTERN_FUNC (void             ) mpc_get_mpz (mpz_t, mpc_t);
 
 #endif

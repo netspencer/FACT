@@ -106,62 +106,51 @@ shell (func_t *main_scope)
   FACT_t          returned;
   linked_word  *  formatted;
   unsigned int    end_line;
-  unsigned int    line_num;
+  unsigned int    hold_line;
 
   /* Print out the disclaimer and logo. */
   printf ("The FACT programming language interactive shell\n(c) 2010 Matthew Plant, under the GPL version 3.\n");
   print_logo ();
-  line_num = 1;
   end_line = 1;
 
   for (;;)
     {
       main_scope->line = end_line;
       input            = get_input (stdin, &end_line);
-      
-#ifdef DEBUG
-      printf (":RAW:\n%s\n:END RAW:\n", input);
-#endif
-      
-      /* Check 1... */
+
+      /* ---- Exit check #1 ---- */
       if (input == NULL)
         {
           printf ("\nExiting...\n");
 	  return;
         }
-      
+      /* ---- Check for incompletions ---- */
+      if (check_for_incompletions ("stdin", input))
+	continue;
+      /* ---- Tokenize the input ---- */
       parsed_input = get_words (input);
-
-#ifdef DEBUG
-      puts ("WORDS: ");
-      for (print_parsed = 0; parsed_input[print_parsed]; print_parsed++)
-	printf ("'%s' ", parsed_input[print_parsed]);
-      putchar ('\n');
-#endif
-
-      /* Check 2... */
+      /* ---- Exit check #2 ---- */
       if (parsed_input == NULL)
 	{
 	  printf ("\nExiting...\n");
 	  return;
 	}
-      
+      /* ---- Continue to parse. ---- */
       formatted = create_list (parsed_input);
       for (formatted = set_list (formatted, END); formatted->previous != NULL; formatted = formatted->previous);
-#ifdef PARSE_CHECK
-      line_num = main_scope->line;
-      if (check_for_errors (formatted, 0, &line_num))
-	printf ("PARSING ERROR [%d]: %s.\n", line_num, get_error ());
-#endif
+      /* ---- Check for parsing errors. ---- */
+      hold_line = end_line;
+      if (check_for_errors (formatted, 0, &hold_line))
+	{
+	  print_parsing_error ("stdin", hold_line);
+	  continue;
+	}
+      /* ---- Continue to parse; convert to polish notation ---- */
       for (rev_shunting_yard (formatted); formatted->previous != NULL; formatted = formatted->previous);
       set_link (formatted);
+      /* ---- Convert the list to a char ** ---- */
       parsed_input = convert_link (formatted);
-#ifdef DEBUG
-      puts ("PARSED: ");
-      for (print_parsed = 0; parsed_input[print_parsed]; print_parsed++)
-	printf ("'%s' ", parsed_input[print_parsed]);
-      putchar ('\n');
-#endif
+      /* ---- Evaluate the statement ---- */
       returned = eval_expression (main_scope, make_word_list (parsed_input, true));
       if (returned.type == ERROR_TYPE)
         {
@@ -171,21 +160,11 @@ shell (func_t *main_scope)
       if (returned.type == VAR_TYPE)
 	printf ("Returned value: %s\n", mpc_get_str (returned.v_point->data));
       else
-#ifdef DEBUG
-	{
-#endif
-	  printf ("Returned object [%s]\n", returned.f_point->name);
-#ifdef DEBUG
-	  printf ("Object starts at line [%d]\n", returned.f_point->line);
-	}
-#endif
+	printf ("Returned object [%s]\n", returned.f_point->name);
       if (returned.return_signal == true)
         {
           printf ("Exiting...\n");
 	  return;
         }
-#ifdef DEBUG
-      printf ("Now on line [scope:%d], [flat:%d]\n", main_scope->line, line_num);
-#endif
     }
 }

@@ -27,7 +27,7 @@ add_newlines (char *word, int newlines)
   return new_str;
 }
 
-static char *
+char *
 lookup_word (int code, int newlines)
 {
   static char * lookup_table [] =
@@ -71,6 +71,7 @@ lookup_word (int code, int newlines)
       ">"       ,
       "<="      ,
       ">="      ,
+      "->"      ,
       "sizeof"  ,
       "if"      ,
       "on_error",
@@ -118,18 +119,19 @@ static bool
 isopt (int op1, int op2)
 {
   /* This is going to be a doozy. */
-  if ((op2 == '=' && (op1 == '='
-		      || op1 == '+'
-		      || op1 == '-'
-		      || op1 == '*'
-		      || op1 == '/'
-		      || op1 == '%'
-		      || op1 == '<'
-		      || op1 == '>'
-		      || op1 == '!'))
+  if (((op1 == '='
+	|| op1 == '+'
+	|| op1 == '-'
+	|| op1 == '*'
+	|| op1 == '/'
+	|| op1 == '%'
+	|| op1 == '<'
+	|| op1 == '>'
+	|| op1 == '!') && op2 == '=')  
       || (op1 == '!' && op2 == '[')
       || (op1 == '&' && op2 == '&')
-      || (op1 == '|' && op2 == '|'))
+      || (op1 == '|' && op2 == '|')
+      || (op1 == '-' && op2 == '>'))
     return true;
   return false;
 }
@@ -287,10 +289,12 @@ get_block_code (char *block)
     return LESS;
   else if (!strcmp (block, ">"))
     return MORE;
-  else if (!strcmp (block, /*"leq"*/ "<="))
+  else if (!strcmp (block, "<="))
     return LESS_EQ;
-  else if (!strcmp (block, /*"meq"*/ ">="))
+  else if (!strcmp (block, ">="))
     return MORE_EQ;
+  else if (!strcmp (block, "->"))
+    return VARIADIC;
   else if (!strcmp (block, "sizeof"))
     return SIZE;
   else if (!strcmp (block, "if"))

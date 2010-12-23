@@ -49,16 +49,6 @@ process_args (int argc, char **argv)
 	    break;
 	  break;
 
-	  /*
-	case 'm':
-	  memt = true;
-	  break;
-
-	case 'n':
-	  memt = false;
-	  break;
-	  */
-
 	case 's':
 	  cmdln = true;
 	  break;
@@ -68,7 +58,6 @@ process_args (int argc, char **argv)
 	  break;
 
 	case 'f':
-	  //mem_trackopt = memt;
 	  file_open = run_file (scope, optarg, false);
 
 	  if (file_open.type == ERROR_TYPE)
@@ -77,27 +66,24 @@ process_args (int argc, char **argv)
 	  break;
 
 	case 'i':
-	  //	  mem_trackopt = memt;
-	  
-	  /* parse remaining arguments into var_tiables */
+	  /* ---- Parse remaining arguments into variables ---- */
 	  inter_argc = add_var (scope, "argc");
 	  mpc_set_si (&(inter_argc->data), argc - 2);
 
 	  inter_argv = add_var (scope, "argv");
 
 	  if (argc - 2 <= 1)
-	    inter_argv->array_size = 1;
+	    mpz_set_ui (inter_argv->array_size, 1);
 	  else
 	    {
-	      inter_argv->array_size = argc - 2;
-	      inter_argv->array_up = string_array_to_var_t (argv + 2, "argv", argc - 2);
+	      mpz_set_ui (inter_argv->array_size, argc - 2);
+	      inter_argv->array_up = string_array_to_var (argv + 2, "argv", argc - 2);
 	    }
 
 	  file_open = run_file (scope, optarg, true);
 
 	  if (file_open.type == ERROR_TYPE)
 	    errorman_dump (file_open.error, 0, optarg);
-
 	  exit (0);
 
 	case '?':
@@ -107,8 +93,6 @@ process_args (int argc, char **argv)
 	  abort ();
 	}
     }
-
-  //  mem_trackopt = memt;
 
   if (cmdln)
     shell (scope);

@@ -3,12 +3,12 @@
 FACT_t
 new_string (func_t *scope, word_list expression)
 {
-  int      length;
-  int      count;
-  int      character;
-  var_t  * string;
-  var_t  * scroller;
-  FACT_t   return_value;
+  int            character;
+  mpz_t          length;
+  var_t        * string;
+  var_t        * scroller;
+  FACT_t         return_value;
+  unsigned int   index;
 
   string            = alloc_var ();
   return_value.type = VAR_TYPE;
@@ -20,14 +20,13 @@ new_string (func_t *scope, word_list expression)
       scroller                   = string;
       expression.move_forward[0] = true;
 
-      for (length = 1, count = 0; expression.syntax[0][count] != '\0'; length++, count++, scroller = scroller->next)
+      for (mpz_init (length), index = 0; expression.syntax[0][index] != '\0'; mpz_add_ui (length, length, 1), index++, scroller = scroller->next)
 	{
-	stringer:
-	  character = expression.syntax[0][count];
+	  character = expression.syntax[0][index];
 
 	  if (character == '\\')
             {
-              switch (expression.syntax[0][++count])
+              switch (expression.syntax[0][++index])
                 {
 		case 'n':
 		  character = '\n';
@@ -57,33 +56,21 @@ new_string (func_t *scope, word_list expression)
 		  character = '\\';
 		  break;
                 }
-	      
             }
 	  mpc_set_si (&(scroller->data), character);
 	  scroller->next = alloc_var ();
 	}
-
-      /*
-	I'm removing this because it conflicts with some stuff.
-	Plus no one really uses it.
-	
-      if (expression.syntax[2] != NULL && !tokcmp (expression.syntax[2], "\""))
+      free_var (scroller->next);
+      scroller->next = NULL;
+      if (!mpz_cmp_ui (length, 1))
+	return_value.v_point = string;
+      else
 	{
-	  expression.move_forward[1] = true;
-	  expression.move_forward[2] = true;
-	  expression.move_forward += 3;
-	  expression.syntax += 3;
-
-	  count = 0;
-	  goto stringer;
+	  return_value.v_point           = alloc_var ();
+	  return_value.v_point->array_up = string;
 	}
-      */
-      
-      return_value.v_point             = alloc_var ();
-      return_value.v_point->array_size = length;
-      return_value.v_point->array_up   = string;
+      mpz_set (return_value.v_point->array_size, length);
     }
-
   expression.move_forward[0] = expression.move_forward[1] = true;
 
   return return_value;

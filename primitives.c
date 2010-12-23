@@ -89,22 +89,13 @@ init_std_prims (func_t *scope)
   add_prim ("||", or);
   add_prim ("def", define);
   add_prim ("defunc", defunc);
-  add_prim ("else", invalid_else);
-  add_prim ("for", invalid_for);
-  add_prim ("if", invalid_if);
-  add_prim ("on_error", invalid_on_error);
-  add_prim ("sizeof", size_of);
-  add_prim ("while", invalid_while);
+  add_prim ("sizeof", size_of); /* Probably going to remove. */
   add_prim ("lambda", lambda);
   add_prim ("up", up);
   add_prim ("this", this);
   add_prim ("NULL", NULL_func);
-  /* These next three will be replaced by standard library functions: */
-  add_prim ("lib.std.getchar", input_character); 
-  add_prim ("lib.std.putchar", print_character);
-  add_prim ("lib.std.putvar", print_var);
-  import = add_func (scope, "import");
-  import->args = get_words ("def path "); /* the extra space is required for parsing reasons. */
+  import             = add_func (scope, "import");
+  import->args       = get_words ("def path "); /* the extra space is required for parsing reasons. */
   import->extrn_func = (void * (*) (struct _FUNC *)) load_lib;
 }
 
@@ -177,16 +168,6 @@ eval_math (func_t *scope, word_list expression, int call_num)
 
   arg1 = eval (scope, expression);
   arg2 = eval (scope, expression);
-
-  /* There is a better way to do this and I will implement it eventually. */
-  if (call_num == 1 && arg1.type == VAR_TYPE
-      && arg2.type == ERROR_TYPE && (!tokcmp (arg2.error.description, "cannot evaluate ;")
-				     || !tokcmp (arg2.error.description, "cannot evaluate <-")
-				     || !tokcmp (arg2.error.description, "cannot evaluate empty expression")))
-    {
-      mpc_neg (&(arg1.v_point->data), arg1.v_point->data);
-      return arg1;
-    }
   
   if (arg1.type == ERROR_TYPE)
     return arg1;

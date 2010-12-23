@@ -89,7 +89,7 @@ num_to_var (char *word)
   else
     mpc_set_str (&(return_value.v_point->data), word, get_prec (word), 10);
 
-  return_value.v_point->array_size = 1;
+  mpz_set_ui (return_value.v_point->array_size, 1);
   return_value.v_point->array_up   = NULL;
   return_value.v_point->next       = NULL;
   

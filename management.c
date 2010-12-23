@@ -1,11 +1,5 @@
 #include "management.h"
 
-/* * * * * * * * * * * * * * * * * *
- * alloc_var: allocate the space   *
- * for a var struct and initialize *
- * all the values.                 *
- * * * * * * * * * * * * * * * * * */
-
 var_t *
 get_local_var (func_t *scope, char *word)
 {
@@ -68,12 +62,13 @@ alloc_var ()
   var_t * new;
 
   new             = (var_t *) better_malloc (sizeof (var_t));
-  new->array_size = 1;
+  // new->array_size = 1;
   new->array_up   = NULL;
   new->next       = NULL;
   new->name       = NULL;
   new->locked     = false;
   mpc_init (&(new->data));
+  mpz_init_set_ui (new->array_size, 1);
 
   return new;
 }
@@ -85,7 +80,7 @@ alloc_func ()
 
   new             = (func_t *) better_malloc (sizeof (func_t));
   new->line       = 1;
-  new->array_size = 1;
+  // new->array_size = 1;
   new->array_up   = NULL;
   new->name       = NULL;
   new->extrn_func = NULL;
@@ -97,6 +92,7 @@ alloc_func ()
   new->funcs      = NULL;
   new->usr_data   = NULL;
   new->locked     = false;
+  mpz_init_set_ui (new->array_size, 1);
 
   return new;
 }
@@ -244,16 +240,17 @@ add_func (func_t *scope, char *name)
 }
 
 var_t *
-resize_var (var_t *resizable, int new_size)
+resize_var (var_t *resizable, mpz_t new_size)
 {
-  int     count;
+  mpz_t   index;
   var_t * scroller;
 
   scroller = resizable;
 
-  if (resizable->array_size < new_size)
+  //  if (resizable->array_size < new_size)
+  if (mpz_cmp (resizable->array_size, new_size) < 0)
     {
-      if (resizable->array_size == 1)
+      if (!mpz_cmp_ui (resizable->array_size, 1))
 	{
 	  scroller->array_up       = alloc_var ();
 	  scroller->array_up->name = scroller->name;
@@ -261,20 +258,22 @@ resize_var (var_t *resizable, int new_size)
       
       scroller = scroller->array_up;
     
-      for (count = 1; scroller->next != NULL;
-	   scroller = scroller->next, count++);
+      for (mpz_init_set_ui (index, 1); scroller->next != NULL;
+	   scroller = scroller->next, mpz_add_ui (index, index, 1));
 
-      while (count < new_size)
+      // while (count < new_size)
+      while (mpz_cmp (index, new_size) < 0)
 	{
 	  scroller->next       = alloc_var ();
 	  scroller->next->name = scroller->name;
 	  scroller             = scroller->next;
-	  count++;
+	  mpz_add_ui (index, index, 1);
 	}
     }
   else
     {
-      if (new_size == 1)
+      //if (new_size == 1)
+      if (!mpz_cmp_ui (new_size, 1))
 	{
 	  free_var (scroller->array_up);
 	  scroller->array_up = NULL;
@@ -283,38 +282,51 @@ resize_var (var_t *resizable, int new_size)
 	{
 	  scroller = scroller->array_up;
 	  
-	  for (count = 1; count < new_size;
-	       scroller = scroller->next, count++);
+	  for (mpz_init_set_ui (index, 1); mpz_cmp (index, new_size) < 0;
+	       scroller = scroller->next, mpz_add_ui (index, index, 1));
 
 	  free_var (scroller->next);
 	  scroller->next = NULL;
 	}
     }
-  resizable->array_size = new_size;
+  mpz_set (resizable->array_size, new_size);
   return resizable;
 }
 	
 func_t *
-resize_func (func_t *resizable, int new_size)
+resize_func (func_t *resizable, mpz_t new_size)
 {
-  int      count;
+  mpz_t    index;
   func_t * scroller;
 
   scroller = resizable;
 
-  if (resizable->array_size < new_size)
+  // if (resizable->array_size < new_size)
+  if (mpz_cmp (resizable->array_size, new_size) < 0)
     {
-      if (resizable->array_size == 1)
+      if (!mpz_cmp_ui (resizable->array_size, 1))
 	{
 	  scroller->array_up       = alloc_func ();
 	  scroller->array_up->name = scroller->name;
 	}
       
       scroller = scroller->array_up;
-      
+
+      for (mpz_init_set_ui (index, 1); scroller->next != NULL;
+	   scroller = scroller->next, mpz_add_ui (index, index, 1));
+      /*
       for (count = 1; scroller->next != NULL;
 	   scroller = scroller->next, count++);
+      */
 
+      while (mpz_cmp (index, new_size) < 0)
+	{
+	  scroller->next       = alloc_func ();
+	  scroller->next->name = scroller->name;
+	  scroller             = scroller->next;
+	  mpz_add_ui (index, index, 1);
+	}
+      /*
       while (count < new_size)
 	{
 	  scroller->next       = alloc_func ();
@@ -322,25 +334,30 @@ resize_func (func_t *resizable, int new_size)
 	  scroller             = scroller->next;
 	  count++;
 	}
+      */
     }
   else
     {
-      if (new_size == 1)
+      if (!mpz_cmp_ui (new_size, 1))
 	{
 	  free_func (scroller->array_up);
 	  scroller->array_up = NULL;
 	}
+      else
+	{
+	  scroller = scroller->array_up;
 
-      scroller = scroller->array_up;
-
-      for (count = 1; count < new_size;
-	   scroller = scroller->next, count++);
-
-      free_func (scroller->next);
-      scroller->next = NULL;
+	  for (mpz_init_set_ui (index, 1); mpz_cmp (index, new_size) < 0;
+	       scroller = scroller->next, mpz_add_ui (index, index, 1));
+	  /*
+	  for (count = 1; count < new_size;
+	       scroller = scroller->next, count++);
+	  */
+	  
+	  free_func (scroller->next);
+	  scroller->next = NULL;
+	}
     }
-
-  resizable->array_size = new_size;
-
+  mpz_set (resizable->array_size, new_size);
   return resizable;
 }      
