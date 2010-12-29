@@ -62,7 +62,6 @@ alloc_var ()
   var_t * new;
 
   new             = (var_t *) better_malloc (sizeof (var_t));
-  // new->array_size = 1;
   new->array_up   = NULL;
   new->next       = NULL;
   new->name       = NULL;
@@ -80,12 +79,12 @@ alloc_func ()
 
   new             = (func_t *) better_malloc (sizeof (func_t));
   new->line       = 1;
-  // new->array_size = 1;
   new->array_up   = NULL;
   new->name       = NULL;
   new->extrn_func = NULL;
   new->up         = NULL;
   new->next       = NULL;
+  new->file_name  = NULL;
   new->args       = NULL;
   new->body       = NULL;
   new->vars       = NULL;

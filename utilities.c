@@ -70,7 +70,7 @@ array_to_string (var_t *convertable)
   char  * setter;
   var_t * scroller;
   
-  return_value = (char *) better_malloc (sizeof (char) * mpz_get_ui (convertable->array_size));
+  return_value = (char *) better_malloc (sizeof (char) * (mpz_get_ui (convertable->array_size) + 1));
   setter       = return_value;
 
   if (mpz_cmp_ui (convertable->array_size, 1) > 0)

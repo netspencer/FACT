@@ -49,7 +49,6 @@ defunc_array (func_t *base, func_t *scope, word_list expression)
 	return errorman_throw_reg (scope, "array size needs to be a variable");
 
       mpc_get_mpz (size, array_size.v_point->data);
-      //if (((size = (mpc_get_si (array_size.v_point->data))) > 1000 || size < 1))
       if (mpz_cmp_ui (size, 1) < 0)
 	return errorman_throw_reg (scope, "invalid array size");
 
@@ -64,8 +63,7 @@ defunc_array (func_t *base, func_t *scope, word_list expression)
 	  
 	  if (checker.type == ERROR_TYPE)
 	    return checker;
-	}
-	
+	}	
       base->name = base->array_up->name;
     }
   return_value.f_point = base;
@@ -291,6 +289,7 @@ set (func_t *scope, word_list expression)
 	return arg2;
 
       arg1.f_point->line       = arg2.f_point->line;
+      arg1.f_point->file_name  = arg2.f_point->file_name;
       arg1.f_point->args       = arg2.f_point->args;
       arg1.f_point->body       = arg2.f_point->body;
       arg1.f_point->vars       = arg2.f_point->vars;
@@ -334,6 +333,13 @@ return_array (func_t *scope, word_list expression)
   FACT_t      return_value;
   FACT_t      hold;
   type_define type;
+  /* Something tells me that is was sort of
+   * pointless to use unions in this case, and
+   * I'll probably remove them at a later date.
+   * But, alas, this project was designed so
+   * that I could learn C from it, and this
+   * helped, so it was included.
+   */
   union
   {
     var_t  * var_t_root;
@@ -355,8 +361,7 @@ return_array (func_t *scope, word_list expression)
 
   if (type == VAR_TYPE)
     {
-      values.var_t_value = hold.v_point;
-     
+      values.var_t_value         = hold.v_point;
       roots.var_t_root           = alloc_var ();
       roots.var_t_root->name     = "result";
       roots.var_t_root->array_up = values.var_t_value;
@@ -395,9 +400,9 @@ return_array (func_t *scope, word_list expression)
       if (type != hold.type)
 	{
 	  if (type == VAR_TYPE)
-	    return errorman_throw_reg (scope, "unexpected function returned in a var_tiable array");
+	    return errorman_throw_reg (scope, "unexpected function returned in a variable array");
 	  else
-	    return errorman_throw_reg (scope, "unexpected var_tiable returned in a function array");
+	    return errorman_throw_reg (scope, "unexpected variable returned in a function array");
 	}
 
       if (type == VAR_TYPE)
@@ -410,6 +415,7 @@ return_array (func_t *scope, word_list expression)
 	  values.func_t_value->next = hold.f_point;
 	  values.func_t_value       = values.func_t_value->next;
 	}
+      mpz_add_ui (size, size, 1);
     }
 
   return_value.type = type;
@@ -609,6 +615,7 @@ combine_arrays (FACT_t op1, FACT_t op2)
   var_t  * temp1;
   var_t  * temp2;
   var_t  * hold;
+  mpz_t    index;
   FACT_t   return_value;
 
   if (op1.type == ERROR_TYPE)
@@ -637,9 +644,9 @@ combine_arrays (FACT_t op1, FACT_t op2)
   else
     result->array_up = temp1->array_up;
 
-  for (hold = result->array_up; hold->next != NULL; hold = hold->next);
+  for (hold = result->array_up, mpz_init_set_ui (index, 1); mpz_cmp (temp1->array_size, index); hold = hold->next, mpz_add_ui (index, index, 1));
 
-  if (!mpz_cmp_ui (temp1->array_size, 1))
+  if (!mpz_cmp_ui (temp2->array_size, 1))
     hold->next = temp2;
   else
     hold->next = temp2->array_up;

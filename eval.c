@@ -280,7 +280,6 @@ procedure (func_t *scope, word_list expression)
   while (expression.syntax[0] != NULL
 	 && tokcmp (expression.syntax[0], "}"))
     {
-      
       length_to_move = get_exp_length_first (expression.syntax, ';');
       return_value   = eval_expression (scope, expression);
 
@@ -310,6 +309,7 @@ lambda_proc (func_t *scope, word_list expression)
     {
       .line       = scope->line,
       .name       = scope->name,
+      .file_name  = scope->file_name,
       .args       = NULL,
       .body       = NULL,
       .array_size = 1,
@@ -321,11 +321,10 @@ lambda_proc (func_t *scope, word_list expression)
       .next       = NULL,
     };
   
-   /*
-     temp_local is a temporary scope created to contain
-     lambda procedures. Note, these are different from
-     lambda functions. A lot.
-   */
+   /* temp_local is a temporary scope created to contain
+    * lambda procedures. Note, these are different from
+    * lambda functions. A lot.
+    */
   
   return_value = procedure (&temp_local, expression);
   scope->line  = temp_local.line;

@@ -9,15 +9,13 @@ typedef struct _LIB
 
 static lib_t *root = NULL;
 
-/*
-  I am a little tired, so this may be a
-  giant clusterfuck of awful. I dunno.
-
-  Also, I have to add the using of
-  an environmental variable as
-  opposed to just using the direct,
-  path.
-*/
+/* I am a little tired, so this may be a
+ * giant clusterfuck of awful. I dunno.
+ * Also, I have to add the using of
+ * an environmental variable as
+ * opposed to just using the direct,
+ * path.
+ */
 
 FACT_t
 load_lib (func_t *scope)
@@ -33,24 +31,13 @@ load_lib (func_t *scope)
     void *(* function)(func_t *);
   }      *   MOD_MAP;
 
-  path = get_var (scope, "path"); // eval (scope, args);
+  path  = get_var (scope, "path"); 
   scope = scope->up;
-
-  /*
-  if (!isvar_t (path))
-    {
-      if (iserror_t (path))
-	return path;
-      else
-	return errorman_throw_reg (scope, "path to library to be loaded cannot be a function");
-    }
-  */
-
   fpath = array_to_string (path);
 
   if (root == NULL)
     {
-      root = better_malloc (sizeof (lib_t));
+      root     = better_malloc (sizeof (lib_t));
       scroller = root;
     }
   else
@@ -61,13 +48,12 @@ load_lib (func_t *scope)
 	    return errorman_throw_reg (scope, "cannot re-load library");
 	}
       scroller->next = better_malloc (sizeof (lib_t));
-      scroller = scroller->next;
+      scroller       = scroller->next;
     }
 
-  scroller->next = NULL;
+  scroller->next      = NULL;
   scroller->file_path = fpath;
-
-  scroller->library = dlopen (fpath, RTLD_LAZY);
+  scroller->library   = dlopen (fpath, RTLD_LAZY);
 
   if (scroller->library == NULL)
     {
@@ -88,11 +74,11 @@ load_lib (func_t *scope)
       if ((ref = add_func (scope, MOD_MAP[pos].name)) == NULL)
 	continue; /* if it couldn't be added, just skip it. */
 
-      /* parse the arguments correctly ---- */
+      /* ---- parse the arguments correctly ---- */
       if (MOD_MAP[pos].arguments == NULL)
 	continue;
       ref->args = get_words (combine_strs (MOD_MAP[pos].arguments, " "));
-      /* end parsing ---- */
+      /* ---- end parsing ---- */
       ref->locked = true;
       ref->extrn_func = MOD_MAP[pos].function;
     }

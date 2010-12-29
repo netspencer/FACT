@@ -19,14 +19,12 @@ process_args (int argc, char **argv)
   file_open = run_file (scope, "/etc/FACT/include/stdlib.ft", true);
 
   if (file_open.type == ERROR_TYPE)
-    errorman_dump (file_open.error, 0, optarg);
+    errorman_dump (file_open.error, 0, "/etc/FACT/include/stdlib.ft", scope->file_name);
 
   for (;;)
     {
       static struct option long_options[] =
 	{
-	  /*{"show-heap", no_argument,       &memt,    1},
-	    {"hide-heap", no_argument,       &memt,    0},*/
 	  {"stdin",     no_argument,       &cmdln,   1},
 	  {"no-stdin",  no_argument,       &cmdln,   0},
 	  {"shebang",   required_argument, 0, 'i'},
@@ -61,7 +59,7 @@ process_args (int argc, char **argv)
 	  file_open = run_file (scope, optarg, false);
 
 	  if (file_open.type == ERROR_TYPE)
-	    errorman_dump (file_open.error, 0, optarg);
+	    errorman_dump (file_open.error, 0, optarg, scope->file_name);
 
 	  break;
 
@@ -83,7 +81,7 @@ process_args (int argc, char **argv)
 	  file_open = run_file (scope, optarg, true);
 
 	  if (file_open.type == ERROR_TYPE)
-	    errorman_dump (file_open.error, 0, optarg);
+	    errorman_dump (file_open.error, 0, optarg, scope->file_name);
 	  exit (0);
 
 	case '?':

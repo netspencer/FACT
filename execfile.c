@@ -5,6 +5,9 @@ run_file (func_t *scope, const char *filename, bool silent)
 {
   int             print_parsed;
   int             hold_line;
+#ifdef DEBUG
+  char         *  scroll_through;
+#endif
   char         *  hold_fn;
   char         *  input;
   char         ** parsed_input;
@@ -17,11 +20,12 @@ run_file (func_t *scope, const char *filename, bool silent)
   if (!silent)
     printf ("Opening file <%s>\n", filename);
 
-  fp          = fopen (filename, "r");
-  hold_line   = scope->line;
-  scope->line = 1;
-  hold_fn     = scope->name;
-  scope->name = (char *) filename;
+  fp               = fopen (filename, "r");
+  hold_line        = scope->line;
+  scope->line      = 1;
+  hold_fn          = scope->name;
+  scope->name      = (char *) filename;
+  scope->file_name = (char *) filename;
 
   if (fp == NULL)
     {
@@ -35,6 +39,22 @@ run_file (func_t *scope, const char *filename, bool silent)
     {
       scope->line = end_line;
       input       = get_input (fp, &end_line);
+
+#ifdef DEBUG
+      puts ("\ninput:");
+      scroll_through = input;
+      do
+	{
+	  printf (":\t");
+	  while (scroll_through != NULL && *scroll_through != '\n' && *scroll_through != '\0')
+	    putchar (*scroll_through++);
+	  if (scroll_through != NULL && *scroll_through == '\n')
+	    scroll_through++;
+	  putchar ('\n');
+	}
+      while (scroll_through != NULL &&  *scroll_through != '\0');
+      fflush (stdout);
+#endif
 
       if (input == NULL)
 	{
@@ -73,12 +93,6 @@ run_file (func_t *scope, const char *filename, bool silent)
 
       /* ---- Check for parsing errors. ---- */
       check_line = end_line;
-      if (check_for_errors (formatted, 0, &check_line))
-	{
-	  print_parsing_error (filename, check_line);
-	  continue;
-	}
-
       for (rev_shunting_yard (formatted); formatted->previous != NULL; formatted = formatted->previous);
       set_link (formatted);
       parsed_input = convert_link (formatted);
@@ -87,7 +101,7 @@ run_file (func_t *scope, const char *filename, bool silent)
 
       if (returned.type == ERROR_TYPE)
         {
-          errorman_dump (returned.error, returned.error.scope->line, filename);
+          errorman_dump (returned.error, returned.error.scope->line, filename, returned.error.scope->file_name);
           continue;
         }
 

@@ -1,9 +1,8 @@
 #include "common.h"
 
-/*
-  I think I should remove the way primitives (not math calls)
-  are handled. It is rather silly.
-*/
+/* I think I should remove the way primitives (not math calls)
+ * are handled. It is rather silly.
+ */
 
 struct          _MATH_PRIMS
 { 
@@ -75,25 +74,25 @@ init_std_prims (func_t *scope)
 {
   func_t * import;
   
-  add_prim ("--", negative);
-  add_prim ("=", set);
-  add_prim ("(", paren);
-  add_prim ("{", lambda_proc);
-  add_prim ("![", return_array);
-  add_prim ("@", liven_func);
-  add_prim ("$", run_func);
-  add_prim ("&", new_scope);
-  add_prim (":", in_scope);
-  add_prim ("\"", new_string);
-  add_prim ("&&", and);
-  add_prim ("||", or);
-  add_prim ("def", define);
-  add_prim ("defunc", defunc);
-  add_prim ("sizeof", size_of); /* Probably going to remove. */
-  add_prim ("lambda", lambda);
-  add_prim ("up", up);
-  add_prim ("this", this);
-  add_prim ("NULL", NULL_func);
+  add_prim ("--"    , negative    );
+  add_prim ("="     , set         );
+  add_prim ("("     , paren       );
+  add_prim ("{"     , lambda_proc );
+  add_prim ("!["    , return_array);
+  add_prim ("@"     , liven_func  );
+  add_prim ("$"     , run_func    );
+  add_prim ("&"     , new_scope   );
+  add_prim (":"     , in_scope    );
+  add_prim ("\""    , new_string  );
+  add_prim ("&&"    , and         );
+  add_prim ("||"    , or          );
+  add_prim ("def"   , define      );
+  add_prim ("defunc", defunc      );
+  add_prim ("sizeof", size_of     ); /* Probably going to remove. */
+  add_prim ("lambda", lambda      );
+  add_prim ("up"    , up          );
+  add_prim ("this"  , this        );
+  add_prim ("NULL"  , NULL_func   );
   import             = add_func (scope, "import");
   import->args       = get_words ("def path "); /* the extra space is required for parsing reasons. */
   import->extrn_func = (void * (*) (struct _FUNC *)) load_lib;

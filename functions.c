@@ -48,6 +48,7 @@ liven_func (func_t *scope, word_list expression)
   if (expression.syntax[0] == NULL || tokcmp (expression.syntax[0], "("))
     return errorman_throw_reg (scope, "expected '(' after function");
 
+  func.f_point->file_name      = scope->file_name;
   func.f_point->line           = scope->line;
   pos_args                     = get_exp_length (expression.syntax + 1, ')');
   args_formatted               = better_malloc (sizeof (char *) * pos_args);
@@ -132,6 +133,7 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
     }
 
   arg_list              = make_word_list (evald.f_point->args, false);
+  new_scope->file_name  = evald.f_point->file_name;
   new_scope->args       = evald.f_point->args;
   new_scope->body       = evald.f_point->body;
   new_scope->line       = evald.f_point->line;
@@ -186,6 +188,7 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
       else if (arg.type == FUNCTION_TYPE)
 	{
 	  arg.f_point->line       = passed.f_point->line;
+	  arg.f_point->file_name  = passed.f_point->file_name;
 	  arg.f_point->args       = passed.f_point->args;
 	  arg.f_point->body       = passed.f_point->body;
 	  arg.f_point->vars       = passed.f_point->vars;

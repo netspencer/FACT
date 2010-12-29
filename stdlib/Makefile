@@ -1,5 +1,6 @@
 CC = gcc
-CFLAGS = -Wall -ggdb -m64 -shared -ldl -fPIC
+BIT = 32 # Set to either 64 or 32
+CFLAGS = -Wall -ggdb -m$(BIT) -shared -ldl -fPIC
 LIBNAME = stdlib.soft
 
 SRCS = stdlib.c file_io.c lock.c # more will be added, I guarantee it. Maybe

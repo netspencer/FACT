@@ -139,24 +139,23 @@ isopt (int op1, int op2)
 char **
 get_words (char *start)
 {
-  /*
-    I need to clean this up.
-    Blarg.
-  */
+  /* I need to clean this up.
+   * Blarg.
+   */
   int     count;
   int     count2;
   bool    isstring;
   char *  end;
   char ** return_string;
 
-  //return_string = (char **) better_malloc (sizeof (char *));
+  return_string = (char **) better_malloc (sizeof (char *));
   return_string = NULL;
   
   for (count = 0, end = start, isstring = false; *end != '\0'; count++)
     {
       return_string = (char **) better_realloc (return_string, (count + 1) * sizeof (char *));
 
-      while (isspace ((int) *end) && !is_in_quotes ((int) *end) && *end != '\n')
+      while (isspace ((int) *end) && !is_in_quotes ((int) *end) && *end != '\n' && *end != '\0')
 	start = ++end;
 
       if (*end == '\n')
@@ -178,13 +177,7 @@ get_words (char *start)
 	  isstring = true;
 	}
       else if (isopt ((int) *end, (int) *(end + 1)))
-	//{
 	end += 2;
-	  /*
-	  while (isopt ((int) *end))
-	    end++;
-	  */
-      //}
       else if (ispunct ((int) *end) && *end != '.')
 	end++;
       else
@@ -196,10 +189,10 @@ get_words (char *start)
       if ((end - start) > 0)
 	{
 	  return_string[count] = (char *) better_malloc ((end - start + 1) * sizeof(char));
-	  
+
 	  for (count2 = 0; start != end; start++, count2++)
             return_string[count][count2] = *start;
-	  
+
 	  return_string[count][count2] = '\0';
 	  start                        = end;
 	}
@@ -322,7 +315,7 @@ alloc_word (linked_word *set_prev)
 {
   linked_word * temp;
 
-  temp              = (linked_word *) better_malloc (sizeof (linked_word));
+  temp              = better_malloc (sizeof (linked_word));
   temp->newlines    = 0;
   temp->code        = UNKNOWN;
   temp->physical    = NULL;
@@ -462,6 +455,7 @@ void
 swap (linked_word *swapping)
 {
   int           hold_prev_lines;
+  bool          hold_end;
   linked_word * temp_next;
   linked_word * temp_prev;
 
@@ -504,7 +498,7 @@ swap (linked_word *swapping)
 static void
 set_neg (linked_word *scan)
 {
-  while (scan->next != NULL)
+  while (scan != NULL && scan->next != NULL)
     {
       if (scan->code == MINUS
 	  && (scan->previous == NULL
@@ -529,7 +523,7 @@ precedence_level1 (linked_word *scan)
   linked_word * find_end;
   linked_word * move_along;
 
-  while (scan->next != NULL)
+  while (scan != NULL && scan->next != NULL)
     {
       switch (scan->code)
 	{
@@ -611,7 +605,7 @@ precedence_level2 (linked_word *scan)
 {
   linked_word * hold;
 
-  while (scan->next != NULL)
+  while (scan != NULL && scan->next != NULL)
     {
       switch (scan->code)
 	{
@@ -655,7 +649,7 @@ precedence_level2 (linked_word *scan)
 void
 precedence_level3 (linked_word *scan)
 {
-  while (scan->next != NULL)
+  while (scan != NULL && scan->next != NULL)
     {
       switch (scan->code)
 	{
@@ -690,7 +684,7 @@ precedence_level4 (linked_word *scan)
 {
   linked_word * hold;
 
-  while (scan->next != NULL)
+  while (scan != NULL && scan->next != NULL)
     {
       switch (scan->code)
 	{
@@ -740,7 +734,7 @@ precedence_level5 (linked_word *scan)
 {
   linked_word *hold;
 
-  while (scan->next != NULL)
+  while (scan != NULL && scan->next != NULL)
     {
       switch (scan->code)
 	{
@@ -787,7 +781,7 @@ precedence_level6 (linked_word *scan)
 {
   linked_word *hold;
 
-  while (scan->next != NULL)
+  while (scan != NULL && scan->next != NULL)
     {
       switch (scan->code)
 	{
@@ -828,15 +822,16 @@ precedence_level6 (linked_word *scan)
     }
 }
 
-/* IT'S SO ANNOYING HOW EACH BITWISE OPERATION HAS IT'S OWN PRECEDENCE LEVEL.
-   JESUS. */
+/* IT'S SO ANNOYING HOW EACH BITWISE OPERATION HAS ITS OWN PRECEDENCE LEVEL.
+ * JESUS.
+ */
 
 void
 precedence_level7 (linked_word *scan)
 {
   linked_word *hold;
 
-  while (scan->next != NULL)
+  while (scan != NULL && scan->next != NULL)
     {
       switch (scan->code)
 	{
@@ -881,7 +876,7 @@ precedence_level8 (linked_word *scan)
 {
   linked_word *hold;
 
-  while (scan->next != NULL)
+  while (scan != NULL && scan->next != NULL)
     {
       switch (scan->code)
 	{
@@ -925,7 +920,7 @@ precedence_level9 (linked_word *scan)
 {
   linked_word *hold;
 
-  while (scan->next != NULL)
+  while (scan != NULL && scan->next != NULL)
     {
       switch (scan->code)
 	{
@@ -968,7 +963,7 @@ precedence_level10 (linked_word *scan)
 {
   linked_word *hold;
 
-  while (scan->next != NULL)
+  while (scan != NULL && scan->next != NULL)
     {
       switch (scan->code)
 	{
@@ -1010,7 +1005,7 @@ precedence_level11 (linked_word *scan)
 {
   linked_word *hold;
 
-  while (scan->next != NULL)
+  while (scan != NULL && scan->next != NULL)
     {
       switch (scan->code)
 	{
@@ -1051,7 +1046,7 @@ precedence_level12 (linked_word *scan)
 {
   linked_word *hold;
 
-  while (scan->next != NULL)
+  while (scan != NULL && scan->next != NULL)
     {
       switch (scan->code)
 	{
@@ -1146,8 +1141,7 @@ convert_link (linked_word *list)
 {
   int     position;
   char ** result;
-      
-  
+        
   result = (char **) better_malloc (sizeof (char *));
 
   for (position = 0; list != NULL; list = list->next, position++)
@@ -1157,7 +1151,7 @@ convert_link (linked_word *list)
       else if (list->code > UNKNOWN)
 	result[position] = lookup_word (list->code - COMB_ARR, list->newlines);
 
-      result = better_realloc (result, sizeof (char **) * (position + 1));
+      result = better_realloc (result, sizeof (char **) * (position + 2));
     }
 
   return result;
@@ -1182,8 +1176,11 @@ get_exp_length (char **words, int block)
           break;
 	  
 	case '{':
+	  pos += get_exp_length (words + pos + 1, '}');
+	  break;
+	  
         case '[':
-          pos += get_exp_length (words + pos + 1, words[pos][0] + 2);
+          pos += get_exp_length (words + pos + 1, ']');
           break;
 	  
         default:
@@ -1200,10 +1197,15 @@ get_exp_length_first (char **words, int block)
   int lines;
   int pos;
 
-  for (pos = 0; words[pos] != NULL
+  for (pos = 0; words != NULL && words[pos] != NULL
          && words[pos][0] != block; pos++)
     {
       for (lines = 0; words[pos][lines] == '\n'; lines++);
+      /*
+#ifdef DEBUG
+      printf ("words[%d (pos)] + %d (lines) = %s\n", pos, lines, words[pos] + lines);
+#endif
+      */
       if (words[pos][lines] == '\0')
 	break;
       switch (words[pos][lines])
@@ -1216,7 +1218,7 @@ get_exp_length_first (char **words, int block)
 	  return pos + get_exp_length (words + pos + 1, '}') + 1;
 	  
         case '[':
-          pos += get_exp_length (words + pos + 1, words[pos][0] + 2);
+          pos += get_exp_length (words + pos + 1, ']');
           break;
 	  
         default:

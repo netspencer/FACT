@@ -74,8 +74,7 @@ get_input (FILE *fp, unsigned int *line_number)
 	{
 	  input[count] = '\0';
 
-	  if (paren_count == 0 && bracket_count == 0 && curly_count == 0 && !in_quotes
-	      /*&& (input[count - 1] == ';' || input[count - 1] == '}')*/)
+	  if (paren_count == 0 && bracket_count == 0 && curly_count == 0 && !in_quotes)
 	    break; 
 	}      
     }
@@ -154,7 +153,7 @@ shell (func_t *main_scope)
       returned = eval_expression (main_scope, make_word_list (parsed_input, true));
       if (returned.type == ERROR_TYPE)
         {
-	  errorman_dump (returned.error, returned.error.scope->line, "stdin");
+	  errorman_dump (returned.error, returned.error.scope->line, "stdin", returned.error.scope->file_name);
           continue;
         }
       if (returned.type == VAR_TYPE)
