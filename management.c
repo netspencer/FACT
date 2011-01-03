@@ -90,6 +90,7 @@ alloc_func ()
   new->vars       = NULL;
   new->funcs      = NULL;
   new->usr_data   = NULL;
+  new->variadic   = NULL;
   new->locked     = false;
   mpz_init_set_ui (new->array_size, 1);
 

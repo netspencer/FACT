@@ -111,6 +111,7 @@ shell (func_t *main_scope)
   printf ("The FACT programming language interactive shell\n(c) 2010 Matthew Plant, under the GPL version 3.\n");
   print_logo ();
   end_line = 1;
+  main_scope->file_name = "stdin";
 
   for (;;)
     {

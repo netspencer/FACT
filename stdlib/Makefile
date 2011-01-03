@@ -1,5 +1,5 @@
 CC = gcc
-BIT = 32 # Set to either 64 or 32
+BIT = 64 # Set to either 64 or 32
 CFLAGS = -Wall -ggdb -m$(BIT) -shared -ldl -fPIC
 LIBNAME = stdlib.soft
 

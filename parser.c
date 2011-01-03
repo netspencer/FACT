@@ -142,18 +142,24 @@ get_words (char *start)
   /* I need to clean this up.
    * Blarg.
    */
-  int     count;
-  int     count2;
-  bool    isstring;
+  int     index; /* count */
+  int     jndex; /* count2 */
+  bool    is_string;
   char *  end;
-  char ** return_string;
+  char ** result;
 
-  return_string = (char **) better_malloc (sizeof (char *));
-  return_string = NULL;
+  /* Insert comment here explaining why this
+   * works and how.
+   * ...
+   * I got nothing. Give me like a day or two
+   * and I'll see if I remember completely.
+   * I know how it works, but I want to be
+   * able to explain it well.
+   */
   
-  for (count = 0, end = start, isstring = false; *end != '\0'; count++)
+  for (index = 0, end = start, is_string = false, result = NULL; *end != '\0'; index++)
     {
-      return_string = (char **) better_realloc (return_string, (count + 1) * sizeof (char *));
+      result = better_realloc (result, (index + 1) * sizeof (char *));
 
       while (isspace ((int) *end) && !is_in_quotes ((int) *end) && *end != '\n' && *end != '\0')
 	start = ++end;
@@ -163,9 +169,9 @@ get_words (char *start)
 	  while (*end == '\n')
 	    end++;
 	}
-      else if (isstring)
+      else if (is_string)
 	{
-	  isstring = false;
+	  is_string = false;
 	  end++;
 	}
       else if (is_in_quotes ((int) *end))
@@ -174,7 +180,7 @@ get_words (char *start)
 	    end++;
 	  
 	  end--;
-	  isstring = true;
+	  is_string = true;
 	}
       else if (isopt ((int) *end, (int) *(end + 1)))
 	end += 2;
@@ -188,19 +194,19 @@ get_words (char *start)
       
       if ((end - start) > 0)
 	{
-	  return_string[count] = (char *) better_malloc ((end - start + 1) * sizeof(char));
+	  result[index] = (char *) better_malloc ((end - start + 1) * sizeof(char));
 
-	  for (count2 = 0; start != end; start++, count2++)
-            return_string[count][count2] = *start;
+	  for (jndex = 0; start != end; start++, jndex++)
+            result[index][jndex] = *start;
 
-	  return_string[count][count2] = '\0';
-	  start                        = end;
+	  result[index][jndex] = '\0';
+	  start                = end;
 	}
     }
       
-  return_string[count - 1] = NULL;
+  result[index - 1] = NULL;
   
-  return (count > 0) ? return_string : NULL;
+  return (index > 0) ? result : NULL;
 }
 
 word_code

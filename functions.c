@@ -160,6 +160,42 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
   
   for (pos = 0; arg_list.syntax[0] != NULL; pos++)
     {
+      if (!tokcmp (arg_list.syntax[0], "->"))
+	{
+	  /* We assume that arg_list has one
+	   * more valid token, the ')'.
+	   */
+	  new_scope->line += arg_list.lines[0] + arg_list.lines[1];
+	  while (!tokcmp (expression.syntax[0], ")"))
+	    {
+	      struct _MIXED * go_through;
+	      
+	      if (new_scope->variadic == NULL)
+		{
+		  new_scope->variadic = better_malloc (sizeof (struct _MIXED));
+		  go_through          = new_scope->variadic;
+		}
+	      else
+		{
+		  go_through->next = better_malloc (sizeof (struct _MIXED));
+		  go_through       = go_through->next;
+		}
+	      passed           = eval (scope, expression);
+	      go_through->type = passed.type;
+	      go_through->next = NULL;
+	      if (passed.type == VAR_TYPE)
+	        go_through->var_p = passed.v_point;
+	      else
+		go_through->func_p = passed.f_point;
+
+	      while (expression.move_forward[0])
+		{
+		  expression.syntax++;
+		  expression.move_forward++;
+		  expression.lines++;
+		}
+	    }
+	}
       arg = eval (new_scope, arg_list);
 
       if (!tokcmp (expression.syntax[0], ")"))

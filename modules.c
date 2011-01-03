@@ -13,7 +13,7 @@ static lib_t *root = NULL;
  * giant clusterfuck of awful. I dunno.
  * Also, I have to add the using of
  * an environmental variable as
- * opposed to just using the direct,
+ * opposed to just using the direct
  * path.
  */
 
