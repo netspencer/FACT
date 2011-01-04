@@ -160,7 +160,8 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
   
   for (pos = 0; arg_list.syntax[0] != NULL; pos++)
     {
-      if (!tokcmp (arg_list.syntax[0], "->"))
+      if (!tokcmp (arg_list.syntax[0], "->")
+	  || (!tokcmp (arg_list.syntax[0], ",") && !tokcmp (arg_list.syntax[1], "->")))
 	{
 	  /* We assume that arg_list has one
 	   * more valid token, the ')'.
@@ -195,6 +196,7 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
 		  expression.lines++;
 		}
 	    }
+	  break;
 	}
       arg = eval (new_scope, arg_list);
 

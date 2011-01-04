@@ -333,7 +333,7 @@ return_array (func_t *scope, word_list expression)
   FACT_t      return_value;
   FACT_t      hold;
   type_define type;
-  /* Something tells me that is was sort of
+  /* Something tells me that it was sort of
    * pointless to use unions in this case, and
    * I'll probably remove them at a later date.
    * But, alas, this project was designed so
@@ -386,7 +386,11 @@ return_array (func_t *scope, word_list expression)
 	}
 
       if (!tokcmp (expression.syntax[0], "]"))
-	break;
+	{
+	  scope->line               += expression.lines[0];
+	  expression.move_forward[0] = true; 
+	  break;
+	}
       else if (tokcmp (expression.syntax[0], ","))
 	return errorman_throw_reg (scope, "expected ',' or closing ']'");
       else

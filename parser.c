@@ -128,7 +128,7 @@ isopt (int op1, int op2)
 	|| op1 == '<'
 	|| op1 == '>'
 	|| op1 == '!') && op2 == '=')  
-      || (op1 == '!' && op2 == '[')
+      /*|| (op1 == '!' && op2 == '[')*/
       || (op1 == '&' && op2 == '&')
       || (op1 == '|' && op2 == '|')
       || (op1 == '-' && op2 == '>'))
@@ -391,8 +391,7 @@ set_list (linked_word *start, word_code stopper)
 	  temp_link->next           = NULL;
 	  start->hidden->hidden_up  = start;
 	}
-      else if (w_code == OP_BRACKET
-	       || w_code == NOP_BRACKET)
+      else if (w_code == OP_BRACKET)
 	{
 	  start->hidden         = start->next;
 	  start->next->previous = NULL;
@@ -502,21 +501,30 @@ swap (linked_word *swapping)
 #define isFACTop(op) ((op >= PLUS && op <= MOD_ASSIGN) || op == SET || (op >= AND && op <= MORE_EQ) || op == IN_SCOPE)
 
 static void
-set_neg (linked_word *scan)
+set_neg_array (linked_word *scan)
 {
   while (scan != NULL && scan->next != NULL)
     {
+      /*
       if (scan->code == MINUS
-	  && (scan->previous == NULL
-	      || (scan->previous->code >= PLUS
-		  && scan->previous->code <= MOD_ASSIGN)
-	      || scan->previous->code == SET
-	      || scan->previous->code == COMMA
-	      || scan->previous->code == IN_SCOPE
-	      || (scan->previous->code >= AND
-		  && scan->previous->code <= MORE_EQ)
-	      || scan->previous->code == THEN))
-	scan->code = NEG;
+      && */
+      if ((scan->previous == NULL
+	   || (scan->previous->code >= COMB_ARR
+	       && scan->previous->code <= MOD_ASSIGN)
+	   || scan->previous->code == SET
+	   || scan->previous->code == COMMA
+	   || scan->previous->code == IN_SCOPE
+	   || (scan->previous->code >= AND
+	       && scan->previous->code <= MORE_EQ)
+	   || scan->previous->code == THEN))
+	{
+	  if (scan->code == MINUS)
+	    scan->code = NEG;
+	  else if (scan->code == OP_BRACKET
+		   && (scan->hidden_up == NULL
+		       || (scan->hidden_up->code == DEF || scan->hidden_up->code == DEFUNC)))
+	    scan->code = NOP_BRACKET;
+	}
       scan = scan->next;
     }
 }
@@ -1095,7 +1103,7 @@ precedence_level12 (linked_word *scan)
 void
 rev_shunting_yard (linked_word *scan)
 {
-  set_neg (scan);
+  set_neg_array (scan);
   precedence_level1  (scan);
   precedence_level2  (scan);
   precedence_level3  (scan);
