@@ -4,8 +4,6 @@
 #define OPEN_FAILED  1
 #define CLOSED       0
 
-#define MAX_RECURSION 500
-
 word_list
 make_word_list (char **words, bool len_check)
 {
@@ -31,7 +29,8 @@ make_word_list (char **words, bool len_check)
   else
     {
       /* ---- Get the length until the NULL terminator ---- */
-      for (index = 0; words[index] != NULL; index++);
+      for (index = 0; words[index] != NULL; index++)
+	;
     }
   /* ---- Allocate the memory for the expression ---- */
   expression.syntax       = better_malloc (sizeof (char *) * (index + 1));
@@ -60,19 +59,19 @@ eval_expression (func_t *scope, word_list expression)
   bool   break_signal;
   bool   getif;
   FACT_t return_value;
-  static int depth = -1;
-  static int if_open [MAX_RECURSION];
+  static int            depth          = -1;
+  static int          * if_open        = NULL;
+  static unsigned int   size_allocated = 0; 
 
 #define BREAK_SIG 0 /* This number is arbitrary, and as long as it's different from
 		       IF, ON_ERROR, ELSE, WHILE, FOR, and RETURN_STAT then it will
 		       work. */
 #define STAT_SIZE (((sizeof (statements)) / (sizeof (statements[0]))) - 1)
 
-  /*
-    The reason why I'm using a struct instead of just an array of
-    char pointers is simply because this makes the interface a fair
-    amount cleaner.
-  */
+  /* The reason why I'm using a struct instead of just an array of
+   * char pointers is simply because this makes the interface a fair
+   * amount cleaner.
+   */
   static struct
   {
     int    id;
@@ -99,12 +98,24 @@ eval_expression (func_t *scope, word_list expression)
   break_signal  = false;
   /* ---- Increase the recursion depth ---- */
   depth++;
+  /* ---- Allocate the recursion stack ---- */
+  if (depth >= size_allocated)
+    {
+      size_allocated  = depth + 1;
+      if_open         = better_realloc (if_open, sizeof (int) * size_allocated);
+    }
+  /*
+  else if (if_open == NULL)
+    if_open = better_malloc (sizeof (int) * size_allocated);
+  */
   /* ---- Check the recursion depth ---- */
+  /*
   if (depth == MAX_RECURSION)
     {
       depth--;
       return errorman_throw_reg (scope, "reached the maximum recursion depth");
     }
+  */
   /* ---- Check for an invalid statement ----
      Note: This will be removed in the future
      when I fix the parser's error checker. */
@@ -134,7 +145,7 @@ eval_expression (func_t *scope, word_list expression)
       && statements[index].id != ON_ERROR
       && statements[index].id != ELSE)
     {
-      for (jndex = MAX_RECURSION - 1; jndex >= depth; jndex--)
+      for (jndex = size_allocated - 1; jndex >= depth; jndex--)
 	if_open[jndex] = CLOSED;
     }
   /* ---- If it's an if or an on_error statement ---- */
@@ -151,13 +162,19 @@ eval_expression (func_t *scope, word_list expression)
       else
 	{
 	  if_open[depth] = OPEN_FAILED;
-	  for (index = 1; expression.syntax[index] != NULL; index++)
+	  for (index = 1, jndex = depth + 1; expression.syntax[index] != NULL; index++)
 	    {
-	      int temp_depth = depth + 1;
 	      scope->line   += expression.lines[index];
 
-	      if (temp_depth >= MAX_RECURSION)
+	      if (jndex >= size_allocated)
+		{
+		  size_allocated = jndex + 1;
+		  if_open        = better_realloc (if_open, sizeof (int) * size_allocated);
+		}
+	      /*
+		if (temp_depth >= MAX_RECURSION)
 		return errorman_throw_reg (scope, "You have too many nested if loops. They exceed the maximum recursion depth");
+	      */
 
 	      if (!tokcmp (expression.syntax[index], "\""))
 		{
@@ -169,7 +186,7 @@ eval_expression (func_t *scope, word_list expression)
 
 	      if (!strcmp (expression.syntax[index], "if")
 		  || !strcmp (expression.syntax[index], "on_error"))
-		if_open[temp_depth++] = OPEN_FAILED;
+		if_open[jndex++] = OPEN_SUCCESS;
 	      else if (!strcmp (expression.syntax[index], ";")
 		       || !strcmp (expression.syntax[index], "{"))
 		break;
@@ -178,28 +195,33 @@ eval_expression (func_t *scope, word_list expression)
     }
   else if (statements[index].id == ELSE)
     {
-      for (index = MAX_RECURSION - 1; index >= 0; index--)
+      for (index = size_allocated - 1; index >= 0; index--)
 	{
-	  int temp_depth;
-
 	  if (if_open[index] == OPEN_FAILED)
 	    {
-	      temp_depth   = depth;
+	      jndex        = depth;
 	      depth        = index - 1;
 	      return_value = else_clause (scope, expression);
-	      depth        = temp_depth;
+	      depth        = jndex;
 	      break;
 	    }
 	  else if (if_open[index] == OPEN_SUCCESS)
 	    {
 	      if_open[index] = CLOSED;
-	      temp_depth     = index;
+	      jndex          = index;
 	      for (index = 0; expression.syntax[index] != NULL; index++)
 		{
 		  scope->line += expression.lines[index];
 
+		  if (jndex >= size_allocated)
+		  {
+		    size_allocated = jndex + 1;
+		    if_open        = better_realloc (if_open, sizeof (int) * size_allocated);
+		  }
+		  /*
 		  if (temp_depth >= MAX_RECURSION)
 		    return errorman_throw_reg (scope, "You have too many nested if loops. They exceed the maximum recursion depth");
+		  */
 
 		  if (!tokcmp (expression.syntax[index], "\""))
 		    {
@@ -211,7 +233,7 @@ eval_expression (func_t *scope, word_list expression)
 
 		  if (!tokcmp (expression.syntax[index], "if")
 		      || !tokcmp (expression.syntax[index], "on_error"))
-		    if_open[temp_depth++] = OPEN_SUCCESS;
+		    if_open[jndex++] = OPEN_SUCCESS;
 		  else if (!tokcmp (expression.syntax[index], ";")
 			   || !tokcmp (expression.syntax[index], "{"))
 		    break;
@@ -233,7 +255,7 @@ eval_expression (func_t *scope, word_list expression)
   else if (statements[index].id == OP_CURLY)
     {
       return_value = lambda_proc (scope, expression);
-      for (index = depth + 1; index < MAX_RECURSION; index++)
+      for (index = depth + 1; index < size_allocated; index++)
 	if_open[index] = CLOSED;
     }
   else if (statements[index].id == RETURN_STAT)
@@ -275,6 +297,7 @@ FACT_t
 procedure (func_t *scope, word_list expression)
 {
   int    length_to_move;
+  int    index;
   FACT_t return_value; 
 
   while (expression.syntax[0] != NULL
@@ -286,13 +309,24 @@ procedure (func_t *scope, word_list expression)
       if (return_value.type == ERROR_TYPE
 	  || return_value.return_signal
 	  || return_value.break_signal)
-	return return_value;
+	{
+	  /* I'm not using length_to_move as the index
+	   * variable as that is slightly misleading.
+	   * Also this sets all the remaining tokens to
+	   * evaluated = true.
+	   */
+	  for (index = 0; index < get_exp_length (expression.syntax, '}');
+	       index++)
+	    expression.move_forward[index] = true;
+	  return return_value;
+	}
 
       expression.move_forward += length_to_move;
       expression.syntax       += length_to_move;
       expression.lines        += length_to_move;
     }
 
+  expression.move_forward[0] = true;
   return_value.return_signal = false;
   return_value.break_signal  = false;
   return_value.v_point       = alloc_var ();
@@ -307,24 +341,28 @@ lambda_proc (func_t *scope, word_list expression)
   FACT_t return_value;
   func_t temp_local = 
     {
-      .line       = scope->line,
-      .name       = scope->name,
-      .file_name  = scope->file_name,
-      .args       = NULL,
-      .body       = NULL,
-      .array_size = 1,
-      .extrn_func = NULL,
-      .vars       = NULL,
-      .funcs      = NULL,
-      .up         = scope,
-      .array_up   = NULL,
-      .next       = NULL,
+      .line       = scope->line      ,
+      .name       = scope->name      ,  
+      .file_name  = scope->file_name ,
+      .args       = NULL             ,
+      .body       = NULL             ,
+      .usr_data   = NULL             ,
+      .extrn_func = NULL             ,
+      .vars       = NULL             ,
+      .funcs      = NULL             ,
+      .up         = scope            ,
+      .caller     = NULL             ,
+      .array_up   = NULL             ,
+      .next       = NULL             ,
+      .variadic   = NULL             ,
     };
-  
+
    /* temp_local is a temporary scope created to contain
     * lambda procedures. Note, these are different from
     * lambda functions. A lot.
     */
+
+  mpz_init_set_ui (temp_local.array_size, 1);
   
   return_value = procedure (&temp_local, expression);
   scope->line  = temp_local.line;
@@ -366,9 +404,19 @@ eval (func_t *scope, word_list expression)
       expression.lines++;
       /* ---- Check for primitives, math calls, variables and functions, in that order ---- */
       if ((call_num = isprim (current_token)) != -1)
-	return runprim (scope, expression, call_num);
+	{
+	  return_value = runprim (scope, expression, call_num);
+	  /* This is actually useful. */
+	  if (return_value.type == VAR_TYPE)
+	    return_value = get_array_var (return_value.v_point, scope, expression);
+	}
       else if ((call_num = ismathcall (current_token)) != -1)
-	return eval_math (scope, expression, call_num);
+	{
+	  return_value = eval_math (scope, expression, call_num);
+	  /* I don't see how this could ever be useful, but whatever. */
+	  if (return_value.type == VAR_TYPE)
+	    return_value = get_array_var (return_value.v_point, scope, expression);
+	}
       else if (get_var (scope, current_token) != NULL)
 	return_value = get_array_var (get_var (scope, current_token), scope, expression);
       else if (get_func (scope, current_token) != NULL)

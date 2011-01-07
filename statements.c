@@ -7,20 +7,23 @@ if_statement (func_t *scope, word_list expression_list, bool *success)
   FACT_t conditional;
   func_t temp_scope =
     {
-      .line       = scope->line,
-      .name       = scope->name,
-      .args       = NULL,
-      .body       = NULL,
-      .array_size = 1,
-      .extrn_func = NULL,
-      .vars       = NULL,
-      .funcs      = NULL,
-      .up         = scope,
-      .array_up   = NULL,
-      .next       = NULL,
+      .line       = scope->line ,
+      .name       = scope->name ,
+      .args       = NULL        ,
+      .body       = NULL        ,
+      .usr_data   = NULL        ,
+      .extrn_func = NULL        ,
+      .vars       = NULL        ,
+      .funcs      = NULL        ,
+      .up         = scope       ,
+      .caller     = NULL        ,
+      .array_up   = NULL        ,
+      .next       = NULL        ,
+      .variadic   = NULL        ,
     };
   
   *success = true;
+  mpz_init_set_ui (temp_scope.array_size, 1);
   
   if (strcmp (expression_list.syntax[0], "(") != 0)
     return errorman_throw_reg (scope, "expected '(' after if statement");
@@ -68,11 +71,10 @@ if_statement (func_t *scope, word_list expression_list, bool *success)
 FACT_t
 on_error (func_t *scope, word_list expression_list, bool *success)
 {
-  /*
-    Since on_error statements act pretty much the same way as
-    if statements, this function is basically a facsimile of
-    the function if_statement.
-  */
+  /* Since on_error statements act pretty much the same way as
+   * if statements, this function is basically a facsimile of
+   * the function if_statement.
+   */
 
   var_t  * message;
   FACT_t   return_value;
@@ -80,19 +82,24 @@ on_error (func_t *scope, word_list expression_list, bool *success)
   func_t * ERROR;
   func_t   temp_scope =
     {
-      .name       = scope->name,
-      .args       = NULL,
-      .body       = NULL,
-      .array_size = 1,
-      .extrn_func = NULL,
-      .vars       = NULL,
-      .funcs      = NULL,
-      .up         = scope,
-      .array_up   = NULL,
-      .next       = NULL,
+      .line       = scope->line ,
+      .name       = scope->name ,
+      .args       = NULL        ,
+      .body       = NULL        ,
+      .usr_data   = NULL        ,
+      .extrn_func = NULL        ,
+      .vars       = NULL        ,
+      .funcs      = NULL        ,
+      .up         = scope       ,
+      .caller     = NULL        ,
+      .array_up   = NULL        ,
+      .next       = NULL        ,
+      .variadic   = NULL        ,
     };
   
   *success = true;
+
+  mpz_init_set_ui (temp_scope.array_size, 1);
   
   if (strcmp (expression_list.syntax[0], "(") != 0)
     return errorman_throw_reg (scope, "expected '(' after on_error statement");
@@ -158,18 +165,22 @@ else_clause (func_t *scope, word_list expression)
   FACT_t return_value;  
   func_t temp_scope =
     {
-      .name       = scope->name,
-      .line       = scope->line,
-      .args       = NULL,
-      .body       = NULL,
-      .array_size = 1,
-      .extrn_func = NULL,
-      .vars       = NULL,
-      .funcs      = NULL,
-      .up         = scope,
-      .array_up   = NULL,
-      .next       = NULL,
+      .line       = scope->line ,
+      .name       = scope->name ,
+      .args       = NULL        ,
+      .body       = NULL        ,
+      .usr_data   = NULL        ,
+      .extrn_func = NULL        ,
+      .vars       = NULL        ,
+      .funcs      = NULL        ,
+      .up         = scope       ,
+      .caller     = NULL        ,
+      .array_up   = NULL        ,
+      .next       = NULL        ,
+      .variadic   = NULL        ,
     };
+
+  mpz_init_set_ui (temp_scope.array_size, 1);
 
   return_value = eval_expression (&temp_scope, expression);
   scope->line  = temp_scope.line; 
@@ -191,18 +202,22 @@ while_loop (func_t *scope, word_list expression)
   word_list conditional_exp;
   func_t    temp_scope =
     {
-      .line       = scope->line,
-      .name       = scope->name,
-      .args       = NULL,
-      .body       = NULL,
-      .array_size = 1,
-      .extrn_func = NULL,
-      .vars       = NULL,
-      .funcs      = NULL,
-      .up         = scope,
-      .array_up   = NULL,
-      .next       = NULL,
+      .line       = scope->line ,
+      .name       = scope->name ,
+      .args       = NULL        ,
+      .body       = NULL        ,
+      .usr_data   = NULL        ,
+      .extrn_func = NULL        ,
+      .vars       = NULL        ,
+      .funcs      = NULL        ,
+      .up         = scope       ,
+      .caller     = NULL        ,
+      .array_up   = NULL        ,
+      .next       = NULL        ,
+      .variadic   = NULL        ,
     };
+
+  mpz_init_set_ui (temp_scope.array_size, 1);
 
   if (expression.syntax[0] == NULL || expression.syntax[0][0] != '(')
     return errorman_throw_reg (scope, "expected '(' after while");
@@ -260,39 +275,38 @@ while_loop (func_t *scope, word_list expression)
 }
 
 FACT_t
-for_loop (func_t *scope, word_list expression)//char **words)
+for_loop (func_t *scope, word_list expression)
 {
-  /*
-    I would say that this function could be cleaned up
-    a fairly large amount.
+  /* I would say that this function could be cleaned up
+   * a fairly large amount.
   */
   int         index;
-  int         pos;
-  int         count;
   int         arr_pos;
   int         hold_lines;
+  mpc_t       one;
+  var_t     * var_scroller;
   FACT_t      index_value;
   FACT_t      limit_value;
   FACT_t      block_evald;
-  //  word_list   index_dest_exp;
-  mpc_t       one;
-  var_t     * var_t_scroller;
-  func_t    * func_t_scroller;
+  func_t    * func_scroller;
   func_t      temp_scope =
     {
-      .line       = scope->line,
-      .name       = scope->name,
-      .args       = NULL,
-      .body       = NULL,
-      .array_size = 1,
-      .extrn_func = NULL,
-      .vars       = NULL,
-      .funcs      = NULL,
-      .up         = scope,
-      .array_up   = NULL,
-      .next       = NULL,
+      .line       = scope->line ,
+      .name       = scope->name ,
+      .args       = NULL        ,
+      .body       = NULL        ,
+      .usr_data   = NULL        ,
+      .extrn_func = NULL        ,
+      .vars       = NULL        ,
+      .funcs      = NULL        ,
+      .up         = scope       ,
+      .caller     = NULL        ,
+      .array_up   = NULL        ,
+      .next       = NULL        ,
+      .variadic   = NULL        ,
     };
 
+  mpz_init_set_ui (temp_scope.array_size, 1);
   index_value = eval (&temp_scope, expression);
 
   if (index_value.type == ERROR_TYPE)
@@ -307,14 +321,6 @@ for_loop (func_t *scope, word_list expression)//char **words)
       expression.move_forward++;
       expression.lines++;
     }
-
-  /*
-  if (tokcmp (expression.syntax[0], ","))
-    {
-      scope->line = temp_scope.line;
-      return errorman_throw_reg (scope, "syntax error in for loop; missing ','");
-    }
-  */
 
   temp_scope.line           += expression.lines[0];
   expression.move_forward[0] = true;
@@ -370,13 +376,13 @@ for_loop (func_t *scope, word_list expression)//char **words)
 	      if (mpz_cmp_ui (limit_value.v_point->array_size, arr_pos) <= 0)
 		break;
 
-	      for (var_t_scroller = limit_value.v_point->array_up, pos = 0;
-		   pos < arr_pos; pos++)
-		var_t_scroller = var_t_scroller->next;
+	      for (var_scroller = limit_value.v_point->array_up, index = 0;
+		   index < arr_pos; index++)
+		var_scroller = var_scroller->next;
 
-	      mpc_set (&(index_value.v_point->data), var_t_scroller->data);
-	      mpz_set (index_value.v_point->array_size, var_t_scroller->array_size);
-	      index_value.v_point->array_up   = clone_var (var_t_scroller->array_up, index_value.v_point->name);
+	      mpc_set (&(index_value.v_point->data), var_scroller->data);
+	      mpz_set (index_value.v_point->array_size, var_scroller->array_size);
+	      index_value.v_point->array_up   = clone_var (var_scroller->array_up, index_value.v_point->name);
 	    }
 	  else if (arr_pos != 0)
 	    {
@@ -393,12 +399,11 @@ for_loop (func_t *scope, word_list expression)//char **words)
 	  if (mpz_cmp_ui (limit_value.f_point->array_size, 1) > 0)
 	    {
 	      if (mpz_cmp_ui (limit_value.v_point->array_size, arr_pos) <= 0)
-	      // if (arr_pos >= limit_value.f_point->array_size)
 		break;
 
-	      for (func_t_scroller = limit_value.f_point->array_up, pos = 1;
-		   pos < arr_pos; pos++)
-		func_t_scroller = func_t_scroller->next;
+	      for (func_scroller = limit_value.f_point->array_up, index = 1;
+		   index < arr_pos; index++)
+		func_scroller = func_scroller->next;
 
 	      index_value.f_point->args       = limit_value.f_point->args;
 	      index_value.f_point->body       = limit_value.f_point->body;
@@ -409,7 +414,6 @@ for_loop (func_t *scope, word_list expression)//char **words)
 	      index_value.f_point->next       = limit_value.f_point->next;
 
 	      mpz_set (index_value.f_point->array_size, limit_value.f_point->array_size);
-
 	    }
 	  else
 	    {
@@ -430,7 +434,6 @@ for_loop (func_t *scope, word_list expression)//char **words)
       arr_pos++;
     }
   scope->line = temp_scope.line;
-
   return block_evald;
 }
 

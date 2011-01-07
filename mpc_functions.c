@@ -414,9 +414,6 @@ void
 mpc_get_mpz (mpz_t rop, mpc_t op)
 {
   mpz_init_set (rop, op.object);
-  while (op.precision != 0)
-    {
-      mpz_tdiv_q_ui (rop, rop, 10);
-      op.precision--;
-    }
+  while (op.precision-- != 0)
+    mpz_tdiv_q_ui (rop, rop, 10);
 }

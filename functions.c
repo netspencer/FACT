@@ -140,6 +140,7 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
   new_scope->up         = evald.f_point->up;
   new_scope->name       = evald.f_point->name;
   new_scope->extrn_func = evald.f_point->extrn_func;
+  new_scope->variadic   = evald.f_point->variadic;
 
   if (arg_list.syntax[0] != NULL && tokcmp (expression.syntax[0], ","))
     return errorman_throw_reg (scope, "expected more arguments");
@@ -150,6 +151,7 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
       expression.syntax++;
       expression.lines++;
     }
+  
 
   if (arg_list.syntax[0] == NULL)
     {
@@ -157,6 +159,9 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
 	return errorman_throw_reg (scope, "expected fewer arguments");
       return evald;
     }
+  else if (tokcmp (expression.syntax[-1], ",")
+	   && !tokcmp (arg_list.syntax[0], "->"))
+    return evald;
   
   for (pos = 0; arg_list.syntax[0] != NULL; pos++)
     {
@@ -166,8 +171,9 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
 	  /* We assume that arg_list has one
 	   * more valid token, the ')'.
 	   */
-	  new_scope->line += arg_list.lines[0] + arg_list.lines[1];
-	  while (!tokcmp (expression.syntax[0], ")"))
+	  new_scope->line += (arg_list.lines[0] + arg_list.lines[1]
+			      + (!tokcmp (arg_list.syntax[0], ",")) ? arg_list.lines[2] : 0);
+	  while (tokcmp (expression.syntax[0], ")"))
 	    {
 	      struct _MIXED * go_through;
 	      
@@ -181,7 +187,9 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
 		  go_through->next = better_malloc (sizeof (struct _MIXED));
 		  go_through       = go_through->next;
 		}
-	      passed           = eval (scope, expression);
+	      passed = eval (scope, expression);
+	      if (passed.type == ERROR_TYPE)
+		return passed;
 	      go_through->type = passed.type;
 	      go_through->next = NULL;
 	      if (passed.type == VAR_TYPE)
@@ -195,6 +203,8 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
 		  expression.move_forward++;
 		  expression.lines++;
 		}
+	      if (!tokcmp (expression.syntax[0], ","))
+		expression.move_forward[0] = true;
 	    }
 	  break;
 	}
@@ -220,6 +230,7 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
 	  temp                    = clone_var (passed.v_point, arg.v_point->name);
 	  passed.v_point->next    = hold;
 	  arg.v_point->array_up   = temp->array_up;
+	  
 	  mpz_set (arg.v_point->array_size, temp->array_size);
 	  mpc_set (&(arg.v_point->data), temp->data);
 	}
@@ -229,12 +240,15 @@ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
 	  arg.f_point->file_name  = passed.f_point->file_name;
 	  arg.f_point->args       = passed.f_point->args;
 	  arg.f_point->body       = passed.f_point->body;
+	  arg.f_point->usr_data   = passed.f_point->usr_data;
+	  arg.f_point->extrn_func = passed.f_point->extrn_func;
 	  arg.f_point->vars       = passed.f_point->vars;
 	  arg.f_point->funcs      = passed.f_point->funcs;
-	  arg.f_point->array_up   = passed.f_point->array_up;
 	  arg.f_point->up         = passed.f_point->up;
-	  arg.f_point->extrn_func = passed.f_point->extrn_func;
-	  arg.f_point->usr_data   = passed.f_point->usr_data;
+	  arg.f_point->caller     = passed.f_point->caller;
+	  arg.f_point->array_up   = passed.f_point->array_up;
+	  arg.f_point->variadic   = passed.f_point->variadic;
+	  
 	  mpz_set (arg.f_point->array_size, passed.f_point->array_size);
 	}
 
@@ -286,6 +300,8 @@ new_scope (func_t *scope, word_list expression)
   if (prepared.type == ERROR_TYPE) 
     return prepared; /* ha ha, that makes me chortle */
 
+  new_scope->caller = scope;
+
   if (new_scope->extrn_func != NULL)
     /* Well that is, um, oh wow. */ 
     prepared = (((FACT_t (*)(func_t *)) new_scope->extrn_func) (new_scope));
@@ -317,7 +333,10 @@ run_func (func_t *scope, word_list expression_list)
   prepared  = prepare_function (scope, new_scope, expression_list);
 
   if (prepared.type == ERROR_TYPE)
-    return prepared; 
+    return prepared;
+
+  new_scope->caller = scope;
+  
   if (new_scope->extrn_func != NULL)
     return_value = (((FACT_t (*)(func_t *)) new_scope->extrn_func) (new_scope));
   else

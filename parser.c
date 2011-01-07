@@ -104,7 +104,10 @@ is_in_quotes (int character)
       return false;
       
     case '\\':
-      prev_slash = true;
+      if (!prev_slash)
+	prev_slash = true;
+      else
+	prev_slash = false;
       break;
 
     default:
@@ -176,9 +179,11 @@ get_words (char *start)
 	}
       else if (is_in_quotes ((int) *end))
 	{
-	  while (is_in_quotes ((int) *end))
-	    end++;
 	  
+	  do
+	    {
+	      end++;
+	    } while (is_in_quotes ((int) *end));
 	  end--;
 	  is_string = true;
 	}
@@ -195,10 +200,8 @@ get_words (char *start)
       if ((end - start) > 0)
 	{
 	  result[index] = (char *) better_malloc ((end - start + 1) * sizeof(char));
-
 	  for (jndex = 0; start != end; start++, jndex++)
             result[index][jndex] = *start;
-
 	  result[index][jndex] = '\0';
 	  start                = end;
 	}
@@ -516,7 +519,8 @@ set_neg_array (linked_word *scan)
 	   || scan->previous->code == IN_SCOPE
 	   || (scan->previous->code >= AND
 	       && scan->previous->code <= MORE_EQ)
-	   || scan->previous->code == THEN))
+	   || scan->previous->code == THEN
+	   || scan->previous->code == RETURN_STAT))
 	{
 	  if (scan->code == MINUS)
 	    scan->code = NEG;
@@ -1171,40 +1175,48 @@ convert_link (linked_word *list)
   return result;
 }
 
-int
-get_exp_length (char **words, int block)
+static inline int
+get_end_block (int block)
 {
-  int lines;
-  int pos;
-
-  for (pos = 0; words[pos] != NULL
-         && words[pos][0] != block; pos++)
-    {
-      for (lines = 0; words[pos][lines] == '\n'; lines++);
-      if (words[pos][lines] == '\0')
-	break;
-      switch (words[pos][lines])
-        {
-        case '(':
-          pos += get_exp_length (words + pos + 1, ')');
-          break;
-	  
-	case '{':
-	  pos += get_exp_length (words + pos + 1, '}');
-	  break;
-	  
-        case '[':
-          pos += get_exp_length (words + pos + 1, ']');
-          break;
-	  
-        default:
-          break;
-        }
-    }
-
-  return (words[pos] == NULL) ? pos : pos + 1;
+  /* I'm not going to make this a giant return (cond) ? : okay? */
+  if (block == '(')
+    return ')';
+  if (block == '['
+      || block == '!')
+    return ']';
+  if (block == '{')
+    return '}';
+  /* NOTREACHED */
+  return 0;
 }
 
+int
+get_exp_length (char **words, int end_block)
+{
+  int lines;
+  int index;
+
+  for (index = 0; words[index] != NULL; index++)
+    {
+      for (lines = 0; words[index][lines] == '\n'; lines++);
+
+      if (words[index][lines] == '\0'
+	  || words[index][lines] == end_block)
+	break;
+      
+      if (words[index][lines] == '('
+	  || words[index][lines] == '['
+	  || (words[index][lines] == '!'
+	      && words[index][lines + 1] == '[')
+	  || words[index][lines] == '{')
+	index += get_exp_length (words + index + 1,
+				 get_end_block (words[index][lines]));
+    }
+
+  return (words[index] == NULL) ? index : index + 1;
+}
+
+/*
 int
 get_exp_length_first (char **words, int block)
 {
@@ -1215,11 +1227,6 @@ get_exp_length_first (char **words, int block)
          && words[pos][0] != block; pos++)
     {
       for (lines = 0; words[pos][lines] == '\n'; lines++);
-      /*
-#ifdef DEBUG
-      printf ("words[%d (pos)] + %d (lines) = %s\n", pos, lines, words[pos] + lines);
-#endif
-      */
       if (words[pos][lines] == '\0')
 	break;
       switch (words[pos][lines])
@@ -1241,4 +1248,33 @@ get_exp_length_first (char **words, int block)
     }
 
   return (words[pos] == NULL) ? pos : pos + 1;
+}
+*/
+
+int
+get_exp_length_first (char **words, int end_block)
+{
+  int lines;
+  int index;
+
+  for (index = 0; words[index] != NULL; index++)
+    {
+      for (lines = 0; words[index][lines] == '\n'; lines++);
+
+      if (words[index][lines] == '\0'
+	  || words[index][lines] == end_block)
+	break;
+      
+      if (words[index][lines] == '('
+	  || words[index][lines] == '['
+	  || (words[index][lines] == '!'
+	      && words[index][lines + 1] == '['))
+	  
+	index += get_exp_length (words + index + 1,
+				 get_end_block (words[index][lines]));
+      else if (words[index][lines] == '{')
+	return index + get_exp_length (words + index + 1, '}');
+    }
+
+  return (words[index] == NULL) ? index : index + 1;
 }

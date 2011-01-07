@@ -1,6 +1,6 @@
 CC = gcc
 BIT = 64 # Set to either 64 or 32
-CFLAGS = -ggdb -m$(BIT) -rdynamic
+CFLAGS = -ggdb -m$(BIT) -rdynamic 
 PROG = FACT-BETA
 
 SRCS = main.c malloc_replacements.c functions.c string.c \

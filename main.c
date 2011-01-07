@@ -12,7 +12,7 @@ process_args (int argc, char **argv)
 
   set_bytes_used (0);
  
-  scope = alloc_func ();
+  scope       = alloc_func ();
   scope->name = "main";
   init_std_prims (scope);
 

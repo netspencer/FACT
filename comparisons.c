@@ -19,6 +19,24 @@
  * each other.                                 *
  * * * * * * * * * * * * * * * * * * * * * * * */
 
+static int
+check_dimensions (var_t *op1, var_t *op2)
+{
+  /* Return 0 on failure and 1 on success. */
+  if ((op1 == NULL && op2 != NULL)
+      || (op1 != NULL && op2 == NULL))
+    return 0;
+  else if (op1 == NULL && op2 == NULL)
+    return 1;
+  else if (mpc_cmp (op1->data, op2->data) == 0)
+    {
+      return (check_dimensions (op1->array_up, op2->array_up)
+	      * check_dimensions (op1->next, op2->next));
+    }
+  else
+    return 0;
+}
+
 FACT_t
 equal (FACT_t arg1, FACT_t arg2)
 {
@@ -32,12 +50,15 @@ equal (FACT_t arg1, FACT_t arg2)
   
   if (arg1.type == VAR_TYPE)
     {
-      if (mpc_cmp (arg1.v_point->data, arg2.v_point->data) == 0)
+      if (mpc_cmp (arg1.v_point->data, arg2.v_point->data) == 0
+	  && check_dimensions (arg1.v_point->array_up, arg2.v_point->array_up))
         mpc_set_si (&(return_value.v_point->data), 1);
     }
-  else /* I *THINK* this works. */ 
+  else
     {
-      if (arg1.f_point == arg2.f_point)
+      /* Eh, best I can do. */
+      if (arg1.f_point->vars == arg2.f_point->vars
+	  && arg1.f_point->funcs == arg2.f_point->funcs)
         mpc_set_si (&(return_value.v_point->data), 1);
     }
 

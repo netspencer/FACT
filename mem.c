@@ -292,12 +292,14 @@ set (func_t *scope, word_list expression)
       arg1.f_point->file_name  = arg2.f_point->file_name;
       arg1.f_point->args       = arg2.f_point->args;
       arg1.f_point->body       = arg2.f_point->body;
+      arg1.f_point->usr_data   = arg2.f_point->usr_data;
+      arg1.f_point->extrn_func = arg2.f_point->extrn_func;
       arg1.f_point->vars       = arg2.f_point->vars;
       arg1.f_point->funcs      = arg2.f_point->funcs;
-      arg1.f_point->array_up   = arg2.f_point->array_up;
       arg1.f_point->up         = arg2.f_point->up;
-      arg1.f_point->extrn_func = arg2.f_point->extrn_func;
-      arg1.f_point->usr_data   = arg2.f_point->usr_data;
+      arg1.f_point->caller     = arg2.f_point->caller;
+      arg1.f_point->array_up   = arg2.f_point->array_up;
+      arg1.f_point->variadic   = arg2.f_point->variadic;
 
       mpz_set (arg1.f_point->array_size, arg2.f_point->array_size);
     }

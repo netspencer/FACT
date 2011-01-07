@@ -40,7 +40,7 @@ run_file (func_t *scope, const char *filename, bool silent)
       scope->line = end_line;
       input       = get_input (fp, &end_line);
 
-#ifdef DEBUG
+#ifdef DEBUG_INPUT
       puts ("\ninput:");
       scroll_through = input;
       do

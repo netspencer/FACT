@@ -22,9 +22,9 @@ FACT_API_FUNC (unsigned int) mpc_get_default_prec (void);
 
 FACT_API_FUNC (void) mpc_init (mpc_t *);
 
-FACT_API_FUNC (void) mpc_set (mpc_t *, mpc_t);
-FACT_API_FUNC (void) mpc_set_ui (mpc_t *, unsigned long int);
-FACT_API_FUNC (void) mpc_set_si (mpc_t *, signed long int);
+FACT_API_FUNC (void) mpc_set     (mpc_t *, mpc_t);
+FACT_API_FUNC (void) mpc_set_ui  (mpc_t *, unsigned long int);
+FACT_API_FUNC (void) mpc_set_si  (mpc_t *, signed long int);
 FACT_API_FUNC (void) mpc_set_str (mpc_t *, char *, unsigned int);
 
 FACT_API_FUNC (void) mpc_add (mpc_t *, mpc_t, mpc_t);
@@ -38,13 +38,14 @@ FACT_API_FUNC (void) mpc_and (mpc_t *, mpc_t, mpc_t);
 FACT_API_FUNC (void) mpc_ior (mpc_t *, mpc_t, mpc_t);
 FACT_API_FUNC (void) mpc_xor (mpc_t *, mpc_t, mpc_t);
 
-FACT_API_FUNC (int) mpc_cmp (mpc_t, mpc_t);
+FACT_API_FUNC (int) mpc_cmp    (mpc_t, mpc_t);
 FACT_API_FUNC (int) mpc_cmp_ui (mpc_t, unsigned long int);
 FACT_API_FUNC (int) mpc_cmp_si (mpc_t, signed long int);
 
-FACT_API_FUNC (unsigned long int) mpc_get_ui (mpc_t);
-FACT_API_FUNC (signed long int) mpc_get_si (mpc_t);
-FACT_API_FUNC (char *) mpc_get_str (mpc_t);
+FACT_API_FUNC (unsigned long int) mpc_get_ui  (mpc_t       );
+FACT_API_FUNC (signed long int  ) mpc_get_si  (mpc_t       );
+FACT_API_FUNC (char *           ) mpc_get_str (mpc_t       );
+FACT_API_FUNC (void             ) mpc_get_mpz (mpz_t, mpc_t);
 
 #ifdef __cplusplus
 }

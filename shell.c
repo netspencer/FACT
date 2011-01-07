@@ -68,8 +68,16 @@ get_input (FILE *fp, unsigned int *line_number)
 	}
 
       if (c == '"')
-	in_quotes = !in_quotes;
-
+	{
+	  if (in_quotes)
+	    {
+	      if (input[count - 2] != '\\'
+		  || (count > 3 && input[count - 3] == '\\'))
+		in_quotes = false;
+	    }
+	  else
+	    in_quotes = true;
+	}
       if (c == ';' || c == '}')
 	{
 	  input[count] = '\0';
@@ -78,7 +86,6 @@ get_input (FILE *fp, unsigned int *line_number)
 	    break; 
 	}      
     }
-
   
   if (input != NULL)
     {
@@ -110,7 +117,8 @@ shell (func_t *main_scope)
   /* Print out the disclaimer and logo. */
   printf ("The FACT programming language interactive shell\n(c) 2010 Matthew Plant, under the GPL version 3.\n");
   print_logo ();
-  end_line = 1;
+  
+  end_line              = 1;
   main_scope->file_name = "stdin";
 
   for (;;)
