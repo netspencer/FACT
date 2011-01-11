@@ -4,6 +4,26 @@
 #define OPEN_FAILED  1
 #define CLOSED       0
 
+/* FACT Bytcode simple guide:
+ * Scripts are translated into bytecode once after execution. Bytecode compiled code
+ * works within the same word_list structure as non-compiled code. The first byte
+ * in an instruction begins with a 1, to indicate that it is in fact an instruction.
+ * The next byte indicates the category of the instruction. This can either be
+ * STATEMENT (0x0), MATH_CALL (0x1), PRIMITIVE (0x2) or NUMBER (0x3). The next byte
+ * indicates the specific instruction of the category to call. This is an exception
+ * for the "NUMBER" category, where it points to mpz_t instead. instruction 0x10 
+ * represents the end of an expression, which is used by get_exp_length and 
+ * get_exp_length first to speed things up.
+ */
+
+typedef enum bytecode_type 
+  {
+    STATEMENT = 0x1, /* This includes keywords such as if, else, and return. */
+    MATH_CALL = 0x2, /* +, -, *, etc. */
+    PRIMITIVE = 0x3, /* Some special things. */
+    NUMBER    = 0x4, /* Numbers become stored in a special way, will implement later. */
+  } bytecode_type;
+
 word_list
 make_word_list (char **words, bool len_check)
 {
@@ -18,9 +38,9 @@ make_word_list (char **words, bool len_check)
       /* ---- Check if there were any end-statement syntax errors ----
 	 This will be removed in the near future as soon as I add
 	 (and fix ;) the parser's error checker. */
-      if (index < 1
-	  || (tokcmp (words[index - 1], ";")
-	      && tokcmp (words[index - 1], "}")))
+      if (index < 1)
+	//	  || (tokcmp (words[index - 1], ";")
+	//    && tokcmp (words[index - 1], "}")))
 	{
 	  expression.syntax = NULL;
 	  return expression;
@@ -55,13 +75,21 @@ eval_expression (func_t *scope, word_list expression)
 {
   int    index;
   int    jndex;
+  bool   write_bcode;   /* false = current token is bytecode, true = write bytecode. */
   bool   return_signal;
   bool   break_signal;
   bool   getif;
   FACT_t return_value;
   static int            depth          = -1;
   static int          * if_open        = NULL;
-  static unsigned int   size_allocated = 0; 
+  static unsigned int   size_allocated = 0;
+
+  /* This function checks the begining of the expression for
+   * statements such as if, while, or etc, and for signals
+   * such as break or return. Since this function is called
+   * with every iteration in a recursive function, so it
+   * handles recursion depth as well.
+   */
 
 #define BREAK_SIG 0 /* This number is arbitrary, and as long as it's different from
 		       IF, ON_ERROR, ELSE, WHILE, FOR, and RETURN_STAT then it will
@@ -78,16 +106,15 @@ eval_expression (func_t *scope, word_list expression)
     char * token;
   } statements [] =
       {
-	{ IF         , "if"       },
-	{ ON_ERROR   , "on_error" },
-	{ ELSE       , "else"     },
-	{ WHILE      , "while"    },
-	{ FOR        , "for"      },
-	{ OP_CURLY   , "{"        },
-	{ RETURN_STAT, "return"   },
-	{ BREAK_SIG  , "break"    },
-	{ UNKNOWN    , NULL       }, /* This ends the struct, again used for interface
-					reasons. */
+	{ IF          , "if"       },
+	{ ON_ERROR    , "on_error" },
+	{ ELSE        , "else"     },
+	{ WHILE       , "while"    },
+	{ FOR         , "for"      },
+	{ OP_CURLY    , "{"        },
+	{ RETURN_STAT , "return"   },
+	{ BREAK_SIG   , "break"    },
+ 	{ UNKNOWN     , NULL       }, /* This ends the struct, again used for interface reasons. */
       };
 
   /* ---- Set the default return_value type ----
@@ -104,18 +131,6 @@ eval_expression (func_t *scope, word_list expression)
       size_allocated  = depth + 1;
       if_open         = better_realloc (if_open, sizeof (int) * size_allocated);
     }
-  /*
-  else if (if_open == NULL)
-    if_open = better_malloc (sizeof (int) * size_allocated);
-  */
-  /* ---- Check the recursion depth ---- */
-  /*
-  if (depth == MAX_RECURSION)
-    {
-      depth--;
-      return errorman_throw_reg (scope, "reached the maximum recursion depth");
-    }
-  */
   /* ---- Check for an invalid statement ----
      Note: This will be removed in the future
      when I fix the parser's error checker. */
@@ -124,15 +139,36 @@ eval_expression (func_t *scope, word_list expression)
       depth--;
       return errorman_throw_reg (scope, "syntax error: expected closing ';' or '}'");
     }
-  /* ---- Search for a statement ---- */
-  for (index = 0; index < STAT_SIZE; index++)
+  /* Check to see if it's a bytecode instruction of the
+   * STATEMENT category. */
+  if (expression.syntax[0][0] == 0x1
+      && expression.syntax[0][1] == 0x1)
     {
-      if (!tokcmp (statements[index].token, expression.syntax[0]))
-	break;
+      write_bcode = false;
+      index       = (int) expression.syntax[0][2];
+    }
+  else
+    {
+      /* ---- Otherwise, search for a statement ---- */
+      write_bcode = true;
+      for (index = 0; index < STAT_SIZE; index++)
+	{
+	  if (!tokcmp (statements[index].token, expression.syntax[0]))
+	    break;
+	}
     }
   /* ---- Do some things if it is a statement ---- */
   if (index < STAT_SIZE)
     {
+      /* If it's desired, write the bytecode. */
+      if (write_bcode)
+	{
+	  //better_free (expression.syntax[0]);
+	  expression.syntax[0]    = better_malloc (sizeof (char) * 3);
+	  expression.syntax[0][0] = 0x1;
+	  expression.syntax[0][1] = 0x1;
+	  expression.syntax[0][2] = (char) index;
+	}
       scope->line += expression.lines[0];
       expression.move_forward[0] = true;
       expression.syntax++;
@@ -389,12 +425,26 @@ eval (func_t *scope, word_list expression)
   /* ---- Set the current token to evaluated and move the current line number forward ---- */
   expression.move_forward[0] = true;
   scope->line               += (expression.lines != NULL) ? expression.lines[0] : 0;
-  /*
-  if (word == NULL)
-    return errorman_throw_reg (scope, "cannot evaluate empty expression");
-  */
+  /* Check to see if the current token is valid bytecode, 
+   * and if so, call the desired instruction.
+   */
+  if (current_token[0] == 0x1)
+    {
+      /* ---- Move the expression forward one ---- */
+      expression.syntax++;
+      expression.move_forward++;
+      expression.lines++;
+      /* check which category it's from */
+      if (current_token[1] == MATH_CALL)
+	return_value = eval_math (scope, expression, (int) current_token[2]);
+      else if (current_token[1] == PRIMITIVE)
+	return_value = runprim (scope, expression, (int) current_token[2]);
+      
+      if (return_value.type == VAR_TYPE)
+	return_value = get_array_var (return_value.v_point, scope, expression);
+    }
   /* ---- Check if the current token is a number ---- */
-  if (isnum (current_token))
+  else if (isnum (current_token))
     return_value = num_to_var (current_token);
   else
     {
@@ -409,6 +459,12 @@ eval (func_t *scope, word_list expression)
 	  /* This is actually useful. */
 	  if (return_value.type == VAR_TYPE)
 	    return_value = get_array_var (return_value.v_point, scope, expression);
+	  /* Temporarily here for reasons. */
+	  // better_free (expression.syntax[-1]);
+	  expression.syntax[-1]    = better_malloc (sizeof (char) * 3);
+	  expression.syntax[-1][0] = 0x1;
+	  expression.syntax[-1][1] = PRIMITIVE;
+	  expression.syntax[-1][2] = (char) call_num;
 	}
       else if ((call_num = ismathcall (current_token)) != -1)
 	{
@@ -416,6 +472,12 @@ eval (func_t *scope, word_list expression)
 	  /* I don't see how this could ever be useful, but whatever. */
 	  if (return_value.type == VAR_TYPE)
 	    return_value = get_array_var (return_value.v_point, scope, expression);
+	  /* Free and write the bytecode */
+	  // better_free (expression.syntax[-1]);
+	  expression.syntax[-1]    = better_malloc (sizeof (char) * 3);
+	  expression.syntax[-1][0] = 0x1;
+	  expression.syntax[-1][1] = MATH_CALL;
+	  expression.syntax[-1][2] = (char) call_num;
 	}
       else if (get_var (scope, current_token) != NULL)
 	return_value = get_array_var (get_var (scope, current_token), scope, expression);

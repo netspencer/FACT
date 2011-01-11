@@ -48,6 +48,7 @@ defunc_array (func_t *base, func_t *scope, word_list expression)
       if (array_size.type != VAR_TYPE)
 	return errorman_throw_reg (scope, "array size needs to be a variable");
 
+      mpz_init    (size);
       mpc_get_mpz (size, array_size.v_point->data);
       if (mpz_cmp_ui (size, 1) < 0)
 	return errorman_throw_reg (scope, "invalid array size");
@@ -129,12 +130,10 @@ def_array (var_t *base, func_t *scope, word_list expression)
  
   scope->line         += expression.lines[0];
   return_value.v_point = alloc_var ();
+  return_value.type    = VAR_TYPE;
 
   if (expression.syntax[0] == NULL)
     return errorman_throw_reg (scope, "cannot define anonymous array");
-  
-  return_value.type = VAR_TYPE;
-
   if (base == NULL)
     base = alloc_var ();
 
@@ -148,7 +147,6 @@ def_array (var_t *base, func_t *scope, word_list expression)
       expression.syntax++;
       expression.move_forward++;
       expression.lines++;
-
       scope->line += expression.lines[0];
       array_size   = get_array_size (scope, expression);
 
@@ -158,37 +156,40 @@ def_array (var_t *base, func_t *scope, word_list expression)
 	  expression.move_forward++;
 	  expression.lines++;
 	}
-
       if (array_size.type == ERROR_TYPE)
 	return array_size;
-
       if (array_size.type != VAR_TYPE)
 	return errorman_throw_reg (scope, "array size needs to be a variable");
 
+      mpz_init    (size);
       mpc_get_mpz (size, array_size.v_point->data);
-      //if (((size = (mpc_get_si (array_size.v_point->data))) > 1000 || size < 1))
+
       if (mpz_cmp_ui (size, 1) < 0)
 	return errorman_throw_reg (scope, "invalid array size");
-      
-      base = resize_array (base, size);
+      if (mpz_cmp_ui (size, 1) == 0)
+	{
+	  /* If the array size is 1, there's nothing to extend or
+	   * assign, thus we continue to look for the name of the
+	   * array and additional dimension, ignoring this one.
+	   */
+	  return def_array (NULL, scope, expression);
+	}
 
-      mpz_init (index);
-      for (scroller = base->array_up, mpz_init (index);  mpz_cmp (index, size) < 0; mpz_add_ui (index, index, 1), scroller = scroller->next)
-	// for (scroller = base->array_up, pos = 0; pos < size; pos++, scroller = scroller->next)
+      base     = resize_array (base, size);
+      scroller = base->array_up;
+      for (mpz_init (index); mpz_cmp (index, size) < 0; mpz_add_ui (index, index, 1))
 	{
 	  set_array (expression.move_forward, count_until_NULL (expression.syntax));
 	  checker      = def_array (scroller, scope, expression);
 	  scope->line -= expression.lines[0];
+	  scroller     = scroller->next;
 	  
 	  if (checker.type == ERROR_TYPE)
 	    return checker;
 	}
-      
       base->name = base->array_up->name;
     }
-
   return_value.v_point = base;
-
   return return_value;
 }     
 
@@ -199,11 +200,7 @@ define (func_t *scope, word_list expression)
   FACT_t temp;
 
   return_value.v_point = alloc_var ();
-
-  if (expression.syntax[0] == NULL)
-    return errorman_throw_reg (scope, "cannot define anonymous var");
-    
-  return_value.type = VAR_TYPE;
+  return_value.type    = VAR_TYPE;
 
   if (!tokcmp (expression.syntax[0], "["))
     {
@@ -215,7 +212,6 @@ define (func_t *scope, word_list expression)
 	  return_value.v_point->array_up   = temp.v_point->array_up;
 	  
 	  mpz_set (return_value.v_point->array_size, temp.v_point->array_size);
-	  GC_free (temp.v_point);
 	}
       else
 	return_value = temp;
@@ -513,6 +509,7 @@ get_array_var (var_t *root, func_t *scope, word_list expression)
   if (array_size.type != VAR_TYPE)
     return errorman_throw_reg (scope, "array position cannot be a function");
 
+  mpz_init    (size);
   mpc_get_mpz (size, array_size.v_point->data);
 
   // if (size >= root->array_size || size < 0)
@@ -581,6 +578,7 @@ get_array_func (func_t *root, func_t *scope, word_list expression)
   if (array_size.type != VAR_TYPE)
     return errorman_throw_reg (scope, "array position cannot be a function");
 
+  mpz_init    (size);
   mpc_get_mpz (size, array_size.v_point->data);
 
   //  if (size >= root->array_size || size < 0)

@@ -10,19 +10,26 @@
 char *
 add_newlines (char *word, int newlines)
 {
-  int    i;
+  int    index;
   int    word_len;
   char * new_str;
+
+  /* add_newlines - this function, given a string and a value,
+   * returns a string allocated in memory of the passed string
+   * combined with the value in newlines at the begining.
+   * For example: word = "hello, world!", newlines = "2" would
+   * return "\n\nhello, world!"
+   */
 
   word_len = strlen (word);
   new_str  = better_malloc (sizeof (char) * (word_len + newlines + 1));
 
-  for (i = 0; i < newlines; i++)
-    new_str[i] = '\n';
+  for (index = 0; index < newlines; index++)
+    new_str[index] = '\n';
 
-  while (i < word_len + newlines)
-    new_str[i++] = word[i - newlines];
-  new_str[i] = '\0';
+  while (index < word_len + newlines)
+    new_str[index++] = word[index - newlines];
+  new_str[index] = '\0';
 
   return new_str;
 }
@@ -30,6 +37,15 @@ add_newlines (char *word, int newlines)
 char *
 lookup_word (int code, int newlines)
 {
+  /* lookup_word - given a word code and a number of newlines,
+   * look up the code in our trusty table and combine it with
+   * the number of newlines.
+   * IMPORTANT NOTE: code is NOT a word_code type, and does not
+   * have values for END, UNKNOWN, etc. If you wish to use this
+   * function by passing a word_code variable, you must first
+   * subtract it by COMB_ARRAY.
+   */
+  
   static char * lookup_table [] =
     {
       "~"       ,
@@ -92,6 +108,19 @@ is_in_quotes (int character)
 {
   static bool prev_slash;
   static bool is_quote;
+
+  /* is_in_quotes - given a character, check whether or not it is
+   * currently in double quotes (") and return true if it is and 
+   * false otherwise.
+   * This may look really confusing, but it operates relatively
+   * simply. is_quote is true when an opening " is passed.
+   * Thus, when a " is passed, if is_quote is false, we turn it on.
+   * prev_slash is true when a backwards slash (\) is passed.
+   * If a \ is passed and prev_slash is set to true, prev_slash
+   * is set to false, denoting a \\. Therefor, when a " is passsed
+   * and prev_slash is true, we do not set is_quote to false, as
+   * it denotes \".
+   */
   
   switch (character)
     {
@@ -104,10 +133,7 @@ is_in_quotes (int character)
       return false;
       
     case '\\':
-      if (!prev_slash)
-	prev_slash = true;
-      else
-	prev_slash = false;
+      prev_slash = !prev_slash;
       break;
 
     default:
@@ -121,7 +147,22 @@ is_in_quotes (int character)
 static bool
 isopt (int op1, int op2)
 {
-  /* This is going to be a doozy. */
+  /* isopt - returns true when passed characters of the
+   * following sequences:
+   *  ==
+   *  +=
+   *  -=
+   *  *=
+   *  /=
+   *  %=
+   *  <=
+   *  >=
+   *  !=
+   *  &&
+   *  ||
+   *  ->
+   * Or returns false otherwise.
+   */
   if (((op1 == '='
 	|| op1 == '+'
 	|| op1 == '-'
@@ -131,7 +172,6 @@ isopt (int op1, int op2)
 	|| op1 == '<'
 	|| op1 == '>'
 	|| op1 == '!') && op2 == '=')  
-      /*|| (op1 == '!' && op2 == '[')*/
       || (op1 == '&' && op2 == '&')
       || (op1 == '|' && op2 == '|')
       || (op1 == '-' && op2 == '>'))
@@ -142,22 +182,40 @@ isopt (int op1, int op2)
 char **
 get_words (char *start)
 {
-  /* I need to clean this up.
-   * Blarg.
-   */
-  int     index; /* count */
-  int     jndex; /* count2 */
+  int     index; 
+  int     jndex; 
   bool    is_string;
   char *  end;
   char ** result;
 
-  /* Insert comment here explaining why this
-   * works and how.
-   * ...
-   * I got nothing. Give me like a day or two
-   * and I'll see if I remember completely.
-   * I know how it works, but I want to be
-   * able to explain it well.
+  /* get_words - the main tokenizing routine. I wrote this code
+   * when I was really obsessed with being simplistic, and now
+   * it looks like this might be the most confusing function in
+   * the entire project.
+   * Basically, given a string, this function allocates memory
+   * for and returns a char **, with each place in char * pointing
+   * to a token. It parses on some simple grammar:
+   *  1. Strings become seperated into three tokens - ", the text, and " again.
+   *  2. Spaces/tabs/newlines seperate tokens, unless inside a string.
+   *  3. Anthing that is returned true by the isopt function becomes its
+   *     own token.
+   *  4. If the ispunct function returns true, then the current character
+   *     gets its own token, with the exception of the '.'.
+   *  5. Strings of letters, numbers, and periods (.) are all tokens.
+   *
+   * Variables:
+   *  @result - the allocated char ** pointing to the different tokens
+   *            in memory. This is the function's return value. 
+   *  @index  - the current token being parsed.
+   *  @jndex  - the position in of the current character in the new string.
+   *  @start  - pointer to the start of the current token in the passed 
+   *            string (also is the passed string itself).
+   *  @end    - pointer to the end of the current token in the passed
+   *            string. This gets incremented if the parsing grammar
+   *            allows it, thus increasing the length of the token.
+   * @is_string - this variable is set to false after creating a string
+   *              token. That way, the ending " does not create a new
+   *              string token.
    */
   
   for (index = 0, end = start, is_string = false, result = NULL; *end != '\0'; index++)
@@ -179,11 +237,9 @@ get_words (char *start)
 	}
       else if (is_in_quotes ((int) *end))
 	{
-	  
 	  do
-	    {
-	      end++;
-	    } while (is_in_quotes ((int) *end));
+	    end++;
+	  while (is_in_quotes ((int) *end));
 	  end--;
 	  is_string = true;
 	}
@@ -208,13 +264,16 @@ get_words (char *start)
     }
       
   result[index - 1] = NULL;
-  
   return (index > 0) ? result : NULL;
 }
 
 word_code
 get_block_code (char *block)
 {
+  /* get_block_code - takes in a string, and returns the word_code
+   * type of that string. For example, the string "+" would return PLUS.
+   */
+  
   if (block == NULL || *block == '\0')
     return END;
   else if (*block == '\n')
@@ -322,6 +381,12 @@ get_block_code (char *block)
 static inline linked_word *
 alloc_word (linked_word *set_prev)
 {
+  /* alloc_word - allocated the necessary space for a single
+   * linked_word structure and initialize the default values.
+   * I'm pretty sure that better_malloc returns everything
+   * pre-initialized to zero, but whatever.
+   */
+  
   linked_word * temp;
 
   temp              = better_malloc (sizeof (linked_word));
@@ -349,7 +414,6 @@ create_list (char **words)
 	  base->newlines = strlen (words[0]);
 	  continue;
 	}
-
       if (w_code == UNKNOWN)
 	base->physical = words[0];
 
@@ -357,7 +421,6 @@ create_list (char **words)
       base->next     = alloc_word (base);
       base           = base->next;
     }
-
   base->code = END;
 
   while (base->previous != NULL)
@@ -431,7 +494,7 @@ set_list (linked_word *start, word_code stopper)
 	  temp_link             = set_list (start->next, UNKNOWN);
 
 	  if (temp_link->code == END)
-	    return temp_link;
+	    return start;
 	  
 	  start->next               = temp_link->next;
 	  temp_link->next->previous = start;
@@ -1157,21 +1220,22 @@ set_link (linked_word *scan)
 char **
 convert_link (linked_word *list)
 {
-  int     position;
-  char ** result;
+  char         ** result;
+  unsigned int    index;
         
-  result = (char **) better_malloc (sizeof (char *));
+  result = better_malloc (sizeof (char *));
 
-  for (position = 0; list != NULL; list = list->next, position++)
+  for (index = 0; list != NULL; list = list->next, index++)
     {
       if (list->code == UNKNOWN)
-	result[position] = add_newlines (list->physical, list->newlines);
+	result[index] = add_newlines (list->physical, list->newlines);
       else if (list->code > UNKNOWN)
-	result[position] = lookup_word (list->code - COMB_ARR, list->newlines);
+	result[index] = lookup_word (list->code - COMB_ARR, list->newlines);
 
-      result = better_realloc (result, sizeof (char **) * (position + 2));
+      result = better_realloc (result, sizeof (char **) * (index + 1));
     }
 
+  result[index] = NULL;
   return result;
 }
 
@@ -1211,45 +1275,14 @@ get_exp_length (char **words, int end_block)
 	  || words[index][lines] == '{')
 	index += get_exp_length (words + index + 1,
 				 get_end_block (words[index][lines]));
+      else if (words[index][lines] == 0x1
+	       && words[index][lines + 1] == 0x3
+	       && words[index][lines + 2] == 0x5)
+	index += get_exp_length (words + index + 1, ')');
     }
 
   return (words[index] == NULL) ? index : index + 1;
 }
-
-/*
-int
-get_exp_length_first (char **words, int block)
-{
-  int lines;
-  int pos;
-
-  for (pos = 0; words != NULL && words[pos] != NULL
-         && words[pos][0] != block; pos++)
-    {
-      for (lines = 0; words[pos][lines] == '\n'; lines++);
-      if (words[pos][lines] == '\0')
-	break;
-      switch (words[pos][lines])
-        {
-        case '(':
-          pos += get_exp_length (words + pos + 1, ')');
-          break;
-	  
-	case '{':
-	  return pos + get_exp_length (words + pos + 1, '}') + 1;
-	  
-        case '[':
-          pos += get_exp_length (words + pos + 1, ']');
-          break;
-	  
-        default:
-          break;
-        }
-    }
-
-  return (words[pos] == NULL) ? pos : pos + 1;
-}
-*/
 
 int
 get_exp_length_first (char **words, int end_block)
@@ -1272,8 +1305,12 @@ get_exp_length_first (char **words, int end_block)
 	  
 	index += get_exp_length (words + index + 1,
 				 get_end_block (words[index][lines]));
+      else if (words[index][lines] == 0x1
+	       && words[index][lines + 1] == 0x3
+	       && words[index][lines + 2] == 0x5)
+	index += get_exp_length (words + index + 1, ')');
       else if (words[index][lines] == '{')
-	return index + get_exp_length (words + index + 1, '}');
+	return index + get_exp_length (words + index + 1, '}') + 1;
     }
 
   return (words[index] == NULL) ? index : index + 1;

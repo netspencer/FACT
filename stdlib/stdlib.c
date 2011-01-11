@@ -56,5 +56,6 @@ struct elements MOD_MAP [] =
     { "get_arg_num" , ""                       , &get_arg_num   },
     { "get_arg"     , "def num"                , &get_arg       },
     { "str"         , "def op"                 , &var_to_string },
+    { "int"         , "def op"                 , &var_to_int    },
     { NULL          , NULL                     , NULL           },
   };

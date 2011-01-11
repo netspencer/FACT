@@ -15,91 +15,92 @@ print_logo ()
 char *
 get_input (FILE *fp, unsigned int *line_number)
 {
-  int    count;
-  int    paren_count;
-  int    bracket_count;
-  int    curly_count;
-  int    c;
+  int    index;
+  int    p_count;
+  int    b_count;
+  int    c_count;
+  int    curr_char;
   bool   in_quotes;  
   char * input;
 
   if (fp == stdin)
     printf ("%% ");
 
-  for (count = 1, input = NULL, in_quotes = false,
-	 paren_count = bracket_count = curly_count = 0; (c = fgetc (fp)) != EOF; count++)
+  /* Doing var = var = x; is unclear and annoying. */
+  input     = NULL;
+  p_count   = 0;
+  b_count   = 0;
+  c_count   = 0;
+  in_quotes = false;
+  
+  for (index = 1; (curr_char = fgetc (fp)) != EOF; index++)
     {
-      input = (char *) better_realloc (input, (count + 1) * sizeof (char));
-
-      if (c == '#' && !in_quotes)
+      if (curr_char == '#' && !in_quotes)
 	{
-	  while ((c = fgetc (fp)) != EOF && c != '\n')
+	  while ((curr_char = fgetc (fp)) != EOF && curr_char != '\n')
 	    ;
-	  ungetc (c, fp);
-	  count--;
+	  ungetc (curr_char, fp);
+	  index--;
 	  continue;
 	}
-
-      if (c == '\n')
+      if (curr_char == '\n')
 	{
 	  ++*line_number;
-	  if (count > 1 && fp == stdin
-	      && ((in_quotes || paren_count || bracket_count || curly_count)
-		  || (input[count - 2] != ';' || input[count - 2] != '}')))
+	  if (index > 1 && fp == stdin
+	      && ((in_quotes || p_count || b_count || c_count)
+		  || (input[index - 2] != ';' || input[index - 2] != '}')))
 	    printf (": ");
 	}
-	      
-      input[count - 1] = c;
+
+      input            = better_realloc (input, (index + 1) * sizeof (char));
+      input[index - 1] = curr_char;
 
       if (!in_quotes)
 	{
-	  if (c == '(')
-	    paren_count++;
-	  else if (c == ')')
-	    paren_count--;
-	  else if (c == '[')
-	    bracket_count++;
-	  else if (c == ']')
-	    bracket_count--;
-	  else if (c == '{')
-	    curly_count++;
-	  else if (c == '}')
-	    curly_count--;
+	  if (curr_char == '(')
+	    p_count++;
+	  else if (curr_char == ')')
+	    p_count--;
+	  else if (curr_char == '[')
+	    b_count++;
+	  else if (curr_char == ']')
+	    b_count--;
+	  else if (curr_char == '{')
+	    c_count++;
+	  else if (curr_char == '}')
+	    c_count--;
 	}
-
-      if (c == '"')
+      if (curr_char == '"')
 	{
 	  if (in_quotes)
 	    {
-	      if (input[count - 2] != '\\'
-		  || (count > 3 && input[count - 3] == '\\'))
+	      if (input[index - 2] != '\\'
+		  || (index > 3 && input[index - 3] == '\\'))
 		in_quotes = false;
 	    }
 	  else
 	    in_quotes = true;
 	}
-      if (c == ';' || c == '}')
+      if (curr_char == ';' || curr_char == '}')
 	{
-	  input[count] = '\0';
+	  input[index] = '\0';
 
-	  if (paren_count == 0 && bracket_count == 0 && curly_count == 0 && !in_quotes)
+	  if (p_count == 0 && b_count == 0 && c_count == 0 && !in_quotes)
 	    break; 
 	}      
     }
   
   if (input != NULL)
     {
-      input            = better_realloc (input, sizeof (char) * (count + 2));
-      input[count]     = c;
-      input[count + 1] = '\0';
+      input            = better_realloc (input, sizeof (char) * (index + 2));
+      input[index]     = curr_char;
+      input[index + 1] = '\0';
+      for (index--; index >= 0; index--)
+	{
+	  if (!isspace ((int) input[index]) && input[index] != '\0')
+	    return input;
+	}  
     }
-
-  for (count--; input != NULL && count >= 0; count--)
-    {
-      if (!isspace ((int) input[count]) && input[count] != '\0')
-	return input;
-    }
-  
   return NULL;
 }
 

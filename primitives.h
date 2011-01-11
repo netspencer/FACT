@@ -8,6 +8,7 @@
  * Provides functions for the
  * easy handeling and calling
  * of math calls and primitives.
+ * This API needs to be fixed A LOT.
  */
 
 FACT_INTERN_FUNC (int) isprim     (char *);

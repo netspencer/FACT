@@ -5,10 +5,6 @@ set_array (bool *rop, int op)
 {
   while (op)
     rop[--op] = false;
-  /*
-  for (pos = 0; pos < op; pos++)
-    rop[pos] = false;
-  */
 }
 
 int

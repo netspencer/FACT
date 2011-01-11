@@ -35,7 +35,7 @@ errorman_dump (_ERROR error, int line_num, const char *file_name_called, const c
       return;
     }
   
-  printf ("Error in <%s:%s> on line %d", file_name_called, file_name_from, line_num);
+  printf ("Error in <%s> on line %d", /*file_name_called,*/ file_name_from, line_num);
 
   printf (": %s.\n",  error.description);
 }

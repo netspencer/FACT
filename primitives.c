@@ -43,7 +43,7 @@ struct         _prims
   FACT_t    (* function)(func_t *, word_list);
 };
 static int             num_of_prims = 0;
-static struct _prims * primitives = NULL;
+static struct _prims * primitives   = NULL;
 
 static int
 comp_prims (const void *op1, const void *op2)

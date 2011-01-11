@@ -25,7 +25,10 @@ if_statement (func_t *scope, word_list expression_list, bool *success)
   *success = true;
   mpz_init_set_ui (temp_scope.array_size, 1);
   
-  if (strcmp (expression_list.syntax[0], "(") != 0)
+  if (tokcmp (expression_list.syntax[0], "(")
+      && (expression_list.syntax[0][0] != 0x1
+	  || expression_list.syntax[0][1] != 0x3
+	  || expression_list.syntax[0][2] != 0x5))
     return errorman_throw_reg (scope, "expected '(' after if statement");
 
   conditional = eval (&temp_scope, expression_list);
@@ -101,7 +104,10 @@ on_error (func_t *scope, word_list expression_list, bool *success)
 
   mpz_init_set_ui (temp_scope.array_size, 1);
   
-  if (strcmp (expression_list.syntax[0], "(") != 0)
+  if (tokcmp (expression_list.syntax[0], "(")
+      && (expression_list.syntax[0][0] != 0x1
+	  || expression_list.syntax[0][1] != 0x3
+	  || expression_list.syntax[0][2] != 0x5))
     return errorman_throw_reg (scope, "expected '(' after on_error statement");
 
   conditional = eval (&temp_scope, expression_list);
@@ -219,7 +225,10 @@ while_loop (func_t *scope, word_list expression)
 
   mpz_init_set_ui (temp_scope.array_size, 1);
 
-  if (expression.syntax[0] == NULL || expression.syntax[0][0] != '(')
+  if (expression.syntax[0] == NULL || (expression.syntax[0][0] != '('
+				       && (expression.syntax[0][0] != 0x1
+					   || expression.syntax[0][1] != 0x3
+					   || expression.syntax[0][2] != 0x5)))
     return errorman_throw_reg (scope, "expected '(' after while");
 
   block_evald.type         = VAR_TYPE;
@@ -279,7 +288,7 @@ for_loop (func_t *scope, word_list expression)
 {
   /* I would say that this function could be cleaned up
    * a fairly large amount.
-  */
+   */
   int         index;
   int         arr_pos;
   int         hold_lines;
