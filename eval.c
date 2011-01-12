@@ -9,11 +9,12 @@
  * works within the same word_list structure as non-compiled code. The first byte
  * in an instruction begins with a 1, to indicate that it is in fact an instruction.
  * The next byte indicates the category of the instruction. This can either be
- * STATEMENT (0x0), MATH_CALL (0x1), PRIMITIVE (0x2) or NUMBER (0x3). The next byte
- * indicates the specific instruction of the category to call. This is an exception
- * for the "NUMBER" category, where it points to mpz_t instead. instruction 0x10 
- * represents the end of an expression, which is used by get_exp_length and 
- * get_exp_length first to speed things up.
+ * STATEMENT (0x1), MATH_CALL (0x2), PRIMITIVE (0x3), NUMBER (0x4), VARIABLE (0x5),
+ * or FUNCTION (0x6). The next byte's format is dependent on the code's category.
+ * Instruction 0x10 represents the end of an expression, which is used by 
+ * get_exp_length and get_exp_length_first to speed things up.
+ *
+ * TODO: Add more things.
  */
 
 typedef enum bytecode_type 
@@ -22,6 +23,8 @@ typedef enum bytecode_type
     MATH_CALL = 0x2, /* +, -, *, etc. */
     PRIMITIVE = 0x3, /* Some special things. */
     NUMBER    = 0x4, /* Numbers become stored in a special way, will implement later. */
+    VARIABLE  = 0x5, /* Address of a variable. */
+    FUNCTION  = 0x6, /* Address of a function. */
   } bytecode_type;
 
 word_list
@@ -409,9 +412,13 @@ lambda_proc (func_t *scope, word_list expression)
 FACT_t
 eval (func_t *scope, word_list expression)
 {
+  int      index;
+  int      bytes;
   int      call_num;
   char   * current_token;
+  var_t  * hold_var;
   FACT_t   return_value;
+  unsigned long hold_pointer;
 
   /* ---- Move the expression forward to the next unevaluated token ---- */
   while (expression.move_forward[0])
@@ -439,6 +446,22 @@ eval (func_t *scope, word_list expression)
 	return_value = eval_math (scope, expression, (int) current_token[2]);
       else if (current_token[1] == PRIMITIVE)
 	return_value = runprim (scope, expression, (int) current_token[2]);
+      else if (current_token[1] == VARIABLE)
+	{
+	  return_value.type = VAR_TYPE;
+	  hold_pointer = 0;
+	  bytes = (sizeof (var_t *) / sizeof (char));
+	  for (index = 0; index < bytes; index++)
+	    {
+#if (BYTE_ORDER == BIG_ENDIAN)
+	      hold_pointer >>= 8;
+#else /* We assume big and little are the only values available */
+	      hold_pointer <<= 8;
+#endif
+	      hold_pointer += (unsigned char) current_token[index + 2];
+	    }
+	  return_value.v_point = (var_t *) hold_pointer;
+	}
       
       if (return_value.type == VAR_TYPE)
 	return_value = get_array_var (return_value.v_point, scope, expression);
@@ -459,12 +482,13 @@ eval (func_t *scope, word_list expression)
 	  /* This is actually useful. */
 	  if (return_value.type == VAR_TYPE)
 	    return_value = get_array_var (return_value.v_point, scope, expression);
-	  /* Temporarily here for reasons. */
-	  // better_free (expression.syntax[-1]);
+	  /* This is being removed for a little bit while
+	     I plan some stuff out...
 	  expression.syntax[-1]    = better_malloc (sizeof (char) * 3);
 	  expression.syntax[-1][0] = 0x1;
 	  expression.syntax[-1][1] = PRIMITIVE;
 	  expression.syntax[-1][2] = (char) call_num;
+	  */
 	}
       else if ((call_num = ismathcall (current_token)) != -1)
 	{
@@ -472,15 +496,28 @@ eval (func_t *scope, word_list expression)
 	  /* I don't see how this could ever be useful, but whatever. */
 	  if (return_value.type == VAR_TYPE)
 	    return_value = get_array_var (return_value.v_point, scope, expression);
-	  /* Free and write the bytecode */
-	  // better_free (expression.syntax[-1]);
 	  expression.syntax[-1]    = better_malloc (sizeof (char) * 3);
 	  expression.syntax[-1][0] = 0x1;
 	  expression.syntax[-1][1] = MATH_CALL;
 	  expression.syntax[-1][2] = (char) call_num;
 	}
-      else if (get_var (scope, current_token) != NULL)
-	return_value = get_array_var (get_var (scope, current_token), scope, expression);
+      else if ((hold_var = get_var (scope, current_token)) != NULL)
+	{
+	  return_value = get_array_var (hold_var, scope, expression);
+	  bytes = (sizeof (var_t *) / sizeof (char));
+	  expression.syntax[-1] = better_malloc (sizeof (char) * (2 + bytes));
+	  expression.syntax[-1][0] = 0x1;
+	  expression.syntax[-1][1] = VARIABLE;
+	  hold_pointer = (unsigned long) hold_var;
+	  for (index = 1; index <= bytes; index++)
+	    {
+#if (BYTE_ORDER == BIG_ENDIAN)
+	      expression.syntax[-1][index + 1] = (char) (hold_pointer << (bytes - index) * 8);
+#else
+	      expression.syntax[-1][index + 1] = (char) (hold_pointer >> ((bytes - index) * 8));
+#endif
+	    }
+	}     
       else if (get_func (scope, current_token) != NULL)
 	return_value = get_array_func (get_func (scope, current_token), scope, expression);
       else

@@ -225,10 +225,7 @@ while_loop (func_t *scope, word_list expression)
 
   mpz_init_set_ui (temp_scope.array_size, 1);
 
-  if (expression.syntax[0] == NULL || (expression.syntax[0][0] != '('
-				       && (expression.syntax[0][0] != 0x1
-					   || expression.syntax[0][1] != 0x3
-					   || expression.syntax[0][2] != 0x5)))
+  if (expression.syntax[0] == NULL || expression.syntax[0][0] != '(')
     return errorman_throw_reg (scope, "expected '(' after while");
 
   block_evald.type         = VAR_TYPE;
