@@ -96,6 +96,7 @@ run_file (func_t *scope, const char *filename, bool silent)
       for (rev_shunting_yard (formatted); formatted->previous != NULL; formatted = formatted->previous);
       set_link (formatted);
       parsed_input = convert_link (formatted);
+      compile_to_bytecode (parsed_input);
 
       returned = eval_expression (scope, make_word_list (parsed_input, true));
 

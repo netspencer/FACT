@@ -62,6 +62,7 @@
 #include "errorman.h"
 #include "management.h"
 #include "error_check.h"
+#include "bytecode.h"
 #include "shell.h"
 #include "parser.h"
 #include "eval.h"

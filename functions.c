@@ -75,7 +75,6 @@ liven_func (func_t *scope, word_list expression)
   while (position > 0)
     {
       position--;
-      /* Seperateing these two out for clarity: */
       block_formatted[position]                        = expression.syntax[position + pos_args + 1];
       block_formatted[position]                        = add_newlines (block_formatted[position], expression.lines[position + pos_args + 1]);
       scope->line                                     += expression.lines[position + pos_args + 1];

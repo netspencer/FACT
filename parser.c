@@ -21,7 +21,15 @@ add_newlines (char *word, int newlines)
    * return "\n\nhello, world!"
    */
 
-  word_len = strlen (word);
+  if (word[0] == BYTECODE)
+    {
+      if (word[1] == NUMBER)
+	word_len = (sizeof (var_t *) / sizeof (char)) + 2;
+      else
+	word_len = 3;
+    }
+  else
+    word_len = strlen (word);
   new_str  = better_malloc (sizeof (char) * (word_len + newlines + 1));
 
   for (index = 0; index < newlines; index++)
@@ -1305,11 +1313,10 @@ get_exp_length_first (char **words, int end_block)
 	  
 	index += get_exp_length (words + index + 1,
 				 get_end_block (words[index][lines]));
-      else if (words[index][lines] == 0x1
-	       && words[index][lines + 1] == 0x3
-	       && words[index][lines + 2] == 0x5)
-	index += get_exp_length (words + index + 1, ')');
-      else if (words[index][lines] == '{')
+      else if (words[index][lines] == '{'
+	       || (words[index][lines] == BYTECODE
+		   && words[index][lines + 1] == STATEMENT
+		   && words[index][lines + 2] == CRL))
 	return index + get_exp_length (words + index + 1, '}') + 1;
     }
 

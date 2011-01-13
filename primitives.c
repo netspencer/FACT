@@ -1,40 +1,4 @@
-#include "common.h"
-
-/* I think I should remove the way primitives (not math calls)
- * are handled. It is rather silly.
- */
-
-struct          _MATH_PRIMS
-{ 
-  const char * name;
-  FACT_t    (* function)(FACT_t, FACT_t);
-};
-
-static struct _MATH_PRIMS math_calls[] =
-  {
-    {"~" , combine_arrays },   
-    {"+" , add            },
-    {"-" , sub            },
-    {"*" , mult           },
-    {"/" , divide         },
-    {"%" , mod            },
-    {"`" , bit_and        },
-    {"^" , bit_xor        },
-    {"|" , bit_ior        },
-    {"+=", add_assignment },
-    {"-=", sub_assignment },
-    {"*=", mult_assignment},
-    {"/=", div_assignment },
-    {"%=", mod_assignment },
-    {"==", equal          },
-    {"!=", not_equal      },
-    {">" , more           },
-    {"<" , less           },
-    {">=", more_equal     },
-    {"<=", less_equal     },
-  };
-
-#define NUM_MATH_PRIMS ((sizeof math_calls) / (sizeof (struct _MATH_PRIMS)))
+#include "primitives.h"
 
 struct         _prims
 {
@@ -125,23 +89,6 @@ isprim (char *word)
     return result->prim_num;
 }
 
-int
-ismathcall (char *word)
-{
-  int pos;
-
-  if (!ispunct ((int) word[0]))
-    return -1;
-
-  for (pos = 0; pos < NUM_MATH_PRIMS; pos++)
-    {
-      if (tokcmp (math_calls[pos].name, word) == 0)
-        return pos;
-    }
-
-  return -1;
-}
-
 FACT_t
 runprim (func_t *scope, word_list expression, int prim_num)
 {
@@ -165,6 +112,33 @@ eval_math (func_t *scope, word_list expression, int call_num)
   FACT_t arg2;
   FACT_t return_value;
 
+  /* This is a list of every math call's corresponding
+   * function. It's an array of function pointers. Wild!
+   */
+  static FACT_t (* math_calls[])(FACT_t, FACT_t) =
+    {
+      combine_arrays  , // ~ 0
+      add             , // + 1
+      sub             , // - 2
+      mult            , // * 3
+      divide          , // / 4
+      mod             , // % 5
+      bit_and         , // ` 6
+      bit_xor         , // ^ 7
+      bit_ior         , // | 8
+      add_assignment  , // += 9
+      sub_assignment  , // -= 10
+      mult_assignment , // *= 11
+      div_assignment  , // /= 12
+      mod_assignment  , // %= 13
+      equal           , // == 14
+      not_equal       , // != 15
+      more            , // > 16
+      less            , // < 17
+      more_equal      , // >= 18
+      less_equal      , // <= 19
+    }; 
+
   arg1 = eval (scope, expression);
   arg2 = eval (scope, expression);
   
@@ -173,7 +147,7 @@ eval_math (func_t *scope, word_list expression, int call_num)
   if (arg2.type == ERROR_TYPE)
     return arg2;
 
-  return_value = math_calls[call_num].function (arg1, arg2);
+  return_value = math_calls[call_num] (arg1, arg2);
 
   if (return_value.type == ERROR_TYPE)
     return_value.error.scope = scope;

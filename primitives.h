@@ -12,7 +12,6 @@
  */
 
 FACT_INTERN_FUNC (int) isprim     (char *);
-FACT_INTERN_FUNC (int) ismathcall (char *);
 
 FACT_INTERN_FUNC (void) add_prim       (const char *, FACT_t (*)(func_t *, word_list));
 FACT_INTERN_FUNC (void) init_std_prims (func_t     *                                 );

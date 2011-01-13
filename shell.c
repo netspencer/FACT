@@ -159,6 +159,7 @@ shell (func_t *main_scope)
       set_link (formatted);
       /* ---- Convert the list to a char ** ---- */
       parsed_input = convert_link (formatted);
+      compile_to_bytecode (parsed_input);
       /* ---- Evaluate the statement ---- */
       returned = eval_expression (main_scope, make_word_list (parsed_input, true));
       if (returned.type == ERROR_TYPE)
