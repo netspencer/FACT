@@ -108,7 +108,7 @@ liven_func (func_t *scope, word_list expression)
    expression.lines++;
 
    ip = 1 + get_ip ();
-   set_ip (0);
+   reset_ip ();
    evald = eval (scope, expression);  
 
    if (evald.type == ERROR_TYPE)
@@ -138,7 +138,7 @@ liven_func (func_t *scope, word_list expression)
      return errorman_throw_reg (scope, "expected more arguments");
 
    ip++;
-   set_ip (0);
+   reset_ip ();
    expression.syntax++;
    expression.lines++;
 
@@ -146,6 +146,7 @@ liven_func (func_t *scope, word_list expression)
      {
        if (tokcmp (expression.syntax[-1], ")"))
 	 return errorman_throw_reg (scope, "expected fewer arguments");
+       set_ip (ip);
        return evald;
      }
    else if (tokcmp (expression.syntax[-1], ",")

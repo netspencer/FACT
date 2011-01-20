@@ -260,25 +260,25 @@ while_loop (func_t *scope, word_list expression)
       if (block_evald.type == ERROR_TYPE || block_evald.return_signal == true || block_evald.break_signal == true)
 	break;
     }
+  
   scope->line = temp_scope.line;
-
   return block_evald;
 }
 
 FACT_t
 for_loop (func_t *scope, word_list expression)
 {
-  unsigned long ip;
-  unsigned long arr_pos;
-  int         index;
-  int         hold_lines;
-  mpc_t       one;
-  var_t     * var_scroller;
-  FACT_t      index_value;
-  FACT_t      limit_value;
-  FACT_t      block_evald;
-  func_t    * func_scroller;
-  func_t      temp_scope =
+ 
+  int             index         ;
+  int             hold_lines    ;
+  mpc_t           one           ;
+  var_t         * var_scroller  ;
+  FACT_t          index_value   ;
+  FACT_t          limit_value   ;
+  FACT_t          block_evald   ;
+  func_t        * func_scroller ;
+  unsigned long   arr_pos       ;
+  func_t          temp_scope =
     {
       .line       = scope->line ,
       .name       = scope->name ,
@@ -296,6 +296,11 @@ for_loop (func_t *scope, word_list expression)
     };
 
   mpz_init_set_ui (temp_scope.array_size, 1);
+
+  expression.syntax++;
+  expression.lines++;
+
+  reset_ip ();
   index_value = eval (&temp_scope, expression);
 
   if (index_value.type == ERROR_TYPE)
@@ -304,11 +309,12 @@ for_loop (func_t *scope, word_list expression)
       return index_value;
     }
 
-  /* Skip the ',' */
-  next_inst ();
-  
-  temp_scope.line += expression.lines[0];
-  limit_value      = eval (&temp_scope, expression);
+  /* Plus one to skip the ',' */
+  expression.syntax += get_ip () + 1;
+  expression.lines  += get_ip () + 1;
+
+  reset_ip ();
+  limit_value = eval (&temp_scope, expression);
 
   if (limit_value.type == ERROR_TYPE)
     {
@@ -326,23 +332,22 @@ for_loop (func_t *scope, word_list expression)
    * follow the for statement, we can safely skip the token without
    * worrying about it.
    */
-  next_inst ();
-  
-  temp_scope.line += expression.lines[0];
+  expression.syntax += get_ip () + 1;
+  expression.lines  += get_ip () + 1;
 
   mpc_init (&one);
   mpc_set_ui (&one, 1);
 
+  arr_pos                  = 0;
   block_evald.type         = VAR_TYPE;
   block_evald.v_point      = alloc_var ();
   block_evald.break_signal = false;
   hold_lines               = temp_scope.line;
 
-  ip = get_ip ();
-
   for (;;)
     {
       temp_scope.line = hold_lines;
+
       if (index_value.type == VAR_TYPE)
 	{
 	  if (mpz_cmp_ui (limit_value.v_point->array_size, 1) > 0)
@@ -396,13 +401,14 @@ for_loop (func_t *scope, word_list expression)
 	    }
 	}
 
-      if (strcmp (expression.syntax[ip], ";"))
+      reset_ip ();
+      if (strcmp (expression.syntax[0], ";"))
 	block_evald = eval_expression (&temp_scope, expression);
 
       if (block_evald.type == ERROR_TYPE || block_evald.return_signal == true || block_evald.break_signal == true)
 	break;
-      set_ip (ip);
     }
+  
   scope->line = temp_scope.line;
   return block_evald;
 }

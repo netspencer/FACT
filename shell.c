@@ -205,7 +205,6 @@ shell (func_t * scope)
    */
   char   *  input     ;
   char   ** tokenized ;
-  char   ** scroll    ; /* For debugging.                         */
   byte   ** bytecode  ; /* Complete string to be passed to the
 			 * interpreter.                           */
   FACT_t    returned  ; /* The value returned by the interpreter. */
@@ -219,7 +218,7 @@ shell (func_t * scope)
    */
   print_logo ();
   printf ("The FACT programming language interactive shell\n"
-	  "(c) 2010 Matthew Plant, under the GPL version 3.\n");
+	  "(c) 2010, 2011 Matthew Plant, under the GPL version 3.\n");
 
   /* Set the initial line number to 1 and the file name to
    * "stdin".
@@ -301,16 +300,6 @@ shell (func_t * scope)
       /* Convert the list back to a char ** format. */
       set_link (parsed);
       bytecode = convert_link (parsed);
-
-      /* Print out the result for debugging purposes. */
-      puts ("\ninput:");
-      scroll = bytecode;
-      while (scroll[0] != NULL)
-	{
-	  puts (scroll[0]);
-	  scroll++;
-	}
-      fflush (stdout);
 
       /* Compile the string array to bytecode and then
        * reset the instruction pointer to zero.
