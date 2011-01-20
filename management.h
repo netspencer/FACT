@@ -17,7 +17,6 @@ FACT_INTERN_FUNC (func_t *) resize_func    (func_t *, mpz_t );
 
 FACT_INTERN_FUNC       (void) free_var  (var_t  *);
 FACT_INTERN_FUNC       (void) free_func (func_t *);
-FACT_INTERN_DEPRECATED (void) scroll    (func_t *);
 
 #define resize_array      resize_var  
 #define resize_func_array resize_func 

@@ -3,20 +3,17 @@
 
 #include "common.h"
 
-/**
- * primitives:
- * Provides functions for the
- * easy handeling and calling
- * of math calls and primitives.
- * This API needs to be fixed A LOT.
+/* Check to see if a token is a valid primitive
+ * (this will be removed in the future, so don't
+ * rely on it).
  */
+FACT_INTERN_FUNC (int) isprim (char *);
 
-FACT_INTERN_FUNC (int) isprim     (char *);
+/* Initialize the built-in functions. */
+FACT_INTERN_FUNC (void) init_BIFs (func_t *);
 
-FACT_INTERN_FUNC (void) add_prim       (const char *, FACT_t (*)(func_t *, word_list));
-FACT_INTERN_FUNC (void) init_std_prims (func_t     *                                 );
-
-FACT_INTERN_FUNC (FACT_t) runprim   (func_t *, word_list, int);
+/* Run a primitive or evaluate math */
+FACT_INTERN_FUNC (FACT_t) run_prim   (func_t *, word_list, int);
 FACT_INTERN_FUNC (FACT_t) eval_math (func_t *, word_list, int);
 
 #endif

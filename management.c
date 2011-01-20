@@ -61,17 +61,16 @@ alloc_var ()
 {
   var_t * new;
 
-  /* I have been put under the impression that
-   * memory allocated by GC is automatically
-   * initialized to 0 (/NULL/false/etc).
-   * However, I play this safe.
+  /* I have been put under the impression that memory allocated
+   * by GC Malloc is automatically initialized to 0/NULL/false/etc.
+   * However, I play this memory game safe.
    */
 
-  new             = (var_t *) better_malloc (sizeof (var_t));
-  new->array_up   = NULL;
-  new->next       = NULL;
-  new->name       = NULL;
-  new->locked     = false;
+  new             = better_malloc (sizeof (var_t));
+  new->array_up   = NULL  ;
+  new->next       = NULL  ;
+  new->name       = NULL  ;
+  new->locked     = false ;
   mpc_init (&(new->data));
   mpz_init_set_ui (new->array_size, 1);
 
@@ -83,26 +82,26 @@ alloc_func ()
 {
   func_t * new;
 
-  /* See my comment for alloc_var (),
-   * it applies to this as well.
+  /* See my comment for alloc_var (), it applies to this 
+   * as well.
    */
 
-  new             = (func_t *) better_malloc (sizeof (func_t));
-  new->line       = 1;
-  new->name       = NULL;
-  new->extrn_func = NULL;
-  new->next       = NULL;
-  new->file_name  = NULL;
-  new->args       = NULL;
-  new->body       = NULL;
-  new->vars       = NULL;
-  new->funcs      = NULL;
-  new->up         = NULL;
-  new->caller     = NULL;
-  new->usr_data   = NULL;
-  new->array_up   = NULL;
-  new->variadic   = NULL;
-  new->locked     = false;
+  new             = better_malloc (sizeof (func_t));
+  new->line       = 1     ; 
+  new->name       = NULL  ;
+  new->extrn_func = NULL  ;
+  new->next       = NULL  ;
+  new->file_name  = NULL  ;
+  new->args       = NULL  ;
+  new->body       = NULL  ;
+  new->vars       = NULL  ;
+  new->funcs      = NULL  ;
+  new->up         = NULL  ;
+  new->caller     = NULL  ;
+  new->usr_data   = NULL  ;
+  new->array_up   = NULL  ;
+  new->variadic   = NULL  ;
+  new->locked     = false ;
   
   mpz_init_set_ui (new->array_size, 1);
 

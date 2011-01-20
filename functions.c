@@ -28,7 +28,7 @@ liven_func (func_t *scope, word_list expression)
   char   ** args_formatted;
   char   ** block_formatted;
   FACT_t    func;
-  
+
   func = eval (scope, expression);
 
   if (func.type == ERROR_TYPE)
@@ -38,12 +38,8 @@ liven_func (func_t *scope, word_list expression)
   if (func.f_point->locked)
     return errorman_throw_reg (scope, "function has been locked");
 
-  while (expression.move_forward[0])
-    {
-      expression.syntax++;
-      expression.move_forward++;
-      expression.lines++;
-    }
+  expression.syntax += get_ip ();
+  expression.lines  += get_ip ();
 
   if (expression.syntax[0] == NULL || tokcmp (expression.syntax[0], "("))
     return errorman_throw_reg (scope, "expected '(' after function");
@@ -58,10 +54,8 @@ liven_func (func_t *scope, word_list expression)
   while (position > 0)
     {
       position--;
-      args_formatted[position]              = add_newlines (expression.syntax[position + 1], expression.lines[position + 1]);
-      // arg_lines[position]                   = expression.lines[position + 1];
-      scope->line                          += expression.lines[position + 1];
-      expression.move_forward[position + 1] = true;
+      args_formatted[position] = add_newlines (expression.syntax[position + 1], expression.lines[position + 1]);
+      scope->line += expression.lines[position + 1];
     }
     
   if (expression.syntax[pos_args] == NULL)
@@ -81,238 +75,258 @@ liven_func (func_t *scope, word_list expression)
       expression.move_forward[position + pos_args + 1] = true;
     }
   
-  func.f_point->args       = args_formatted;
-  func.f_point->body       = block_formatted;
-  func.f_point->up         = scope;
-  
-  for (position = 0; position < pos_args + pos_block; position++)
-    expression.move_forward[position] = true;
-  
+  func.f_point->args = args_formatted;
+  func.f_point->body = block_formatted;
+  func.f_point->up   = scope;
+
+  move_ip (pos_args + pos_block + 1);
   return func;
-}
+ }
 
-FACT_t
-prepare_function (func_t *scope, func_t *new_scope, word_list expression)
-{
-  int         pos;
-  int         count;
-  var_t     * hold;
-  var_t     * temp;
-  FACT_t      evald;
-  FACT_t      arg;
-  FACT_t      passed;
-  word_list   arg_list;
+ FACT_t
+ prepare_function (func_t *scope, func_t *new_scope, word_list expression)
+ {
+   int         pos;
+   int         count;
+   var_t     * hold;
+   var_t     * temp;
+   FACT_t      evald;
+   FACT_t      arg;
+   FACT_t      passed;
+   word_list   arg_list;
+   unsigned int ip;
+   unsigned int ipe;
+   unsigned int ipf;
 
-  if (tokcmp (expression.syntax[0], "("))
-    return errorman_throw_reg (scope, "expected '(' after function call");
-  else
-    {
-      expression.move_forward[0] = true;
-      expression.move_forward++;
-      expression.syntax++;
-      expression.lines++;
-    }
-  
-  evald = eval (scope, expression);
+   expression.syntax += get_ip ();
+   expression.lines  += get_ip ();
 
-  if (evald.type == ERROR_TYPE)
-    return evald;
+   if (tokcmp (expression.syntax[0], "("))
+     return errorman_throw_reg (scope, "expected '(' after function call");
 
-  if (evald.type != FUNCTION_TYPE)
-    return errorman_throw_reg (scope, "cannot run a non-function");
+   expression.syntax++;
+   expression.lines++;
 
-  if (evald.f_point->args == NULL)
-    return errorman_throw_reg (scope, "given function has no body");
+   ip = 1 + get_ip ();
+   set_ip (0);
+   evald = eval (scope, expression);  
 
-  while (expression.move_forward[0])
-    {
-      expression.syntax++;
-      expression.move_forward++;
-      expression.lines++;
-    }
+   if (evald.type == ERROR_TYPE)
+     return evald;
 
-  arg_list              = make_word_list (evald.f_point->args, false);
-  new_scope->file_name  = evald.f_point->file_name;
-  new_scope->args       = evald.f_point->args;
-  new_scope->body       = evald.f_point->body;
-  new_scope->line       = evald.f_point->line;
-  new_scope->up         = evald.f_point->up;
-  new_scope->name       = evald.f_point->name;
-  new_scope->extrn_func = evald.f_point->extrn_func;
-  new_scope->variadic   = evald.f_point->variadic;
+   if (evald.type != FUNCTION_TYPE)
+     return errorman_throw_reg (scope, "cannot run a non-function");
 
-  if (arg_list.syntax[0] != NULL && tokcmp (expression.syntax[0], ","))
-    return errorman_throw_reg (scope, "expected more arguments");
-  else
-    {
-      expression.move_forward[0] = true;
-      expression.move_forward++;
-      expression.syntax++;
-      expression.lines++;
-    }
-  
+   if (evald.f_point->args == NULL)
+     return errorman_throw_reg (scope, "given function has no body");
 
-  if (arg_list.syntax[0] == NULL)
-    {
-      if (tokcmp (expression.syntax[-1], ")"))
-	return errorman_throw_reg (scope, "expected fewer arguments");
-      return evald;
-    }
-  else if (tokcmp (expression.syntax[-1], ",")
-	   && !tokcmp (arg_list.syntax[0], "->"))
-    return evald;
-  
-  for (pos = 0; arg_list.syntax[0] != NULL; pos++)
-    {
-      if (!tokcmp (arg_list.syntax[0], "->")
-	  || (!tokcmp (arg_list.syntax[0], ",") && !tokcmp (arg_list.syntax[1], "->")))
-	{
-	  /* We assume that arg_list has one
-	   * more valid token, the ')'.
-	   */
-	  new_scope->line += (arg_list.lines[0] + arg_list.lines[1]
-			      + (!tokcmp (arg_list.syntax[0], ",")) ? arg_list.lines[2] : 0);
-	  while (tokcmp (expression.syntax[0], ")"))
-	    {
-	      struct _MIXED * go_through;
-	      
-	      if (new_scope->variadic == NULL)
-		{
-		  new_scope->variadic = better_malloc (sizeof (struct _MIXED));
-		  go_through          = new_scope->variadic;
-		}
-	      else
-		{
-		  go_through->next = better_malloc (sizeof (struct _MIXED));
-		  go_through       = go_through->next;
-		}
-	      passed = eval (scope, expression);
-	      if (passed.type == ERROR_TYPE)
-		return passed;
-	      go_through->type = passed.type;
-	      go_through->next = NULL;
-	      if (passed.type == VAR_TYPE)
-	        go_through->var_p = passed.v_point;
-	      else
-		go_through->func_p = passed.f_point;
+   expression.syntax += get_ip ();
+   expression.lines  += get_ip ();
+   ip += get_ip ();
 
-	      while (expression.move_forward[0])
-		{
-		  expression.syntax++;
-		  expression.move_forward++;
-		  expression.lines++;
-		}
-	      if (!tokcmp (expression.syntax[0], ","))
-		expression.move_forward[0] = true;
-	    }
-	  break;
-	}
-      arg = eval (new_scope, arg_list);
+   arg_list              = make_word_list (evald.f_point->args, false);
+   new_scope->file_name  = evald.f_point->file_name;
+   new_scope->args       = evald.f_point->args;
+   new_scope->body       = evald.f_point->body;
+   new_scope->line       = evald.f_point->line;
+   new_scope->up         = evald.f_point->up;
+   new_scope->name       = evald.f_point->name;
+   new_scope->extrn_func = evald.f_point->extrn_func;
+   new_scope->variadic   = evald.f_point->variadic;
 
-      if (!tokcmp (expression.syntax[0], ")"))
-	return errorman_throw_reg (scope, "expected more arguments");
+   if (arg_list.syntax[0] != NULL && tokcmp (expression.syntax[0], ","))
+     return errorman_throw_reg (scope, "expected more arguments");
 
-      passed = eval (scope, expression);
+   ip++;
+   set_ip (0);
+   expression.syntax++;
+   expression.lines++;
 
-      if (arg.type == ERROR_TYPE)
-	return arg;
-      if (passed.type == ERROR_TYPE)
-	return passed;
-      
-      if (passed.type != arg.type)
-	return errorman_throw_reg (scope, "expected argument type does not match passed argument type");
+   if (arg_list.syntax[0] == NULL)
+     {
+       if (tokcmp (expression.syntax[-1], ")"))
+	 return errorman_throw_reg (scope, "expected fewer arguments");
+       return evald;
+     }
+   else if (tokcmp (expression.syntax[-1], ",")
+	    && !tokcmp (arg_list.syntax[0], "->"))
+     return evald;
 
-      if (arg.type == VAR_TYPE)
-	{
-	  hold                    = passed.v_point->next;
-	  passed.v_point->next    = NULL;
-	  temp                    = clone_var (passed.v_point, arg.v_point->name);
-	  passed.v_point->next    = hold;
-	  arg.v_point->array_up   = temp->array_up;
-	  
-	  mpz_set (arg.v_point->array_size, temp->array_size);
-	  mpc_set (&(arg.v_point->data), temp->data);
-	}
-      else if (arg.type == FUNCTION_TYPE)
-	{
-	  arg.f_point->line       = passed.f_point->line;
-	  arg.f_point->file_name  = passed.f_point->file_name;
-	  arg.f_point->args       = passed.f_point->args;
-	  arg.f_point->body       = passed.f_point->body;
-	  arg.f_point->usr_data   = passed.f_point->usr_data;
-	  arg.f_point->extrn_func = passed.f_point->extrn_func;
-	  arg.f_point->vars       = passed.f_point->vars;
-	  arg.f_point->funcs      = passed.f_point->funcs;
-	  arg.f_point->up         = passed.f_point->up;
-	  arg.f_point->caller     = passed.f_point->caller;
-	  arg.f_point->array_up   = passed.f_point->array_up;
-	  arg.f_point->variadic   = passed.f_point->variadic;
-	  
-	  mpz_set (arg.f_point->array_size, passed.f_point->array_size);
-	}
+   ipf = 0;
+   ipe = 0;
 
-      while (arg_list.move_forward[0])
-	{
-	  arg_list.syntax++;
-	  arg_list.move_forward++;
-	  arg_list.lines++;
-	}
-      while (expression.move_forward[0])
-	{
-	  expression.syntax++;
-	  expression.move_forward++;
-	  expression.lines++;
-	}
-      if (arg_list.syntax[0] == NULL)
-        {
-          if (tokcmp (expression.syntax[0], ")")
-	      && tokcmp (expression.syntax[0], ",") == 0)
-	    return errorman_throw_reg (scope, "expected fewer arguments");
-	  else
-	    break;
-        }
-      else if (tokcmp (arg_list.syntax[0], ",") == 0)
-	{
-	  if (tokcmp (expression.syntax[0], ",") != 0)
-	    return errorman_throw_reg (scope, "expected more arguments");
-	  else
-	    arg_list.move_forward[0] = expression.move_forward[0] = true;
-	}
-      else
-	return errorman_throw_reg (new_scope, "syntax error in argument declaration");
-	// return errorman_throw_reg (scope, "syntax error in argument declarations");
-    }
-  expression.move_forward[0] = true;
+   for (pos = 0; arg_list.syntax[0] != NULL; pos++)
+     {
+       if (!tokcmp (arg_list.syntax[0], "->")
+	   || (!tokcmp (arg_list.syntax[0], ",") && !tokcmp (arg_list.syntax[1], "->")))
+	 {
+	   new_scope->line += (arg_list.lines[0] + arg_list.lines[1]
+			       + (!tokcmp (arg_list.syntax[0], ",")) ? arg_list.lines[2] : 0);
+	   ipe = 0;
+	   while (tokcmp (expression.syntax[0], ")"))
+	     {
+	       struct _MIXED * go_through;
+
+	       if (new_scope->variadic == NULL)
+		 {
+		   new_scope->variadic = better_malloc (sizeof (struct _MIXED));
+		   go_through          = new_scope->variadic;
+		 }
+	       else
+		 {
+		   go_through->next = better_malloc (sizeof (struct _MIXED));
+		   go_through       = go_through->next;
+		 }
+	       set_ip (ipe);
+	       passed = eval (scope, expression);
+	       ipe = get_ip ();
+
+	       if (passed.type == ERROR_TYPE)
+		 return passed;
+
+	       go_through->type = passed.type;
+	       go_through->next = NULL;
+
+	       if (passed.type == VAR_TYPE)
+		 go_through->var_p = passed.v_point;
+	       else
+		 go_through->func_p = passed.f_point;
+
+	       expression.syntax += ipe;
+	       expression.lines  += ipe;
+
+	       if (!tokcmp (expression.syntax[0], ","))
+		 next_inst ();
+	       ipe = 1;
+	     }
+	   break;
+	 }
+
+       set_ip (0);
+       arg = eval (new_scope, arg_list);
+       ipf = get_ip ();
+
+       if (!tokcmp (expression.syntax[0], ")"))
+	 return errorman_throw_reg (scope, "expected more arguments");
+
+       set_ip (0);
+       passed = eval (scope, expression);
+       ipe  = get_ip ();
+       ip  += ipe; 
+
+       if (arg.type == ERROR_TYPE)
+	 return arg;
+       if (passed.type == ERROR_TYPE)
+	 return passed;
+
+       if (passed.type != arg.type)
+	 return errorman_throw_reg (scope, "expected argument type does not match passed argument type");
+
+       if (arg.type == VAR_TYPE)
+	 {
+	   hold                    = passed.v_point->next;
+	   passed.v_point->next    = NULL;
+	   temp                    = clone_var (passed.v_point, arg.v_point->name);
+	   passed.v_point->next    = hold;
+	   arg.v_point->array_up   = temp->array_up;
+
+	   mpz_set (arg.v_point->array_size, temp->array_size);
+	   mpc_set (&(arg.v_point->data), temp->data);
+	 }
+       else if (arg.type == FUNCTION_TYPE)
+	 {
+	   arg.f_point->line       = passed.f_point->line;
+	   arg.f_point->file_name  = passed.f_point->file_name;
+	   arg.f_point->args       = passed.f_point->args;
+	   arg.f_point->body       = passed.f_point->body;
+	   arg.f_point->usr_data   = passed.f_point->usr_data;
+	   arg.f_point->extrn_func = passed.f_point->extrn_func;
+	   arg.f_point->vars       = passed.f_point->vars;
+	   arg.f_point->funcs      = passed.f_point->funcs;
+	   arg.f_point->up         = passed.f_point->up;
+	   arg.f_point->caller     = passed.f_point->caller;
+	   arg.f_point->array_up   = passed.f_point->array_up;
+	   arg.f_point->variadic   = passed.f_point->variadic;
+
+	   mpz_set (arg.f_point->array_size, passed.f_point->array_size);
+	 }
+
+       arg_list.syntax   += ipf;
+       arg_list.lines    += ipf;
+       expression.syntax += ipe;
+       expression.lines  += ipe;
+
+       if (arg_list.syntax[0] == NULL)
+	 {
+	   if (tokcmp (expression.syntax[0], ")")
+	       && tokcmp (expression.syntax[0], ",") == 0)
+	     return errorman_throw_reg (scope, "expected fewer arguments");
+	   else
+	     break;
+	 }
+       else if (tokcmp (arg_list.syntax[0], ",") == 0)
+	 {
+	   if (tokcmp (expression.syntax[0], ",") != 0)
+	     return errorman_throw_reg (scope, "expected more arguments");
+	   else
+	     arg_list.move_forward[0] = expression.move_forward[0] = true;
+	 }
+       else
+	 return errorman_throw_reg (new_scope, "syntax error in argument declaration");
+
+       /* There are more arguments, so we skip the commas. */
+       arg_list.syntax   ++;
+       arg_list.lines    ++;
+       expression.syntax ++;
+       expression.lines  ++;
+       ip                ++;
+     }
+
+  set_ip (ip + 1);
   return evald;
 }
 
 FACT_t
 new_scope (func_t *scope, word_list expression)
 {
+  /* new_scope - run a function and save its scope. This is a really
+   * pretty simple function, I don't think that many will have trouble
+   * understanding it. Oh wait, I forgot about the cast. It is a lot
+   * of fun.
+   */
   func_t * new_scope;
   FACT_t   prepared;
   FACT_t   return_value;
+  unsigned long ip;
 
   new_scope = alloc_func ();
   prepared  = prepare_function (scope, new_scope, expression);
 
   if (prepared.type == ERROR_TYPE) 
-    return prepared; /* ha ha, that makes me chortle */
+    return prepared; /* Ha ha! "Return prepared!" */
 
   new_scope->caller = scope;
 
   if (new_scope->extrn_func != NULL)
-    /* Well that is, um, oh wow. */ 
     prepared = (((FACT_t (*)(func_t *)) new_scope->extrn_func) (new_scope));
   else
     {
       new_scope->line += strcount ('\n', prepared.f_point->body[0]);
-      prepared         = procedure (new_scope, make_word_list (prepared.f_point->body + 1, false));
+
+      /* Hold the instruction pointer for later and reset it.  */
+      ip = get_ip ();
+      reset_ip ();
+
+      /* Run the function. */
+      prepared = procedure (new_scope, make_word_list (prepared.f_point->body + 1, false));
+
+      /* Restore the instruction pointer. */
+      set_ip (ip);
     }
 
   if (prepared.type == ERROR_TYPE)
     return prepared;
-
+  
   return_value.f_point       = new_scope;
   return_value.type          = FUNCTION_TYPE;
   return_value.return_signal = false;
@@ -324,9 +338,15 @@ new_scope (func_t *scope, word_list expression)
 FACT_t
 run_func (func_t *scope, word_list expression_list)
 {
+  /* run_func - prepare and run a function without saving its
+   * scope. Not much goes on in this function, so I tried to
+   * make it as elegent as possible (although I'm not really
+   * good at that).
+   */
   func_t * new_scope;
   FACT_t   return_value;
   FACT_t   prepared;
+  unsigned long ip;
 
   new_scope = alloc_func ();
   prepared  = prepare_function (scope, new_scope, expression_list);
@@ -340,8 +360,11 @@ run_func (func_t *scope, word_list expression_list)
     return_value = (((FACT_t (*)(func_t *)) new_scope->extrn_func) (new_scope));
   else
     {
-      new_scope->line += strcount ('\n', prepared.f_point->body[0]); 
-      return_value     = procedure (new_scope, make_word_list (prepared.f_point->body + 1, false));
+      new_scope->line += strcount ('\n', prepared.f_point->body[0]);
+      ip = get_ip ();
+      reset_ip ();
+      return_value = procedure (new_scope, make_word_list (prepared.f_point->body + 1, false));
+      set_ip (ip);      
     }
 
   return_value.return_signal = false;
@@ -354,16 +377,13 @@ FACT_t
 in_scope (func_t *scope, word_list expression)
 {
   FACT_t new_scope;
-  FACT_t to_return;
-
+  
   new_scope = eval (scope, expression);
 
   if (new_scope.type != FUNCTION_TYPE)
     return errorman_throw_reg (scope, "the argument to : must be a function");
   
-  to_return = eval (new_scope.f_point, expression);
-
-  return to_return;
+  return eval (new_scope.f_point, expression);
 }
 
 FACT_t

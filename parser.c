@@ -382,6 +382,8 @@ get_block_code (char *block)
     return SEMI;
   else if (!strcmp (block, "return"))
     return RETURN_STAT;
+  else if (!strcmp (block, "break"))
+    return BREAK_SIG;
   else
     return UNKNOWN;
 }
@@ -620,6 +622,8 @@ precedence_level1 (linked_word *scan)
 	case NOP_BRACKET:
 	case OP_BRACKET:
 	case OP_PAREN:
+	  //case DEF:
+	  //case DEFUNC:
 	  rev_shunting_yard (scan->hidden);
 	  break;
 
@@ -791,13 +795,31 @@ precedence_level4 (linked_word *scan)
 
 	case COMB_ARR:
 	case PLUS:
-	case MINUS:
 	  hold = scan->next;
 	  while (scan->previous != NULL
 		 && scan->previous->code != BIT_AND
 		 && scan->previous->code != BIT_IOR
 		 && scan->previous->code != BIT_XOR
 		 && isnotAS (scan->previous->code)
+		 && isnotSE (scan->previous->code)
+		 && isnotOPC (scan->previous->code)
+		 && isnotASN (scan->previous->code)
+		 && isnotCMP (scan->previous->code))
+	    swap (scan);
+
+	  if (hold->code == MINUS)
+	    hold = hold->next;
+	  
+	  scan = hold;
+	  break;
+	  
+	case MINUS:
+	  hold = scan->next;
+	  while (scan->previous != NULL
+		 && scan->previous->code != BIT_AND
+		 && scan->previous->code != BIT_IOR
+		 && scan->previous->code != BIT_XOR
+		 && scan->previous->code != MINUS
 		 && isnotSE (scan->previous->code)
 		 && isnotOPC (scan->previous->code)
 		 && isnotASN (scan->previous->code)
@@ -1283,10 +1305,6 @@ get_exp_length (char **words, int end_block)
 	  || words[index][lines] == '{')
 	index += get_exp_length (words + index + 1,
 				 get_end_block (words[index][lines]));
-      else if (words[index][lines] == 0x1
-	       && words[index][lines + 1] == 0x3
-	       && words[index][lines + 2] == 0x5)
-	index += get_exp_length (words + index + 1, ')');
     }
 
   return (words[index] == NULL) ? index : index + 1;
@@ -1313,10 +1331,7 @@ get_exp_length_first (char **words, int end_block)
 	  
 	index += get_exp_length (words + index + 1,
 				 get_end_block (words[index][lines]));
-      else if (words[index][lines] == '{'
-	       || (words[index][lines] == BYTECODE
-		   && words[index][lines + 1] == STATEMENT
-		   && words[index][lines + 2] == CRL))
+      else if (words[index][lines] == '{')
 	return index + get_exp_length (words + index + 1, '}') + 1;
     }
 

@@ -3,6 +3,7 @@
 FACT_t
 if_statement (func_t *scope, word_list expression_list, bool *success)
 {
+  unsigned long ip;
   FACT_t return_value;
   FACT_t conditional;
   func_t temp_scope =
@@ -24,13 +25,15 @@ if_statement (func_t *scope, word_list expression_list, bool *success)
   
   *success = true;
   mpz_init_set_ui (temp_scope.array_size, 1);
+
+  expression_list.syntax++;
+  expression_list.lines++;
   
-  if (tokcmp (expression_list.syntax[0], "(")
-      && (expression_list.syntax[0][0] != 0x1
-	  || expression_list.syntax[0][1] != 0x3
-	  || expression_list.syntax[0][2] != 0x5))
+  if (tokcmp (expression_list.syntax[0], "("))
     return errorman_throw_reg (scope, "expected '(' after if statement");
 
+  ip = get_ip ();
+  set_ip (0);
   conditional = eval (&temp_scope, expression_list);
   scope->line = temp_scope.line;
 
@@ -55,18 +58,12 @@ if_statement (func_t *scope, word_list expression_list, bool *success)
       return return_value;
     }
 
-  while (expression_list.move_forward[0])
-    {
-      expression_list.syntax++;
-      expression_list.move_forward++;
-      expression_list.lines++;
-    }
-  
   return_value = eval_expression (&temp_scope, expression_list);
   scope->line  = temp_scope.line;
   
   if (return_value.type == ERROR_TYPE)
     return_value.error.scope = scope;
+  ip += get_ip ();
     
   return return_value;
 }
@@ -185,9 +182,13 @@ else_clause (func_t *scope, word_list expression)
       .next       = NULL        ,
       .variadic   = NULL        ,
     };
+  
+  expression.syntax++;
+  expression.lines++;
 
   mpz_init_set_ui (temp_scope.array_size, 1);
 
+  reset_ip ();
   return_value = eval_expression (&temp_scope, expression);
   scope->line  = temp_scope.line; 
 
@@ -200,9 +201,7 @@ else_clause (func_t *scope, word_list expression)
 FACT_t
 while_loop (func_t *scope, word_list expression)
 {
-  int       jump_len;
   int       index;
-  int       exp_len;
   FACT_t    conditional_evald;
   FACT_t    block_evald;
   word_list conditional_exp;
@@ -225,26 +224,21 @@ while_loop (func_t *scope, word_list expression)
 
   mpz_init_set_ui (temp_scope.array_size, 1);
 
+  expression.syntax++;
+  expression.lines++;
+
   if (expression.syntax[0] == NULL || expression.syntax[0][0] != '(')
     return errorman_throw_reg (scope, "expected '(' after while");
 
   block_evald.type         = VAR_TYPE;
   block_evald.v_point      = alloc_var ();
   block_evald.break_signal = false;
-  jump_len                 = 0;
-  exp_len                  = 0;
 
   for (;;)
     {
-      expression.syntax       -= jump_len;
-      expression.move_forward -= jump_len;
-      expression.lines        -= jump_len;
-      temp_scope.line          = scope->line;
-      jump_len                 = 0;
-      
-      for (index = 0; expression.syntax[index] != NULL; index++)
-	expression.move_forward[index] = false;
-      
+      temp_scope.line = scope->line;
+
+      reset_ip ();
       conditional_evald = eval (&temp_scope, expression);
       
       if (conditional_evald.type == ERROR_TYPE)
@@ -260,16 +254,7 @@ while_loop (func_t *scope, word_list expression)
 
       if (mpc_cmp_si (conditional_evald.v_point->data, 0) == 0)
         break;
-
-      while (expression.move_forward[0])
-	{
-	  expression.move_forward[0] = false;
-	  expression.syntax++;
-	  expression.move_forward++;
-	  expression.lines++;
-	  jump_len++;
-	}
-
+      
       block_evald = eval_expression (&temp_scope, expression);
 
       if (block_evald.type == ERROR_TYPE || block_evald.return_signal == true || block_evald.break_signal == true)
@@ -283,11 +268,9 @@ while_loop (func_t *scope, word_list expression)
 FACT_t
 for_loop (func_t *scope, word_list expression)
 {
-  /* I would say that this function could be cleaned up
-   * a fairly large amount.
-   */
+  unsigned long ip;
+  unsigned long arr_pos;
   int         index;
-  int         arr_pos;
   int         hold_lines;
   mpc_t       one;
   var_t     * var_scroller;
@@ -321,16 +304,11 @@ for_loop (func_t *scope, word_list expression)
       return index_value;
     }
 
-  while (expression.move_forward[0])
-    {
-      expression.syntax++;
-      expression.move_forward++;
-      expression.lines++;
-    }
-
-  temp_scope.line           += expression.lines[0];
-  expression.move_forward[0] = true;
-  limit_value                = eval (&temp_scope, expression);
+  /* Skip the ',' */
+  next_inst ();
+  
+  temp_scope.line += expression.lines[0];
+  limit_value      = eval (&temp_scope, expression);
 
   if (limit_value.type == ERROR_TYPE)
     {
@@ -344,33 +322,23 @@ for_loop (func_t *scope, word_list expression)
       return errorman_throw_reg (scope, "error in for loop; index type does not match destination type");
     }
 
-  while (expression.move_forward[0])
-    {
-      expression.syntax++;
-      expression.move_forward++;
-      expression.lines++;
-    }
+  /* Since the parser would have rejected the code if a then didn't
+   * follow the for statement, we can safely skip the token without
+   * worrying about it.
+   */
+  next_inst ();
   
-  if (tokcmp (expression.syntax[0], "then"))
-    {
-      scope->line = temp_scope.line;
-      return errorman_throw_reg (scope, "syntax error in for loop; missing 'then'");
-    }
-
   temp_scope.line += expression.lines[0];
-
-  expression.syntax++;
-  expression.move_forward++;
-  expression.lines++;
 
   mpc_init (&one);
   mpc_set_ui (&one, 1);
 
-  arr_pos                  = 0;
   block_evald.type         = VAR_TYPE;
   block_evald.v_point      = alloc_var ();
   block_evald.break_signal = false;
   hold_lines               = temp_scope.line;
+
+  ip = get_ip ();
 
   for (;;)
     {
@@ -411,13 +379,13 @@ for_loop (func_t *scope, word_list expression)
 		   index < arr_pos; index++)
 		func_scroller = func_scroller->next;
 
-	      index_value.f_point->args       = limit_value.f_point->args;
-	      index_value.f_point->body       = limit_value.f_point->body;
-	      index_value.f_point->vars       = limit_value.f_point->vars;
-	      index_value.f_point->funcs      = limit_value.f_point->funcs;
-	      index_value.f_point->up         = limit_value.f_point->up;
-	      index_value.f_point->array_up   = limit_value.f_point->array_up;
-	      index_value.f_point->next       = limit_value.f_point->next;
+	      index_value.f_point->args     = limit_value.f_point->args;
+	      index_value.f_point->body     = limit_value.f_point->body;
+	      index_value.f_point->vars     = limit_value.f_point->vars;
+	      index_value.f_point->funcs    = limit_value.f_point->funcs;
+	      index_value.f_point->up       = limit_value.f_point->up;
+	      index_value.f_point->array_up = limit_value.f_point->array_up;
+	      index_value.f_point->next     = limit_value.f_point->next;
 
 	      mpz_set (index_value.f_point->array_size, limit_value.f_point->array_size);
 	    }
@@ -428,16 +396,12 @@ for_loop (func_t *scope, word_list expression)
 	    }
 	}
 
-      if (strcmp (expression.syntax[0], ";"))
+      if (strcmp (expression.syntax[ip], ";"))
 	block_evald = eval_expression (&temp_scope, expression);
 
       if (block_evald.type == ERROR_TYPE || block_evald.return_signal == true || block_evald.break_signal == true)
 	break;
-
-      for (index = 0; expression.syntax[index] != NULL; index++)
-	expression.move_forward[index] = false;
-
-      arr_pos++;
+      set_ip (ip);
     }
   scope->line = temp_scope.line;
   return block_evald;

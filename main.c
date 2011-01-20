@@ -14,22 +14,22 @@ process_args (int argc, char **argv)
  
   scope       = alloc_func ();
   scope->name = "main";
-  init_std_prims (scope);
+  init_BIFs (scope);
 
   file_open = run_file (scope, "/etc/FACT/include/stdlib.ft", true);
 
   if (file_open.type == ERROR_TYPE)
-    errorman_dump (file_open.error, 0, "/etc/FACT/include/stdlib.ft", scope->file_name);
+    errorman_dump (file_open.error);
 
   for (;;)
     {
       static struct option long_options[] =
 	{
-	  {"stdin",     no_argument,       &cmdln,   1},
-	  {"no-stdin",  no_argument,       &cmdln,   0},
-	  {"shebang",   required_argument, 0, 'i'},
-	  {"file",      required_argument, 0, 'f'},
-	  {0, 0, 0, 0}
+	  { "stdin"    , no_argument       , &cmdln , 1   } ,
+	  { "no-stdin" , no_argument       , &cmdln , 0   } ,
+	  { "shebang"  , required_argument , 0      , 'i' } ,
+	  { "file"     , required_argument , 0      , 'f' } ,
+	  { 0          , 0                 , 0      , 0   } ,
 	};
 
       int option_index = 0;
@@ -59,7 +59,7 @@ process_args (int argc, char **argv)
 	  file_open = run_file (scope, optarg, false);
 
 	  if (file_open.type == ERROR_TYPE)
-	    errorman_dump (file_open.error, 0, optarg, scope->file_name);
+	    errorman_dump (file_open.error);
 
 	  break;
 
@@ -81,7 +81,7 @@ process_args (int argc, char **argv)
 	  file_open = run_file (scope, optarg, true);
 
 	  if (file_open.type == ERROR_TYPE)
-	    errorman_dump (file_open.error, 0, optarg, scope->file_name);
+	    errorman_dump (file_open.error);
 	  exit (0);
 
 	case '?':

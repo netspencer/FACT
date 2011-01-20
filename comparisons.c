@@ -146,7 +146,7 @@ more_equal (FACT_t arg1, FACT_t arg2)
 /* * * * * * * * * * * * * * * * * * * * * * *
  * less: checks if the first argument is     *
  * smaller in value than the other arguemnt. *
- * If either argument is not a var_tiable, it  *
+ * If either argument is not a variable, it  *
  * throws an error.                          *
  * * * * * * * * * * * * * * * * * * * * * * */
 
@@ -159,7 +159,7 @@ less (FACT_t arg1, FACT_t arg2)
   return_value.v_point = alloc_var ();
 
   if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
-    return errorman_throw_reg (NULL, "arguments to < must be vars");
+    return errorman_throw_reg (NULL, "arguments to < must be variables");
 
   if (mpc_cmp (arg1.v_point->data, arg2.v_point->data) < 0)
     mpc_set_si (&(return_value.v_point->data), 1);
@@ -171,7 +171,7 @@ less (FACT_t arg1, FACT_t arg2)
  * less_equal: checks if the first argument  *
  * is smaller or equal in value to the other *
  * arguemnt. If either argument is not a     *
- * var_tiable, it throws an error.             *
+ * variable, it throws an error.             *
  * * * * * * * * * * * * * * * * * * * * * * */
 
 FACT_t
@@ -183,7 +183,7 @@ less_equal (FACT_t arg1, FACT_t arg2)
   return_value.v_point = alloc_var ();
 
   if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
-    return errorman_throw_reg (NULL, "arguments to <= must be vars");
+    return errorman_throw_reg (NULL, "arguments to <= must be variables");
 
   if (mpc_cmp (arg1.v_point->data, arg2.v_point->data) <= 0)
     mpc_set_si (&(return_value.v_point->data), 1);
@@ -191,91 +191,68 @@ less_equal (FACT_t arg1, FACT_t arg2)
   return return_value;
 }
 
-/* * * * * * * * * * * * * * * * * * * * * * *
- * This function is for checking how long an *
- * expression is. It's used by the "and"     *
- * function. It's not very good but works I  *
- * guess.                                    *
- * * * * * * * * * * * * * * * * * * * * * * */
-
 static int
 statement_length (char **words)
 {
-  int pos;
-  int w_code;
-  int arguments_left;
+  int    index          ;
+  int    w_code         ;
+  int    arguments_left ;
+  char * token          ;
 
-  // extern int get_exp_length_first (char **, int);
-  // extern word_code get_block_code (char *);
-
-  for (pos = 0, arguments_left = 1; arguments_left > 0 && words[pos] != NULL; pos++, arguments_left--)
+  arguments_left = 1;
+  
+  for (index = 0; arguments_left > 0 && words[index] != NULL; index++, arguments_left--)
     {
-      switch (w_code = get_block_code (words[pos]))
+      token  = get_bcode_label (words[index]);
+      w_code = (token != NULL) ? get_block_code (token) : get_block_code (words[index]);
+      
+      switch (w_code)
 	{
 	case CL_PAREN:
 	case CL_BRACKET:
 	case CL_CURLY:
-	  return pos; 
+	  return index; 
 
 	case OP_BRACKET:
 	case NOP_BRACKET:
-	  pos += get_exp_length (words + pos + 1, ']');
-	  if (get_block_code (words[pos + 1]) == OP_BRACKET)
+	  index += get_exp_length  (words + index + 1, ']');
+	  token  = get_bcode_label (words[index + 1]);
+	  w_code = (token != NULL) ? get_block_code (token) : get_block_code (words[index + 1]);
+
+	  if (w_code == OP_BRACKET)
 	    arguments_left++;
 	  break;
 
-	case OP_CURLY: /* we are assuming that the user is an idiot and we have to check for this */
-	  pos += get_exp_length (words + pos + 1, '}');
+	case OP_CURLY:
+	  index += get_exp_length (words + index + 1, '}');
 	  break;
 
 	case OP_PAREN:
-	  pos += get_exp_length (words + pos + 1, ')');
+	  index += get_exp_length (words + index + 1, ')');
 	  break;
-	  /*
-	    I'm not sure just adding FUNC_RET and FUNC_OBJ
-	    will work, but it's worth a shot.
-	  */
-	case FUNC_RET:
-	case FUNC_OBJ:
-	  arguments_left++;
-	  break;
-	  
-	case SET:
-	case PLUS:
-	case MINUS:
-	case MULTIPLY:
-	case DIVIDE:
-	case MOD:
+
+	case OR        :
+	case EQ        :
+	case AND       :
+	case MOD       :
+	case NEQ       :
+	case SET       :
+	case MORE      :
+	case PLUS      :
+	case MINUS     :
+	case DIVIDE    :
+	case LESS_EQ   :
+	case MORE_EQ   :
+	case MULTIPLY  :
 	case ADD_ASSIGN:
-	case SUB_ASSIGN:
 	case DIV_ASSIGN:
 	case MOD_ASSIGN:
-	case AND:
-	case OR:
-	case EQ:
-	case NEQ:
-	case MORE:
-	case LESS_EQ:
-	case MORE_EQ:
+	case SUB_ASSIGN:
 	  arguments_left += 2;
 	  break;
 
-	  /*
 	case FUNC_RET:
 	case FUNC_OBJ:
-	  while ((w_code = get_block_code (words[++pos])) != FUNC_END
-		 && w_code != END)
-	    {
-	      if (w_code == OP_CURLY)
-		pos += get_exp_length (words + pos + 1, '}');
-	      else if (w_code == OP_BRACKET || w_code == NOP_BRACKET)
-		pos += get_exp_length (words + pos + 1, ']');
-	      else if (w_code == OP_PAREN)
-		pos += get_exp_length (words + pos + 1, ')');
-	    }
-	  break;
-	  */
-
 	case IN_SCOPE:
 	case SIZE:
 	  arguments_left++;
@@ -283,21 +260,26 @@ statement_length (char **words)
 
 	case DEF:
 	case DEFUNC:
-	  while ((w_code = get_block_code (words[++pos])) != UNKNOWN
-		 && w_code != END)
+	  for (;;)
 	    {
-	      if (w_code == OP_CURLY)
-		pos += get_exp_length (words + pos + 1, '}');
+	      token  = get_bcode_label (words[index]);
+	      w_code = (token != NULL) ? get_block_code (token) : get_block_code (words[index]);
+	      if (w_code == UNKNOWN || w_code == END)
+		break;
+	      else if (w_code == OP_CURLY)
+		index += get_exp_length (words + index + 1, '}');
 	      else if (w_code == OP_BRACKET || w_code == NOP_BRACKET)
-		pos += get_exp_length (words + pos + 1, ']');
+		index += get_exp_length (words + index + 1, ']');
 	      else if (w_code == OP_PAREN)
-		pos += get_exp_length (words + pos + 1, ')');
+		index += get_exp_length (words + index + 1, ')');
 	    }
 	  break;
 
 	case UNKNOWN:
-	  if (!tokcmp (words[pos], "?")
-	      || get_block_code (words[pos + 1]) == OP_BRACKET)
+	  token  = get_bcode_label (words[index + 1]);
+	  w_code = (token != NULL) ? get_block_code (token) : get_block_code (words[index + 1]);
+
+	  if (w_code == OP_BRACKET)
 	    arguments_left++;
 	  break;
 
@@ -306,127 +288,113 @@ statement_length (char **words)
 	}
     }
 
-  return pos;
+  return index;
 }
-
-/* * * * * * * * * * * * * * * * * * * * * * *
- * and: checks if both arguments are true.   *
- * In order for an argument to be true it    *
- * must not be equal to zero. This function  *
- * needs to be treaty differently than other *
- * math functions, so that it doesn't return *
- * an error if the second argument is        *
- * erroneous and the first argument          *
- * evaluates to false.                       *
- * * * * * * * * * * * * * * * * * * * * * * */
 
 FACT_t
 and (func_t *scope, word_list expression)
 {
-  int    pos;
-  int    len;
-  FACT_t arg1;
-  FACT_t arg2;
-  FACT_t return_value;
+  int           len          ;
+  FACT_t        arg1         ;
+  FACT_t        arg2         ;
+  FACT_t        return_value ;
+  unsigned long ip           ;
 
-  arg1 = eval (scope, expression);
-
-  if (arg1.type == ERROR_TYPE)
+  ip = get_ip ();
+  reset_ip ();
+  
+  expression.syntax += ip;
+  expression.lines  += ip;
+  
+  if ((arg1 = eval (scope, expression)).type == ERROR_TYPE)
     return arg1;
   else if (arg1.type == FUNCTION_TYPE)
-    return errorman_throw_reg (scope, "arguments to && must be var_tiables");
+    return errorman_throw_reg (scope, "arguments to && must be variables");
 
   return_value.type    = VAR_TYPE;
   return_value.v_point = alloc_var ();
 
-  while (expression.move_forward[0])
+  expression.syntax += get_ip ();
+  expression.lines  += get_ip ();
+
+  len = statement_length (expression.syntax);
+
+  if (!mpc_cmp_si (arg1.v_point->data, 0))
     {
-      expression.syntax++;
-      expression.move_forward++;
-      expression.lines++;
-    }
-
-  len = statement_length (expression.syntax) + 1;
-
-  if (mpc_cmp_si (arg1.v_point->data, 0) == 0)
-    {
-      for (pos = 0; pos < len; pos++)
-	expression.move_forward[pos] = true;
-
+      move_ip (ip + len);
       return return_value;
     }
-
-  arg2 = eval (scope, expression);
   
-  if (arg2.type == ERROR_TYPE)
+  ip += get_ip ();
+  reset_ip ();
+
+  if ((arg2 = eval (scope, expression)).type == ERROR_TYPE)
     return arg1;
   else if (arg2.type == FUNCTION_TYPE)
-    return errorman_throw_reg (scope, "arguments to && must be var_tiables");
+    return errorman_throw_reg (scope, "arguments to && must be variables");
 
   if (mpc_cmp_si (arg2.v_point->data, 0) == 0)
     return return_value;
 
   mpc_set_si (&(return_value.v_point->data), 1);
 
+  move_ip (ip);
+
   return return_value;
 }
 
-/* * * * * * * * * * * * * * * * * * * * * *
- * or: checks if at least one of the       *
- * passed arguments evaluate to true.      *
- * * * * * * * * * * * * * * * * * * * * * */
-
 FACT_t
-or
-(func_t *scope, word_list expression)
+or (func_t *scope, word_list expression)
 {
-  int pos;
-  int len;
+  int           len          ;
+  FACT_t        arg1         ;
+  FACT_t        arg2         ;
+  FACT_t        return_value ;
+  unsigned long ip           ;
 
-  FACT_t arg1;
-  FACT_t arg2;
-  FACT_t return_value;
+  ip = get_ip ();
+  reset_ip ();
 
-  arg1 = eval (scope, expression);
-
-  if (arg1.type == ERROR_TYPE)
+  expression.syntax += ip;
+  expression.lines  += ip;
+  
+  if ((arg1 = eval (scope, expression)).type == ERROR_TYPE)
     return arg1;
   else if (arg1.type == FUNCTION_TYPE)
-    return errorman_throw_reg (scope, "arguments to || must be var_tiables");
+    return errorman_throw_reg (scope, "arguments to || must be variables");
 
   return_value.type    = VAR_TYPE;
   return_value.v_point = alloc_var ();
 
   mpc_set_ui (&(return_value.v_point->data), 1);
 
-  while (expression.move_forward[0])
+  expression.syntax += get_ip ();
+  expression.lines  += get_ip ();
+
+  len = statement_length (expression.syntax);
+
+  if (mpc_cmp_si (arg1.v_point->data, 0))
     {
-      expression.syntax++;
-      expression.move_forward++;
-      expression.lines++;
-    }
-
-  len = statement_length (expression.syntax) + 1;
-
-  if (mpc_cmp_si (arg1.v_point->data, 0) != 0)
-    {
-      for (pos = 0; pos < len; pos++)
-	expression.move_forward[pos] = true;
-
+      move_ip (ip + len);
       return return_value;
     }
 
+  ip += get_ip ();
+  reset_ip ();
+
   arg2 = eval (scope, expression);
   
-  if (arg2.type == ERROR_TYPE)
+  if ((arg2 = eval (scope, expression)).type == ERROR_TYPE)
     return arg1;
   else if (arg2.type == FUNCTION_TYPE)
-    return errorman_throw_reg (scope, "arguments to || must be var_tiables");
+    return errorman_throw_reg (scope, "arguments to || must be variables");
 
   if (mpc_cmp_si (arg2.v_point->data, 0) != 0)
     return return_value;
 
   mpc_set_ui (&(return_value.v_point->data), 1);
+
+  move_ip (ip);
 
   return return_value;
 }

@@ -398,20 +398,26 @@ negative (func_t *scope, word_list expression)
 FACT_t
 paren (func_t *scope, word_list expression)
 {
-  int    pos;
+  int    index;
   FACT_t return_value;
-  
-  pos = get_exp_length (expression.syntax, ')');
+  unsigned long ip;
 
-  if (pos == 0)
+  expression.syntax += get_ip ();
+  expression.lines  += get_ip ();
+
+  ip = get_ip ();
+  reset_ip ();
+  
+  index = get_exp_length (expression.syntax, ')');
+
+  if (index == 0)
     return errorman_throw_reg (scope, "parenthesis has no body");
-  else if (expression.syntax[pos - 1][0] != ')')
-    return errorman_throw_reg (scope, "syntax error; expected closing ')'");
- 
-  expression.syntax[pos - 1]       = NULL;
-  return_value                     = eval (scope, expression);
-  expression.syntax[pos - 1]       = ")";
-  expression.move_forward[pos - 1] = true;
+   
+  expression.syntax[index - 1] = NULL;
+  return_value                 = eval (scope, expression);
+  expression.syntax[index - 1] = ")";
+
+  set_ip (ip + index);
 
   return return_value;
 }

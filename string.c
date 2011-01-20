@@ -1,4 +1,4 @@
-#include "common.h"
+#include "string.h"
 
 FACT_t
 new_string (func_t *scope, word_list expression)
@@ -13,6 +13,9 @@ new_string (func_t *scope, word_list expression)
   string            = alloc_var ();
   return_value.type = VAR_TYPE;
 
+  expression.syntax += get_ip ();
+  expression.lines  += get_ip ();
+  
   if (tokcmp (expression.syntax[0], "\"") == 0)
     return_value.v_point = string;
   else
@@ -71,7 +74,7 @@ new_string (func_t *scope, word_list expression)
 	}
       mpz_set (return_value.v_point->array_size, length);
     }
-  expression.move_forward[0] = expression.move_forward[1] = true;
+  move_ip (2);
 
   return return_value;
 }

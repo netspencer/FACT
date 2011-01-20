@@ -89,20 +89,28 @@ run_file (func_t *scope, const char *filename, bool silent)
 	}
 
       formatted = create_list (parsed_input);
+      formatted = set_list (formatted, END);
       for (formatted = set_list (formatted, END); formatted->previous != NULL; formatted = formatted->previous);
 
-      /* ---- Check for parsing errors. ---- */
       check_line = end_line;
+      if (check_for_errors (formatted, 0, &check_line, false))
+	{
+	  print_parsing_error ("stdin", hold_line);
+	  continue;
+	}
+
       for (rev_shunting_yard (formatted); formatted->previous != NULL; formatted = formatted->previous);
+      
       set_link (formatted);
       parsed_input = convert_link (formatted);
       compile_to_bytecode (parsed_input);
+      reset_ip ();
 
       returned = eval_expression (scope, make_word_list (parsed_input, true));
 
       if (returned.type == ERROR_TYPE)
         {
-          errorman_dump (returned.error, returned.error.scope->line, filename, returned.error.scope->file_name);
+          errorman_dump (returned.error);
           continue;
         }
 

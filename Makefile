@@ -1,15 +1,15 @@
 CC = gcc
 BIT = 64 # Set to either 64 or 32
-CFLAGS = -ggdb -m$(BIT) -rdynamic -pg 
+CFLAGS = -ggdb -m$(BIT) -rdynamic
 PROG = FACT-BETA
 
 SRCS = main.c malloc_replacements.c functions.c string.c \
-	management.c scroll.c math.c mem.c shell.c \
+	management.c math.c mem.c shell.c \
 	comparisons.c parser.c primitives.c eval.c \
 	errorman.c statements.c utilities.c execfile.c \
 	mpc_functions.c modules.c error_check.c bytecode.c
 
-LIBS = -lgc -lgmp -ldl
+LIBS = -lgc -lgmp -ldl 
 
 all: $(PROG)
 	cd ./stdlib ; make ; 
