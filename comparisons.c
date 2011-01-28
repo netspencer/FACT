@@ -382,17 +382,15 @@ or (func_t *scope, word_list expression)
   ip += get_ip ();
   reset_ip ();
 
-  arg2 = eval (scope, expression);
-  
   if ((arg2 = eval (scope, expression)).type == ERROR_TYPE)
-    return arg1;
+    return arg2;
   else if (arg2.type == FUNCTION_TYPE)
     return errorman_throw_reg (scope, "arguments to || must be variables");
 
-  if (mpc_cmp_si (arg2.v_point->data, 0) != 0)
+  if (mpc_cmp_si (arg2.v_point->data, 0))
     return return_value;
 
-  mpc_set_ui (&(return_value.v_point->data), 1);
+  mpc_set_ui (&(return_value.v_point->data), 0);
 
   move_ip (ip);
 

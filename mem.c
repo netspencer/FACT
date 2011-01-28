@@ -321,7 +321,6 @@ set (func_t *scope, word_list expression)
   FACT_t   arg2;
   var_t  * hold;
   var_t  * copy;
-
   
   if ((arg1 = eval (scope, expression)).type == ERROR_TYPE)
     return arg1;
@@ -483,14 +482,12 @@ return_array (func_t *scope, word_list expression)
       
       if (!tokcmp (expression.syntax[0], "]"))
 	{
-	  scope->line               += expression.lines[0];
-	  expression.move_forward[0] = true; 
+	  scope->line += expression.lines[0];
+	  next_inst ();
 	  break;
 	}
       else if (tokcmp (expression.syntax[0], ","))
 	return errorman_throw_reg (scope, "expected ',' or closing ']'");
-      else
-	expression.move_forward[0] = true;
 
       /* If there was a comma, then move the instruction pointer forward one
        * and get the next argument.
@@ -636,6 +633,8 @@ get_array_var (var_t *root, func_t *scope, word_list expression)
 
       return_value.v_point = root;
 
+      /* Move the ip forward again. */
+      move_ip (ip);
       return return_value;
     }
 
@@ -706,7 +705,9 @@ get_array_func (func_t *root, func_t *scope, word_list expression)
 	return errorman_throw_reg (scope, "array out of bounds");
 
       return_value.f_point = root;
-       
+
+        /* Move the ip forward again. */
+      move_ip (ip);
       return return_value;
     }
 

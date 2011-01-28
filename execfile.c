@@ -38,7 +38,7 @@ run_file (func_t *scope, const char *filename, bool silent)
   for (;;)
     {
       scope->line = end_line;
-      input       = get_input (fp, &end_line);
+      input       = get_input (fp, &end_line, NULL, NULL);
 
 #ifdef DEBUG_INPUT
       puts ("\ninput:");

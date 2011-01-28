@@ -44,6 +44,9 @@ throw_error (func_t *scope)
 
 struct elements MOD_MAP [] =
   {
+    /* This should have a bit more consistency in way of argument
+     * names. It shouldn't be anything symbolic though.
+     */
     { "fopen"       , "def filename, def mode" , &open_file     },
     { "fclose"      , "defunc file_object"     , &close_file    },
     { "fgetc"       , "defunc file_object"     , &get_char_file },
@@ -57,5 +60,6 @@ struct elements MOD_MAP [] =
     { "get_arg"     , "def num"                , &get_arg       },
     { "str"         , "def op"                 , &var_to_string },
     { "int"         , "def op"                 , &var_to_int    },
+    { "random"      , ""                       , &simple_rand   },
     { NULL          , NULL                     , NULL           },
   };

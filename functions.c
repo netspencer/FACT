@@ -69,10 +69,9 @@ liven_func (func_t *scope, word_list expression)
   while (position > 0)
     {
       position--;
-      block_formatted[position]                        = expression.syntax[position + pos_args + 1];
-      block_formatted[position]                        = add_newlines (block_formatted[position], expression.lines[position + pos_args + 1]);
-      scope->line                                     += expression.lines[position + pos_args + 1];
-      expression.move_forward[position + pos_args + 1] = true;
+      block_formatted[position] = expression.syntax[position + pos_args + 1];
+      block_formatted[position] = add_newlines (block_formatted[position], expression.lines[position + pos_args + 1]);
+      scope->line              += expression.lines[position + pos_args + 1];
     }
   
   func.f_point->args = args_formatted;
@@ -86,17 +85,16 @@ liven_func (func_t *scope, word_list expression)
  FACT_t
  prepare_function (func_t *scope, func_t *new_scope, word_list expression)
  {
-   int         pos;
-   int         count;
-   var_t     * hold;
-   var_t     * temp;
-   FACT_t      evald;
-   FACT_t      arg;
-   FACT_t      passed;
-   word_list   arg_list;
-   unsigned int ip;
-   unsigned int ipe;
-   unsigned int ipf;
+   int            count    ;
+   var_t        * hold     ;
+   var_t        * temp     ;
+   FACT_t         evald    ;
+   FACT_t         arg      ;
+   FACT_t         passed   ;
+   word_list      arg_list ;
+   unsigned int   ip       ;
+   unsigned int   ipe      ;
+   unsigned int   ipf      ;
 
    expression.syntax += get_ip ();
    expression.lines  += get_ip ();
@@ -125,14 +123,14 @@ liven_func (func_t *scope, word_list expression)
    ip += get_ip ();
 
    arg_list              = make_word_list (evald.f_point->args, false);
-   new_scope->file_name  = evald.f_point->file_name;
-   new_scope->args       = evald.f_point->args;
-   new_scope->body       = evald.f_point->body;
-   new_scope->line       = evald.f_point->line;
-   new_scope->up         = evald.f_point->up;
-   new_scope->name       = evald.f_point->name;
-   new_scope->extrn_func = evald.f_point->extrn_func;
-   new_scope->variadic   = evald.f_point->variadic;
+   new_scope->file_name  = evald.f_point->file_name  ;
+   new_scope->args       = evald.f_point->args       ;
+   new_scope->body       = evald.f_point->body       ;
+   new_scope->line       = evald.f_point->line       ;
+   new_scope->up         = evald.f_point->up         ;
+   new_scope->name       = evald.f_point->name       ;
+   new_scope->extrn_func = evald.f_point->extrn_func ;
+   new_scope->variadic   = evald.f_point->variadic   ;
 
    if (arg_list.syntax[0] != NULL && tokcmp (expression.syntax[0], ","))
      return errorman_throw_reg (scope, "expected more arguments");
@@ -156,7 +154,7 @@ liven_func (func_t *scope, word_list expression)
    ipf = 0;
    ipe = 0;
 
-   for (pos = 0; arg_list.syntax[0] != NULL; pos++)
+   while (*arg_list.syntax != NULL)
      {
        if (!tokcmp (arg_list.syntax[0], "->")
 	   || (!tokcmp (arg_list.syntax[0], ",") && !tokcmp (arg_list.syntax[1], "->")))
@@ -269,8 +267,6 @@ liven_func (func_t *scope, word_list expression)
 	 {
 	   if (tokcmp (expression.syntax[0], ",") != 0)
 	     return errorman_throw_reg (scope, "expected more arguments");
-	   else
-	     arg_list.move_forward[0] = expression.move_forward[0] = true;
 	 }
        else
 	 return errorman_throw_reg (new_scope, "syntax error in argument declaration");

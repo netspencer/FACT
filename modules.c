@@ -2,28 +2,26 @@
 
 typedef struct _LIB
 {
-  void        * library;
-  char        * file_path;
-  struct _LIB * next;
+  void        * library   ;
+  char        * file_path ;
+  struct _LIB * next      ;
 } lib_t;
 
-static lib_t *root = NULL;
+static lib_t * root;
 
-/* I am a little tired, so this may be a
- * giant clusterfuck of awful. I dunno.
- * Also, I have to add the using of
- * an environmental variable as
- * opposed to just using the direct
- * path.
+/* I am a little tired, so this may be a giant clusterfuck
+ * of awful. I don't know. Also, I have to add the using of
+ * an environmental variable as opposed to just using the
+ * direct path.
  */
 
 FACT_t
 load_lib (func_t *scope)
 {
-  int      pos;
-  char   * fpath;
-  lib_t  * scroller;
-  var_t  * path;
+  int      index    ;
+  char   * fpath    ;
+  lib_t  * scroller ;
+  var_t  * path     ;
   struct   elements
   {
     char *   name;
@@ -67,20 +65,19 @@ load_lib (func_t *scope)
   if (MOD_MAP == NULL)
     return errorman_throw_reg (scope, "could not find MOD_MAP symbol in module");
 
-  for (pos = 0; MOD_MAP[pos].name != NULL; pos++)
+  for (index = 0; MOD_MAP[index].name != NULL; index++)
     {
       func_t * ref;
 
-      if ((ref = add_func (scope, MOD_MAP[pos].name)) == NULL)
+      if ((ref = add_func (scope, MOD_MAP[index].name)) == NULL)
 	continue; /* if it couldn't be added, just skip it. */
 
-      /* ---- parse the arguments correctly ---- */
-      if (MOD_MAP[pos].arguments == NULL)
+      if (MOD_MAP[index].arguments == NULL)
 	continue;
-      ref->args = get_words (combine_strs (MOD_MAP[pos].arguments, " "));
-      /* ---- end parsing ---- */
+      ref->args = get_words (combine_strs (MOD_MAP[index].arguments, " "));
+
       ref->locked = true;
-      ref->extrn_func = MOD_MAP[pos].function;
+      ref->extrn_func = MOD_MAP[index].function;
     }
   
   return FACT_get_ui (0);

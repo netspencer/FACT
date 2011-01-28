@@ -48,6 +48,7 @@
 #include <gc/gc.h>
 #include <getopt.h>
 #include <dlfcn.h>
+#include <pthread.h>
 
 /*---------------------------------------------*
  * Local includes: headers that provide        *

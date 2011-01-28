@@ -1,12 +1,9 @@
 #include "eval.h"
 
-#define OPEN_SUCCESS 2
-#define OPEN_FAILED  1
-#define CLOSED       0
-
 word_list
 make_word_list (char **words, bool len_check)
 {
+  /* To be removed because it is really bad. */
   int       index;
   int       jndex;
   word_list expression;
@@ -14,7 +11,7 @@ make_word_list (char **words, bool len_check)
   if (len_check)
     {
       index = get_exp_length_first (words, ';');
-      if (index < 1)
+       if (index < 1)
 	{
 	  expression.syntax = NULL;
 	  return expression;
@@ -26,9 +23,8 @@ make_word_list (char **words, bool len_check)
 	;
     }
 
-  expression.syntax       = better_malloc (sizeof (char *) * (index + 1));
-  expression.move_forward = better_malloc (sizeof (bool  ) * (index + 1));
-  expression.lines        = better_malloc (sizeof (int   ) * (index + 1));
+  expression.syntax = better_malloc (sizeof (char *) * (index + 1));
+  expression.lines  = better_malloc (sizeof (int   ) * (index + 1));
 
   for (expression.syntax[index--] = NULL; index >= 0; index--)
     {
@@ -41,49 +37,6 @@ make_word_list (char **words, bool len_check)
     }
   
   return expression;
-}
-
-/* These three variables are used for the handeling of recursion
- * depth, if/on_error blocks, etc. They should generally be left
- * alone.
- */
-static int            depth = -1     ;
-static int          * if_open        ;       
-static unsigned int   size_allocated ;
-
-static void
-close_blocks ( void )
-{
-  /* close_blocks - close all open if/on_error blocks deeper
-   * than the current depth. This function is used by
-   * functions like lambda_proc to close all inset if/on_error
-   * statements.
-   */
-  unsigned int index;
-  
-  for (index = depth + 1; index < size_allocated; index++)
-    if_open[index] = CLOSED;
-}
-
-static void
-increase_depth ( void )
-{
-  /* increase_depth - increase the recursion depth by one,
-   * and if appropriate, increase the memory allocated to
-   * the recursion stack.
-   */
-
-  depth++; // No need to explain this.
-
-  /* If the depth is greater than the size currently
-   * allocated, increase size_allocated and allocate
-   * more memory.
-   */
-  if (depth >= size_allocated)
-    {
-      size_allocated  = depth + 1;
-      if_open         = better_realloc (if_open, sizeof (int) * size_allocated);
-    }
 }
 
 /* This is the instruction pointer, and it points to the next
@@ -109,6 +62,84 @@ next_inst ( void ) { ip++; }
 
 /* End instruction pointer accessor methods. */
 
+static unsigned long
+get_else (char ** expression)
+{
+  /* get_else - get the length to the else clause corresponding 
+   * to the given if statement. If none is available, return
+   * the length to NULL.
+   */
+
+  /* @ifs - How many if/on_error statements needed to be matched. */ 
+  unsigned long ifs   ; 
+  unsigned long index ;
+
+  for (index = ifs = 0; expression[index] != NULL; index++)
+    {
+      if (expression[index][0] == BYTECODE
+	  && expression[index][1] == STATEMENT)
+	{
+	  /* Don't even touch ifs or elses if the token isn't
+	   * bytecode and it isn't a statement.
+	   */
+	  switch (expression[index][2])
+	    {
+	    case IFS: /* This stands for IF STATEMENT. */
+	    case ONE:
+	      ifs++;  /* This stands for "the number of if statements." */
+	      break;
+	      
+	    case ELS:
+	      /* We check if it's time to return here as
+	       * well.
+	       */
+	      if (--ifs == 0)
+		return index; 
+	      break;
+	      
+	    default:
+	      break;
+	    }
+	}
+      else
+	{
+	  switch (expression[index][0])
+	    {
+	    case ';':
+	      if (expression[index + 1] == NULL
+		  || expression[index + 1][0] != BYTECODE
+		  || expression[index + 1][1] != STATEMENT
+		  || expression[index + 1][2] != ELS)
+		return index + 1;
+	      break;
+	      
+	    case '{':
+	      index += get_exp_length (expression + index + 1,'}');
+
+	      if (expression[index + 1] == NULL
+		  || expression[index + 1][0] != BYTECODE
+		  || expression[index + 1][1] != STATEMENT
+		  || expression[index + 1][2] != ELS)
+		return index + 1;
+	      break;
+
+	    case '(':
+	      index += get_exp_length (expression + index + 1,')');
+	      break;
+
+	    case '[':
+	      index += get_exp_length (expression + index + 1,']');
+	      break;
+	      
+	    default:
+	      break;
+	    }
+	}
+    }
+
+  return index;
+}
+
 FACT_t
 eval_expression (func_t *scope, word_list expression)
 {  
@@ -118,14 +149,14 @@ eval_expression (func_t *scope, word_list expression)
    * with every iteration in a recursive function, so it
    * handles recursion depth as well.
    */
-  int    index;
-  int    jndex;
-  byte   instruction;
-  bool   is_instruction;
-  bool   return_signal;
-  bool   break_signal;
-  bool   getif;
-  FACT_t return_value;
+  int    index          ;
+  int    jndex          ;
+  byte   instruction    ; 
+  bool   is_instruction ;
+  bool   return_signal  ;
+  bool   break_signal   ;
+  bool   getif          ;
+  FACT_t return_value   ;
 
   /* Init routines -- Set the default return value to var,
    * set the signals to their default off, and increase
@@ -134,7 +165,6 @@ eval_expression (func_t *scope, word_list expression)
   return_value.type = VAR_TYPE;  
   return_signal = false;
   break_signal  = false;
-  increase_depth ();
 
   /* Move the current token to the instruction pointer. */
   expression.syntax += get_ip ();
@@ -142,10 +172,7 @@ eval_expression (func_t *scope, word_list expression)
 
   /* This will be removed in the future. */
   if (expression.syntax == NULL) 
-    {
-      depth--;
-      return errorman_throw_reg (scope, "syntax error: expected closing ';' or '}'");
-    }
+    return errorman_throw_reg (scope, "syntax error: expected closing ';' or '}'");
   
   /* Check to see if it's a bytecode instruction of the
    * STATEMENT category. These are the only instructions
@@ -156,10 +183,6 @@ eval_expression (func_t *scope, word_list expression)
     {
       is_instruction = true;
       instruction    = expression.syntax[0][2];
-
-      /* If it's not a conditional statement, close all open blocks. */
-      if (instruction != IFS && instruction != ONE && instruction != ELS)
-	close_blocks ();
 
       /* Increse the current line number and instruction pointer
        * by one. This is so statements don't re-evaluated their
@@ -178,99 +201,40 @@ eval_expression (func_t *scope, word_list expression)
    */
   if (is_instruction && (instruction == IFS || instruction == ONE))
     {
-      
       if (instruction == IFS)
 	return_value = if_statement (scope, expression, &getif);
       else
 	return_value = on_error (scope, expression, &getif);
 
-      if (getif)
-	/* If the conditional was successful, set the current depth's
-	 * if_open to SUCCESS, so that any following 'else' clauses
-	 * will not be run.
-	 */
-	if_open[depth] = OPEN_SUCCESS;
-      else
+      if (!getif)
 	{
-	  /* If the conditional was unsuccessful, set the current depth
-	   * to a failure and procede to loop through the body and mark
-	   * all inset if/on_error statements as failures (so their
-	   * corresponding else clauses will not be run.
+	  /* If the conditional evaluated to false, get the place
+	   * of the else matching this current if statement, and
+	   * evaluate its expression.
 	   */
-	  if_open[depth] = OPEN_FAILED;
+	  index = get_else (expression.syntax);
+
+	  /* If there's no corresponding else statement, just
+	   * return whatever if_statement or on_error gave us.
+	   */
+	  if (expression.syntax[index] == NULL
+	      || expression.syntax[index][0] != BYTECODE
+	      || expression.syntax[index][1] != STATEMENT
+	      || expression.syntax[index][2] != ELS)
+	    return return_value;
+
+	  expression.syntax += index;
+	  expression.lines  += index;
 	  
-	  for (index = 1, jndex = depth + 1; expression.syntax[index] != NULL; index++)
-	    {
-	      if (jndex >= size_allocated)
-		{
-		  size_allocated = jndex + 1;
-		  if_open        = better_realloc (if_open, sizeof (int) * size_allocated);
-		}
-	      if (!tokcmp (expression.syntax[index], "\""))
-		{
-		  if (expression.syntax[index + 2] != NULL)
-		    scope->line += expression.lines[index + 2];
-		  scope->line += expression.lines[index + 1];
-		  index       += 2;
-		}
-	      
-	      if (!strcmp (expression.syntax[index], "if")
-		  || !strcmp (expression.syntax[index], "on_error"))
-		if_open[jndex++] = OPEN_SUCCESS;
-	      else if (!strcmp (expression.syntax[index], ";")
-		       || !strcmp (expression.syntax[index], "{"))
-		break;
-	    }
+	  return_value = else_clause (scope, expression);
 	}
     }
   else if (is_instruction && instruction == ELS)
     {
-      for (index = size_allocated - 1; index >= 0; index--)
-	{
-	  if (if_open[index] == OPEN_FAILED)
-	    {
-	      jndex        = depth;
-	      depth        = index - 1;
-	      return_value = else_clause (scope, expression);
-	      depth        = jndex;
-	      break;
-	    }
-	  else if (if_open[index] == OPEN_SUCCESS)
-	    {
-	      if_open[index] = CLOSED;
-	      jndex          = index;
-	      for (index = 0; expression.syntax[index] != NULL; index++)
-		{
-		  scope->line += expression.lines[index];
-
-		  if (jndex >= size_allocated)
-		  {
-		    size_allocated = jndex + 1;
-		    if_open        = better_realloc (if_open, sizeof (int) * size_allocated);
-		  }
-		  if (!tokcmp (expression.syntax[index], "\""))
-		    {
-		      if (expression.syntax[index + 2] != NULL)
-			scope->line += expression.lines[index + 2];
-		      scope->line += expression.lines[index + 1];
-		      index       += 2;
-		    }
-		  if (!tokcmp (expression.syntax[index], "if")
-		      || !tokcmp (expression.syntax[index], "on_error"))
-		    if_open[jndex++] = OPEN_SUCCESS;
-		  else if (!tokcmp (expression.syntax[index], ";")
-			   || !tokcmp (expression.syntax[index], "{"))
-		    break;
-		}
-	      depth--;
-	      return FACT_get_ui (0);
-	    }
-	}
-      if (index == -1)
-	{
-	  depth--;
-	  return errorman_throw_reg (scope, "unmatched 'else'");
-	}
+      /* If it's an else clause, someone messed up. Therefor
+       * we return an "unmatched else" error.
+       */
+      return errorman_throw_reg (scope, "unmatched 'else'");
     }
   else if (is_instruction && instruction == WHL)
     return_value = while_loop (scope, expression);
@@ -278,6 +242,7 @@ eval_expression (func_t *scope, word_list expression)
     return_value = for_loop (scope, expression);
   else if (is_instruction && instruction == RTN)
     {
+      set_ip (1);
       return_value  = eval (scope, expression);
       return_signal = true;
     }
@@ -305,19 +270,15 @@ eval_expression (func_t *scope, word_list expression)
   if (!return_value.break_signal)
     return_value.break_signal = break_signal;
 
-  /* Decrease the recursion depth and exit. */
-  depth--;
   return return_value;
 }
 
 FACT_t
 procedure (func_t *scope, word_list expression)
 {
-  int    length;
-  FACT_t return_value;
-  unsigned long ip;
-
-  increase_depth ();
+  int           length       ;
+  FACT_t        return_value ;
+  unsigned long ip           ;
 
   expression.syntax += get_ip ();
   expression.lines  += get_ip ();
@@ -343,8 +304,28 @@ procedure (func_t *scope, word_list expression)
 	  return return_value;
 	}
 
-      length = get_exp_length_first (expression.syntax, ';');
-      ip    += length + 1;
+      if (expression.syntax[0][0] == BYTECODE
+	  && expression.syntax[0][1] == STATEMENT
+	  && (expression.syntax[0][2] == IFS
+	      || expression.syntax[0][2] == ONE))
+	{
+	  /* Using get_else will move the expression the exact
+	   * correct amount forward, skipping all else expressions
+	   * that are not to be evaluated. We just have to move
+	   * forward one expression after.
+	   */
+	  length = get_else (expression.syntax);
+
+	  while (expression.syntax[length][0] == BYTECODE
+		 && expression.syntax[length][1] == STATEMENT
+		 && expression.syntax[length][2] == ELS)
+	    length += get_else (expression.syntax + length + 1) + 1; // get_exp_length_first (expression.syntax + length, ';');
+	}
+      else
+	length = get_exp_length_first (expression.syntax, ';');
+
+      ip += length + 1;
+ 
       expression.syntax += length;
       expression.lines  += length;
     }
@@ -353,7 +334,6 @@ procedure (func_t *scope, word_list expression)
    * return values to their defualts, and decrease the
    * recusion depth by one. Then, return.
    */
-  close_blocks ();
   next_inst ();
 
   return_value.return_signal = false;
@@ -361,11 +341,16 @@ procedure (func_t *scope, word_list expression)
 
   return_value.v_point       = alloc_var ();
   return_value.type          = VAR_TYPE;
-
-  depth--;
       
   return return_value;
 }
+
+/* When ignore_signals is set to true, it overides the default
+ * setting for eval to reset the return and break value to false.
+ * This will be removed in the future. This variable is ONLY used
+ * by lambda_proc and eval.
+ */
+static bool ignore_signals;
 
 FACT_t
 lambda_proc (func_t *scope, word_list expression)
@@ -392,6 +377,8 @@ lambda_proc (func_t *scope, word_list expression)
   return_value = procedure (new_scope, expression);
   scope->line  = new_scope->line;
 
+  ignore_signals = true;
+
   return return_value;
 }
 
@@ -404,15 +391,19 @@ eval (func_t *scope, word_list expression)
    * for this, so it might change in the future to be combined
    * with eval_expression).
    */
-  int      index;
-  int      call_num;
-  char   * current_token;
-  var_t  * hold_var;
-  func_t * hold_func;
-  FACT_t   return_value;
-  unsigned long ip;
-  unsigned long hold_pointer;
-  unsigned byte bytes;
+  int      index           ;
+  int      call_num        ;
+  bool     hold_break_sig  ;
+  bool     hold_return_sig ;
+  char   * current_token   ;
+  var_t  * hold_var        ;
+  func_t * hold_func       ;
+  FACT_t   return_value    ;
+  
+  unsigned long ip           ;
+  unsigned long hold_pointer ;
+  
+  static unsigned byte bytes ;
 
   /* Get the instruction pointer (ip), and then set the
    * current_token (using the ip). Then, move the ip one
@@ -434,6 +425,10 @@ eval (func_t *scope, word_list expression)
    */
   if (current_token[0] == BYTECODE)
     {
+      /* If bytes isn't set, set it. */
+      if (!bytes)
+	bytes = (sizeof (var_t *) / sizeof (char));
+      
       /* check which category it's from */
       if (current_token[1] == MATH_CALL)
 	return_value = eval_math (scope, expression, (int) current_token[2]);
@@ -446,12 +441,10 @@ eval (func_t *scope, word_list expression)
 	   * eight or four bytes (depending on whether it's a 64
 	   * or 32 bit system respectively) which are converted
 	   * to an unsigned long which is then cast into a pointer.
-	   * To quote Ken Thompson, you aren't expected to
-	   * undertsand this.
 	   */
 	  return_value.type = VAR_TYPE;
 	  hold_pointer = 0;
-	  bytes = (sizeof (var_t *) / sizeof (char));
+	  
 	  for (index = 0; index < bytes; index++)
 	    {
 #if (BYTE_ORDER == LITTLE_ENDIAN)
@@ -491,6 +484,21 @@ eval (func_t *scope, word_list expression)
 	return errorman_throw_reg (scope, combine_strs ("cannot evaluate ", current_token));
     }
 
+  /* Hold the return signals if ignore_signals is true.
+   * Otherwise, set them to false.
+   */
+  if (ignore_signals)
+    {
+      hold_break_sig  = return_value.break_signal;
+      hold_return_sig = return_value.return_signal;
+      ignore_signals  = false;
+    }
+  else
+    {
+      hold_break_sig  = false;
+      hold_return_sig = false;
+    }
+      
   /* Depending on whether or not the return value is
    * a variable or a function, we check for a variable
    * array or a function array. This includes numbers,
@@ -508,8 +516,8 @@ eval (func_t *scope, word_list expression)
    * Thus, we set the respective signals to off for
    * protection.
    */
-  return_value.return_signal = false;
-  return_value.break_signal  = false;
+  return_value.return_signal = hold_return_sig ;
+  return_value.break_signal  = hold_break_sig  ;
   
   return return_value;
 }

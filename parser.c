@@ -433,6 +433,7 @@ create_list (char **words)
     }
   base->code = END;
 
+  /* I don't think this is needed, may remove it. */
   while (base->previous != NULL)
     base = base->previous;
 

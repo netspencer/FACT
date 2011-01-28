@@ -13,7 +13,7 @@ print_logo ( void )
 }
 
 char *
-get_input (FILE *fp, unsigned int *line_number)
+get_input (FILE *fp, unsigned int *line_number, const char *start_prompt, const char *cont_prompt)
 {
   int    index;
   int    p_count;
@@ -24,7 +24,7 @@ get_input (FILE *fp, unsigned int *line_number)
   char * input;
 
   if (fp == stdin)
-    printf ("%% ");
+    printf ("%s ", start_prompt);
 
   /* Doing var = var = x; is unclear and annoying. */
   input     = NULL;
@@ -49,7 +49,7 @@ get_input (FILE *fp, unsigned int *line_number)
 	  if (index > 1 && fp == stdin
 	      && ((in_quotes || p_count || b_count || c_count)
 		  || (input[index - 2] != ';' || input[index - 2] != '}')))
-	    printf (": ");
+	    printf ("%s ", cont_prompt);
 	}
 
       input            = better_realloc (input, (index + 1) * sizeof (char));
@@ -203,11 +203,15 @@ shell (func_t * scope)
    *
    * @scope  - the scope to use when evaluating expressions.
    */
-  char   *  input     ;
-  char   ** tokenized ;
-  byte   ** bytecode  ; /* Complete string to be passed to the
-			 * interpreter.                           */
-  FACT_t    returned  ; /* The value returned by the interpreter. */
+  char   *  input       ;
+  char   *  hold_input  ; /* Used by the loop that checks for else
+			   * clauses.                               */
+  char   ** tokenized   ;
+  char   ** hold_tokens ; /* Used by the loop that checks for else
+			   * clauses.                               */
+  byte   ** bytecode    ; /* Complete string to be passed to the
+			   * interpreter.                           */
+  FACT_t    returned    ; /* The value returned by the interpreter. */
 
   linked_word  * parsed    ;
   unsigned int   end_line  ;
@@ -218,12 +222,13 @@ shell (func_t * scope)
    */
   print_logo ();
   printf ("The FACT programming language interactive shell\n"
-	  "(c) 2010, 2011 Matthew Plant, under the GPL version 3.\n");
+	  "© 2010, 2011 Matthew Plant, under the GPL version 3.\n");
 
   /* Set the initial line number to 1 and the file name to
-   * "stdin".
+   * "stdin". Also, set hold_input to NULL.
    */
   end_line         = 1       ;
+  hold_input       = NULL    ;
   scope->file_name = "stdin" ;
 
   for ( ; ; ) /* Heh, that looks like a spider. */
@@ -234,7 +239,13 @@ shell (func_t * scope)
       scope->line = end_line;
 
       /* Then, get raw input for an entire expression. */
-      input = get_input (stdin, &end_line);
+      if (hold_input == NULL)
+	input = get_input (stdin, &end_line, "S>", "C>");
+      else
+	{
+	  input = hold_input;
+	  hold_input = NULL;
+	}
 
       /* We do two checks for EOF signals: once before
        * tokenizing, and once after. I am not completely
@@ -256,6 +267,45 @@ shell (func_t * scope)
 
       if (tokenized == NULL)
 	break;
+      
+      /* If the first token in the expression is if/on_error,
+       * continue to get input as long as the first token is
+       * else. I could forsee this being an issue in places
+       * where the else is placed erroneosly, but
+       * that'll be fixed later I assume.
+       */ 
+      if ((tokenized[0][0] == '\n'
+	   && (!tokcmp (tokenized[1], "if")
+	       || !tokcmp (tokenized[1], "on_error")))
+	  || (!tokcmp (tokenized[0], "if")
+	      || !tokcmp (tokenized[0], "on_error")))
+	{
+	  for ( ; ; )
+	    {
+	      /* Go through all the steps we went through from
+	       * the start of the loop down to here.
+	       */
+	      hold_input = get_input (stdin, &end_line, "E>", "C>");
+
+	      /* Check for all errors in a really condensed form. */
+	      if (hold_input == NULL || check_for_incompletions ("stdin", hold_input)
+		  || (hold_tokens = get_words (hold_input)) == NULL)
+		break;
+	      /* Check to see if the statement starts with else. */
+	      if ((hold_tokens[0][0] == '\n'
+		   && !tokcmp (hold_tokens[1], "else"))
+		  || !tokcmp (hold_tokens[0], "else"))
+		{
+		  input[strlen (input) - 1] = '\0';
+		  input = combine_strs (input, hold_input);
+		  hold_input = NULL;
+		}
+	      else
+		break;
+	    }
+	  puts ("");
+	  tokenized = get_words (input);
+	}
 
       /* Convert the tokens to a list, and then set the
        * list. Setting the list does some stuff that
@@ -308,7 +358,7 @@ shell (func_t * scope)
       reset_ip ();
 
       /* Evaluate the expression. */
-      returned = eval_expression (scope, make_word_list (bytecode, true));
+      returned = eval_expression (scope, make_word_list (bytecode, false));
 
       /* If there were errors, print them out. Otherwise,
        * print the value of the variable or the name of

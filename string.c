@@ -20,8 +20,7 @@ new_string (func_t *scope, word_list expression)
     return_value.v_point = string;
   else
     {
-      scroller                   = string;
-      expression.move_forward[0] = true;
+      scroller = string;
 
       for (mpz_init (length), index = 0; expression.syntax[0][index] != '\0'; mpz_add_ui (length, length, 1), index++, scroller = scroller->next)
 	{

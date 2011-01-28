@@ -125,13 +125,6 @@ on_error (func_t *scope, word_list expression_list, bool *success)
       
       return return_value;
     }
-
-  while (expression_list.move_forward[0])
-    {
-      expression_list.syntax++;
-      expression_list.move_forward++;
-      expression_list.lines++;
-    }
   
   /*
    * This adds a local object called 'ERROR', which only
@@ -249,7 +242,7 @@ while_loop (func_t *scope, word_list expression)
       if (conditional_evald.type == FUNCTION_TYPE)
 	{
 	  scope->line = temp_scope.line;
-	  return errorman_throw_reg (scope, "while loop conditional must return a var_t");
+	  return errorman_throw_reg (scope, "while loop conditional must return a variable");
 	}
 
       if (mpc_cmp_si (conditional_evald.v_point->data, 0) == 0)
@@ -257,7 +250,7 @@ while_loop (func_t *scope, word_list expression)
       
       block_evald = eval_expression (&temp_scope, expression);
 
-      if (block_evald.type == ERROR_TYPE || block_evald.return_signal == true || block_evald.break_signal == true)
+      if (block_evald.type == ERROR_TYPE || block_evald.return_signal || block_evald.break_signal)
 	break;
     }
   
@@ -407,6 +400,8 @@ for_loop (func_t *scope, word_list expression)
 
       if (block_evald.type == ERROR_TYPE || block_evald.return_signal == true || block_evald.break_signal == true)
 	break;
+
+      arr_pos++; // For some reason I don't think this is needed
     }
   
   scope->line = temp_scope.line;
