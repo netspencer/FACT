@@ -22,7 +22,6 @@ static struct  _prims
     { "def"   , define       },
     { "defunc", defunc       },
     { "lambda", lambda       },
-    { "sizeof", size_of      }, /* DEFINITELY to be removed. */
     { "this"  , this         },
     { "up"    , up           },
     { "{"     , lambda_proc  },
@@ -52,11 +51,20 @@ init_BIFs (func_t *scope)
    * is loaded once during start-up and then is
    * forgotten. It should NEVER be called twice.
    */
-  func_t * import;
+  func_t * import  ;
+  func_t * size_of ; /* Actually called sizeof. */ 
   
-  import             = add_func (scope, "import");
-  import->args       = get_words ("def path "); /* the extra space at the end is required for parsing reasons. */
-  import->extrn_func = (void * (*) (struct _FUNC *)) load_lib;
+  import  = add_func (scope, "import");
+  size_of = add_func (scope, "sizeof");
+
+  /* The extra space at the end of each is required for
+   * parsing reasons.
+   */
+  import->args  = get_words ("def path ");
+  size_of->args = get_words (FACT_BIF (sizeof).arguments);
+  
+  import->extrn_func  = (void * (*) (struct _FUNC *)) load_lib;
+  size_of->extrn_func = FACT_BIF (sizeof).function;
 }
 
 int

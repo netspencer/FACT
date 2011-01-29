@@ -516,8 +516,8 @@ eval (func_t *scope, word_list expression)
    * Thus, we set the respective signals to off for
    * protection.
    */
-  return_value.return_signal = hold_return_sig ;
-  return_value.break_signal  = hold_break_sig  ;
+  return_value.return_signal = hold_return_sig;
+  return_value.break_signal  = hold_break_sig;
   
   return return_value;
 }

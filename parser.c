@@ -364,8 +364,10 @@ get_block_code (char *block)
     return MORE_EQ;
   else if (!strcmp (block, "->"))
     return VARIADIC;
+  /*
   else if (!strcmp (block, "sizeof"))
     return SIZE;
+  */
   else if (!strcmp (block, "if"))
     return IF;
   else if (!strcmp (block, "on_error"))

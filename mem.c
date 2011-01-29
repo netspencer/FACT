@@ -15,14 +15,14 @@ defunc_array (func_t *base, func_t *scope, word_list expression)
    * dimension. An array would have to have something like
    * over 10000 dimensions to cause this.
    */
-  mpz_t    size;
-  mpz_t    index;
-  FACT_t   checker;
-  FACT_t   array_size;
-  FACT_t   return_value;
-  func_t * scroller;
-  unsigned long ip_mv;
-  unsigned long ip;
+  mpz_t           size         ;
+  mpz_t           index        ;
+  FACT_t          checker      ;
+  FACT_t          array_size   ;
+  FACT_t          return_value ;
+  func_t        * scroller     ;
+  unsigned long   ip_mv        ;
+  unsigned long   ip           ;
 
   scope->line += expression.lines[0];
 
@@ -44,6 +44,7 @@ defunc_array (func_t *base, func_t *scope, word_list expression)
     {
       ip_mv = 1;
       base->name = expression.syntax[0];
+      base->file_name = scope->file_name;
     }
   else
     {
@@ -105,8 +106,9 @@ defunc_array (func_t *base, func_t *scope, word_list expression)
 	  if (checker.type == ERROR_TYPE)
 	    return checker;
 	}
-      /* Get the name from the dimension above. */
+      /* Get the name and file name from the dimension above. */
       base->name = base->array_up->name;
+      base->file_name = base->array_up->file_name;
     }
   return_value.f_point = base;
   move_ip (ip_mv);
@@ -141,10 +143,11 @@ defunc (func_t *scope, word_list expression)
 
       if (temp.type != ERROR_TYPE)
 	{
-	  return_value.f_point             = add_func (scope, temp.f_point->array_up->name);
-	  return_value.f_point->line       = scope->line;
-	  return_value.f_point->array_up   = temp.f_point->array_up;
-	  return_value.f_point->up         = scope;
+	  return_value.f_point            = add_func (scope, temp.f_point->array_up->name);
+	  return_value.f_point->line      = scope->line;
+	  return_value.f_point->array_up  = temp.f_point->array_up;
+	  return_value.f_point->up        = scope;
+	  return_value.f_point->file_name = scope->file_name; 
 	  
 	  mpz_set (return_value.f_point->array_size, temp.f_point->array_size);
 	  GC_free (temp.f_point);
@@ -159,8 +162,9 @@ defunc (func_t *scope, word_list expression)
       if (return_value.f_point == NULL)
 	return errorman_throw_reg (scope, "could not define function");
 
-      return_value.f_point->line       = scope->line;
-      return_value.f_point->up         = scope;
+      return_value.f_point->line      = scope->line;
+      return_value.f_point->up        = scope;
+      return_value.f_point->file_name = scope->file_name; 
       mpz_set_ui (return_value.f_point->array_size, 1);
     }
 
@@ -317,10 +321,10 @@ clone_var (var_t *surrogate, char *name)
 FACT_t
 set (func_t *scope, word_list expression)
 {
-  FACT_t   arg1;
-  FACT_t   arg2;
   var_t  * hold;
   var_t  * copy;
+  FACT_t   arg1;
+  FACT_t   arg2;
   
   if ((arg1 = eval (scope, expression)).type == ERROR_TYPE)
     return arg1;
@@ -353,18 +357,18 @@ set (func_t *scope, word_list expression)
       if (arg1.f_point->locked)
 	return arg2;
 
-      arg1.f_point->line       = arg2.f_point->line;
-      arg1.f_point->file_name  = arg2.f_point->file_name;
-      arg1.f_point->args       = arg2.f_point->args;
-      arg1.f_point->body       = arg2.f_point->body;
-      arg1.f_point->usr_data   = arg2.f_point->usr_data;
-      arg1.f_point->extrn_func = arg2.f_point->extrn_func;
-      arg1.f_point->vars       = arg2.f_point->vars;
-      arg1.f_point->funcs      = arg2.f_point->funcs;
-      arg1.f_point->up         = arg2.f_point->up;
-      arg1.f_point->caller     = arg2.f_point->caller;
-      arg1.f_point->array_up   = arg2.f_point->array_up;
-      arg1.f_point->variadic   = arg2.f_point->variadic;
+      arg1.f_point->line       = arg2.f_point->line       ;
+      arg1.f_point->file_name  = arg2.f_point->file_name  ;
+      arg1.f_point->args       = arg2.f_point->args       ;
+      arg1.f_point->body       = arg2.f_point->body       ;
+      arg1.f_point->usr_data   = arg2.f_point->usr_data   ;
+      arg1.f_point->extrn_func = arg2.f_point->extrn_func ;
+      arg1.f_point->vars       = arg2.f_point->vars       ;
+      arg1.f_point->funcs      = arg2.f_point->funcs      ;
+      arg1.f_point->up         = arg2.f_point->up         ;
+      arg1.f_point->caller     = arg2.f_point->caller     ;
+      arg1.f_point->array_up   = arg2.f_point->array_up   ;
+      arg1.f_point->variadic   = arg2.f_point->variadic   ;
 
       mpz_set (arg1.f_point->array_size, arg2.f_point->array_size);
     }
@@ -378,9 +382,9 @@ get_array_size (func_t *scope, word_list expression)
   /* get_array_size - get whatever is returned in between
    * [ and ]. Simple, easy, not all that big of a deal.
    */
-  int    index;  
-  FACT_t return_value;
-  unsigned long ip;
+  int           index        ;  
+  FACT_t        return_value ;
+  unsigned long ip           ;
 
   /* We hold on to the ip but reset it. This is to make eval
    * think that expression is at zero.
@@ -412,11 +416,12 @@ return_array (func_t *scope, word_list expression)
    * be converted to a '![' if it does not follow a number/string/variable or
    * function.
    */
-  mpz_t         size;
-  FACT_t        return_value;
-  FACT_t        hold;
-  type_define   type;
-  unsigned long ip;
+  mpz_t         size         ;
+  FACT_t        return_value ;
+  FACT_t        hold         ;
+  type_define   type         ;
+  unsigned long ip           ;
+  
   /* Something tells me that it was sort of
    * pointless to use unions in this case, and
    * I'll probably remove them at a later date.

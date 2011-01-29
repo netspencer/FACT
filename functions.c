@@ -193,7 +193,8 @@ liven_func (func_t *scope, word_list expression)
 
 	       expression.syntax += ipe;
 	       expression.lines  += ipe;
-
+	       ip += ipe;
+	       
 	       if (!tokcmp (expression.syntax[0], ","))
 		 next_inst ();
 	       ipe = 1;

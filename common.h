@@ -21,6 +21,7 @@
 
 #define FACT_INTERN_FUNC(type) extern type
 #define FACT_INLINE_FUNC(type) extern inline type
+
 #if (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 1))
 #define FACT_INTERN_DEPRECATED(type) extern __attribute__((__deprecated__)) type
 #else
@@ -59,11 +60,12 @@
 #include "typedefs.h"
 #include "mpc_functions.h"
 #include "utilities.h"
-#include "modules.h"
 #include "malloc_replacements.h"
 #include "errorman.h"
 #include "management.h"
 #include "error_check.h"
+#include "modules.h"
+#include "BIFs.h"
 #include "bytecode.h"
 #include "shell.h"
 #include "parser.h"
