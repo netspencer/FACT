@@ -1,4 +1,4 @@
-#include "modules.h"
+#include "common.h"
 
 typedef struct _LIB
 {
@@ -15,8 +15,7 @@ static lib_t * root;
  * direct path.
  */
 
-FACT_t
-load_lib (func_t *scope)
+FACT_DEFINE_BIF (import, "def path")
 {
   int      index    ;
   char   * fpath    ;

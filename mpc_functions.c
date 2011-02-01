@@ -139,8 +139,9 @@ mpc_mul (mpc_t *rop, mpc_t op1, mpc_t op2)
 }
 
 void
-mpc_div (mpc_t *rop, mpc_t op1, mpc_t op2)  /* Division by zero is not checked for in this function. */
+mpc_div (mpc_t *rop, mpc_t op1, mpc_t op2) 
 {
+  /* This function needs to be fixed. */
   mpc_t temp;
   mpz_t temp_res;
 
@@ -148,12 +149,15 @@ mpc_div (mpc_t *rop, mpc_t op1, mpc_t op2)  /* Division by zero is not checked f
   mpz_init (temp_res);
 
   if (op1.precision == 0)
-    temp.precision = default_prec;
+    {
+      temp.precision = default_prec;
+      power_of_ten (temp.object, temp.precision/* + op2.precision*/);
+    }
   else
     temp.precision = op1.precision;
   
   mpz_set (temp.object, op1.object);
-  power_of_ten (temp.object, temp.precision + op2.precision);  
+  //  power_of_ten (temp.object, temp.precision/* + op2.precision*/);  
   mpz_tdiv_q (temp_res, temp.object, op2.object);
 
   rop->precision = temp.precision;
@@ -163,9 +167,6 @@ mpc_div (mpc_t *rop, mpc_t op1, mpc_t op2)  /* Division by zero is not checked f
 void
 mpc_mod (mpc_t *rop, mpc_t op1, mpc_t op2)
 {
-  /* Division by zero is not checked, and this function
-     literally doesn't even work. It's just filler because
-     I'm tired. HAHAHA DISREGARD THAT I FIXED IT. */
   mpc_t temp;
   
   temp.precision = (op1.precision < op2.precision) ? op2.precision : op1.precision;

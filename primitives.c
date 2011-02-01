@@ -60,10 +60,10 @@ init_BIFs (func_t *scope)
   /* The extra space at the end of each is required for
    * parsing reasons.
    */
-  import->args  = get_words ("def path ");
+  import->args  = get_words (FACT_BIF (import).arguments);
   size_of->args = get_words (FACT_BIF (sizeof).arguments);
   
-  import->extrn_func  = (void * (*) (struct _FUNC *)) load_lib;
+  import->extrn_func  = FACT_BIF (import).function;
   size_of->extrn_func = FACT_BIF (sizeof).function;
 }
 

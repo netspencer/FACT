@@ -28,6 +28,18 @@
 #define FACT_INTERN_DEPRECATED(type) extern type
 #endif
 
+/* Macros for defining Built In Functions (BIFS). */
+/* Macro definitions. */
+#define FACT_DEFINE_BIF(name, args) FACT_t name##_func (func_t * scope); \
+  BIF name##_BIF = {							\
+    .arguments = args " ",						\
+    .function = (void * (*) (struct _FUNC *)) &(name ## _func)		\
+  };									\
+  FACT_t name##_func (func_t * scope)
+
+#define FACT_EXTERN_BIF(name) extern BIF name ## _BIF
+#define FACT_BIF(name) name ## _BIF
+
 #define PARSE_CHECK
 #define DEBUG
 
@@ -64,8 +76,8 @@
 #include "errorman.h"
 #include "management.h"
 #include "error_check.h"
-#include "modules.h"
 #include "BIFs.h"
+#include "modules.h"
 #include "bytecode.h"
 #include "shell.h"
 #include "parser.h"
