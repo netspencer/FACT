@@ -1,4 +1,4 @@
-#include "common.h"
+#include "FACT.h"
 
 void
 process_args (int argc, char **argv)

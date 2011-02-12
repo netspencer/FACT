@@ -1,10 +1,10 @@
-#include "common.h"
+#include "FACT.h"
 
 /*---------------------------------------------*
- * math.c: Provides functions for various math *
- * procedures and other things.                *
- *                                             *
- * This code is (C) 2010 Matthew Plant.        *
+ | math.c: Provides functions for various math |
+ | procedures and other things.                |
+ |                                             |
+ | This code is (C) 2010 Matthew Plant.        |
  *---------------------------------------------*/
 
 /* * * * * * * * * * * * * * * * * * * * * * * *
@@ -14,11 +14,11 @@
  * * * * * * * * * * * * * * * * * * * * * * * */
 
 bool
-isnum (char *word)
+isnum (char * word)
 {
-  bool         hex;
-  bool         flp;
-  unsigned int pos;
+  bool         hex ;
+  bool         flp ;
+  unsigned int pos ;
 
   if (word[0] == '0' && tolower (word[1]) == 'x')
     hex = true;
@@ -51,9 +51,9 @@ isnum (char *word)
 unsigned int
 get_prec (char *word)
 {
-  bool         is_decimal;
-  unsigned int pos;
-  unsigned int precision;
+  bool         is_decimal ;
+  unsigned int pos        ;
+  unsigned int precision  ;
 
   for (pos = precision = 0, is_decimal = false; word[pos] != '\0'; pos++)
     {

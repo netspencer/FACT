@@ -1,4 +1,4 @@
-#include "mem.h"
+#include "FACT.h"
 
 FACT_t
 defunc_array (func_t *base, func_t *scope, word_list expression)

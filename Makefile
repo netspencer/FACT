@@ -1,7 +1,9 @@
-CC = gcc
-BIT = 64 # Set to either 64 or 32
-CFLAGS = -ggdb -m$(BIT) -rdynamic
-PROG = FACT-BETA
+CC          = gcc
+BIT         = 64 # Set to either 64 or 32
+CFLAGS      = -ggdb -m$(BIT) -rdynamic
+PROG        = FACT-BETA
+INCLUDE_DIR = ./Include
+API_INC_DIR = ./API_Include
 
 SRCS = main.c malloc_replacements.c functions.c string.c    \
 	management.c math.c mem.c shell.c BIFs.c            \
@@ -15,7 +17,7 @@ all: $(PROG)
 	cd ./stdlib ; make ; 
 
 $(PROG):	$(SRCS)
-	$(CC) $(CFLAGS) -o $(PROG) $(SRCS) $(LIBS)
+	$(CC) $(CFLAGS) -o $(PROG) $(SRCS) $(LIBS) -I$(INCLUDE_DIR)
 
 help:
 	@echo To install FACT-BETA completely, in your shell enter these three commands:
@@ -27,15 +29,15 @@ install_headers:
 	if test -d /usr/include/FACT; \
 	then rm -r /usr/include/FACT/; \
 	fi
-	cp -r ./includes /usr/include/FACT/           # install the development headers
+	cp -r $(API_INC_DIR) /usr/include/FACT/ # install the development headers
 
 install:
 	cp ./$(PROG) /usr/bin/$(PROG)
-	chmod +x /usr/bin/$(PROG)                     # this is to make sure that FACT is an executable
+	chmod +x /usr/bin/$(PROG) # this is to make sure that FACT is an executable
 	if test -d /etc/FACT; \
 	then rm -r /etc/FACT; \
 	fi
-	mkdir /etc/FACT                               # make the folder containing all the data
+	mkdir /etc/FACT # make the folder containing all the data
 	mkdir /etc/FACT/modules
 	mkdir /etc/FACT/include
 	cp ./stdlib/stdlib.soft /etc/FACT/modules/    # install the stdlib so

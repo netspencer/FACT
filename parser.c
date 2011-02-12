@@ -1,11 +1,4 @@
-/*
- * parser.c
- * (c) 2010 Matthew Plant
- * Includes functions for parsing input into
- * more easily used data.
- */
-
-#include "parser.h"
+#include "FACT.h"
 
 char *
 add_newlines (char *word, int newlines)

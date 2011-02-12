@@ -1,4 +1,4 @@
-#include "common.h"
+#include "FACT.h"
 
 static unsigned int default_prec = 6;
 
@@ -148,17 +148,35 @@ mpc_div (mpc_t *rop, mpc_t op1, mpc_t op2)
   mpz_init (temp.object);
   mpz_init (temp_res);
 
-  if (op1.precision == 0)
+  temp.precision = (op1.precision < op2.precision) ? op2.precision : op1.precision;
+
+  if (!op1.precision && !op2.precision)
     {
       temp.precision = default_prec;
-      power_of_ten (temp.object, temp.precision/* + op2.precision*/);
+      mpz_set (temp.object, op1.object);
+      power_of_ten (temp.object, default_prec);
+      mpz_tdiv_q (temp_res, temp.object, op2.object);
+    }
+  else if (op1.precision < op2.precision)
+    {
+      temp.precision = op2.precision;
+      mpz_set (temp.object, op1.object);
+      power_of_ten (temp.object, op2.precision - op1.precision);
+      mpz_tdiv_q (temp_res, temp.object, op2.object);
+    }
+  else if (op1.precision > op2.precision)
+    {
+      temp.precision = op1.precision;
+      mpz_set (temp.object, op2.object);
+      power_of_ten (temp.object, op1.precision - op2.precision);
+      mpz_tdiv_q (temp_res, op1.object, temp.object);
     }
   else
-    temp.precision = op1.precision;
-  
-  mpz_set (temp.object, op1.object);
-  //  power_of_ten (temp.object, temp.precision/* + op2.precision*/);  
-  mpz_tdiv_q (temp_res, temp.object, op2.object);
+    {
+      temp.precision = op1.precision;
+      mpz_set (temp.object, op1.object);
+      mpz_tdiv_q (temp_res, temp.object, op2.object);
+    }
 
   rop->precision = temp.precision;
   mpz_set (rop->object, temp_res);
@@ -348,10 +366,8 @@ mpc_get_si (mpc_t rop)
 static char *
 concatinate_free (char *op1, char *op2, bool fop1, bool fop2)
 {
-  char *return_value;
+  char * return_value;
 
-  extern char *combine_strs (char *, char *);
-  
   return_value = combine_strs (op1, op2);
 
   if (fop1)

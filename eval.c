@@ -1,4 +1,4 @@
-#include "eval.h"
+#include "FACT.h"
 
 word_list
 make_word_list (char **words, bool len_check)
@@ -65,12 +65,14 @@ next_inst ( void ) { ip++; }
 static unsigned long
 get_else (char ** expression)
 {
-  /* get_else - get the length to the else clause corresponding 
+  /**
+   * get_else - get the length to the else clause corresponding 
    * to the given if statement. If none is available, return
    * the length to NULL.
+   *
+   * @ifs: how many if/on_error statements needed to be matched.  
    */
 
-  /* @ifs - How many if/on_error statements needed to be matched. */ 
   unsigned long ifs   ; 
   unsigned long index ;
 
@@ -84,15 +86,12 @@ get_else (char ** expression)
 	   */
 	  switch (expression[index][2])
 	    {
-	    case IFS: /* This stands for IF STATEMENT. */
-	    case ONE:
-	      ifs++;  /* This stands for "the number of if statements." */
+	    case IFS: // IFS stands for IF Statement.
+	    case ONE: // ONE stands for ON Error.
+	      ifs++; 
 	      break;
 	      
-	    case ELS:
-	      /* We check if it's time to return here as
-	       * well.
-	       */
+	    case ELS: // And ELS stands for Else clause.
 	      if (--ifs == 0)
 		return index; 
 	      break;
@@ -124,11 +123,11 @@ get_else (char ** expression)
 	      break;
 
 	    case '(':
-	      index += get_exp_length (expression + index + 1,')');
+	      index += get_exp_length (expression + index + 1, ')');
 	      break;
 
 	    case '[':
-	      index += get_exp_length (expression + index + 1,']');
+	      index += get_exp_length (expression + index + 1, ']');
 	      break;
 	      
 	    default:
@@ -143,11 +142,13 @@ get_else (char ** expression)
 FACT_t
 eval_expression (func_t *scope, word_list expression)
 {  
-  /* This function checks the begining of the expression for
-   * statements such as if, while, or etc, and for signals
-   * such as break or return. Since this function is called
-   * with every iteration in a recursive function, so it
-   * handles recursion depth as well.
+  /**
+   * eval_expression - checks the begining of the expression 
+   * for statements such as if, while, or etc, and for signals
+   * such as break or return.
+   *
+   * @scope: scope to evaluate the expression in.
+   * @expression: expression to evaluate.
    */
   int    index          ;
   int    jndex          ;
@@ -316,7 +317,8 @@ procedure (func_t *scope, word_list expression)
 	   */
 	  length = get_else (expression.syntax);
 
-	  while (expression.syntax[length][0] == BYTECODE
+	  while (expression.syntax[length] != NULL
+                 && expression.syntax[length][0] == BYTECODE
 		 && expression.syntax[length][1] == STATEMENT
 		 && expression.syntax[length][2] == ELS)
 	    length += get_else (expression.syntax + length + 1) + 1; // get_exp_length_first (expression.syntax + length, ';');
@@ -383,13 +385,15 @@ lambda_proc (func_t *scope, word_list expression)
 }
 
 FACT_t
-eval (func_t *scope, word_list expression)
+eval (func_t * scope, word_list expression)
 {
-  /* eval - evaluate one single instruction. Since this function
-   * has no real control over the depth and if/on_error blocks,
-   * it cannot handle statements (although there's no real reason
-   * for this, so it might change in the future to be combined
-   * with eval_expression).
+  /**
+   * eval - evaluate one single instruction or return a variable
+   * or a function.
+   *
+   * @scope:      The scope to evalute the instruction in.
+   * @expression: Word list that contains every instruction in
+   *              the expression.
    */
   int      index           ;
   int      call_num        ;

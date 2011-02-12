@@ -1,4 +1,4 @@
-#include "string.h"
+#include "FACT.h"
 
 FACT_t
 new_string (func_t *scope, word_list expression)

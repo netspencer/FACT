@@ -1,4 +1,4 @@
-#include "common.h"
+#include "FACT.h"
 
 /*---------------------------------------------*
  * operators.c: Provides functions for         *
@@ -6,18 +6,6 @@
  *                                             *
  * This code is (C) 2010 Matthew Plant.        *
  *---------------------------------------------*/
-
-/*---------------------------------------------*
- * Functions: The actual code. All of these    *
- * functions will return 1 if the arguments    *
- * passed to it meet their conditions, and 0   *
- * if they do not.                             *
- *---------------------------------------------*/
-
-/* * * * * * * * * * * * * * * * * * * * * * * *
- * equal: checks if two arguments are equal to *
- * each other.                                 *
- * * * * * * * * * * * * * * * * * * * * * * * */
 
 static int
 check_dimensions (var_t *op1, var_t *op2)
