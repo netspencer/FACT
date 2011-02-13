@@ -15,6 +15,24 @@ count_until_NULL (char **words)
   return pos;
 }
 
+bool
+compare_var_arrays (var_t *op1, var_t *op2, bool first)
+{
+  /* compare_var_arrays: returns true on == and false on !=. */ 
+
+  if (op1 == NULL && op2 == NULL)
+    return true;
+  if (op1 == NULL || op2 == NULL)
+    return false;
+  
+  if (!mpc_cmp (op1->data, op2->data))
+    return compare_var_arrays (op1->array_up, op2->array_up, false)
+      && ((first) // If we're not in the first position, search the 'next' element.
+          ? true
+          : compare_var_arrays (op1->next, op2->next, false));
+  return false;
+}
+
 char *
 combine_strs (char *str1, char *str2)
 {
@@ -66,7 +84,7 @@ array_to_string (var_t *convertable)
   char  * setter;
   var_t * scroller;
   
-  return_value = (char *) better_malloc (sizeof (char) * (mpz_get_ui (convertable->array_size) + 1));
+  return_value = better_malloc (sizeof (char) * (mpz_get_ui (convertable->array_size) + 1));
   setter       = return_value;
 
   if (mpz_cmp_ui (convertable->array_size, 1) > 0)
@@ -83,23 +101,24 @@ array_to_string (var_t *convertable)
 var_t *
 string_to_array (char *convertable, char *name)
 {
-  int     length;
-  int     pos;
+  int     index;
   var_t * root;
   var_t * scroller;
 
-  length = strlen (convertable) + 1;
-  root   = alloc_var ();
-
-  for (scroller = root, pos = 1; pos < length; pos++)
+  root     = alloc_var ();
+  scroller = root;
+  
+  for (index = 0; convertable[index] != '\0'; index++)
     {
-      mpc_set_si (&(scroller->data), (int) (convertable [pos - 1]));
+      mpc_set_si (&(scroller->data), (int) (convertable [index]));
       scroller->name = name;
-      scroller->next = alloc_var ();
-      scroller       = scroller->next;
+      
+      if (convertable[index + 1] != '\0')
+        {
+          scroller->next = alloc_var ();
+          scroller       = scroller->next;
+        }
     }
-
-  scroller->name = name;
 
   return root;
 }

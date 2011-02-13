@@ -174,6 +174,13 @@ eval_expression (func_t *scope, word_list expression)
   /* This will be removed in the future. */
   if (expression.syntax == NULL) 
     return errorman_throw_reg (scope, "syntax error: expected closing ';' or '}'");
+  while (expression.syntax[0][0] == BYTECODE
+         && expression.syntax[0][1] == IGNORE) // Skip all of the ignores.
+    {
+      expression.syntax++;
+      expression.lines++;
+      next_inst ();
+    }
   
   /* Check to see if it's a bytecode instruction of the
    * STATEMENT category. These are the only instructions
@@ -414,6 +421,14 @@ eval (func_t * scope, word_list expression)
    * to indicate that the token has been evaluated.  
    */
   ip = get_ip ();
+
+  while (expression.syntax[ip][0] == BYTECODE
+         && expression.syntax[ip][1] == IGNORE) // Skip all of the ignores.
+    {
+      ip++;
+      next_inst ();
+    }
+
   current_token = expression.syntax[ip];
   next_inst ();
 
