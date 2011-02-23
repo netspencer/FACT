@@ -78,7 +78,7 @@ static struct
      * category's end variable for a category's start, but
      * I think this makes things a bit nicer.
      */
-    { 0x00, 0x06 }, // Statements
+    { 0x00, 0x07 }, // Statements
     { 0x08, 0x1b }, // Math calls
     { 0x1c, 0x2a }, // Primitives
   };
