@@ -51,20 +51,29 @@ init_BIFs (func_t *scope)
    * is loaded once during start-up and then is
    * forgotten. It should NEVER be called twice.
    */
+  func_t * ref     ;
+  func_t * deref   ;
   func_t * import  ;
-  func_t * size_of ; /* Actually called sizeof. */ 
-  
-  import  = add_func (scope, "import");
-  size_of = add_func (scope, "sizeof");
+  func_t * size_of ; // Actually written as 'sizeof'.
+  func_t * get_tid ;
 
-  /* The extra space at the end of each is required for
-   * parsing reasons.
-   */
-  import->args  = get_words (FACT_BIF (import).arguments);
-  size_of->args = get_words (FACT_BIF (sizeof).arguments);
-  
+  ref     = add_func (scope, "ref"    );
+  deref   = add_func (scope, "deref"  );
+  import  = add_func (scope, "import" );
+  size_of = add_func (scope, "sizeof" );
+  get_tid = add_func (scope, "get_tid");
+
+  ref->args     = get_words (FACT_BIF (ref).arguments    );
+  deref->args   = get_words (FACT_BIF (deref).arguments  );
+  import->args  = get_words (FACT_BIF (import).arguments );
+  size_of->args = get_words (FACT_BIF (sizeof).arguments );
+  get_tid->args = get_words (FACT_BIF (get_tid).arguments);
+
+  ref->extrn_func     = FACT_BIF (ref).function;
+  deref->extrn_func   = FACT_BIF (deref).function;
   import->extrn_func  = FACT_BIF (import).function;
   size_of->extrn_func = FACT_BIF (sizeof).function;
+  get_tid->extrn_func = FACT_BIF (get_tid).function;
 }
 
 int

@@ -8,13 +8,13 @@
  * struct definitions, and typedefs.
  *
  * Now let's do that Allegro thing:
- *    ________   ________   ________   _________
- *   /\  _____\ /\  ___  \ /\  _____\ /\___  ___\
- *   \ \ \____/ \ \ \__L\ \\ \ \____/ \/__/\ \__/
- *    \ \  ___\  \ \  ____ \\ \ \         \ \ \
- *     \ \ \__/   \ \ \__/\ \\ \ \______   \ \ \
- *      \ \_\      \ \_\ \ \_\\ \_______\   \ \_\
- *       \/_/       \/_/  \/_/ \/_______/    \/_/
+ *    ________  ________   ________  _________
+ *   /\  _____\/\  ___  \ /\  _____\/\___  ___\
+ *   \ \ \____/\ \ \__L\ \\ \ \____/\/__/\ \__/
+ *    \ \  ___\ \ \  ____ \\ \ \        \ \ \
+ *     \ \ \__/  \ \ \__/\ \\ \ \______  \ \ \
+ *      \ \_\     \ \_\ \ \_\\ \_______\  \ \_\
+ *       \/_/      \/_/  \/_/ \/_______/   \/_/
  *
  * (C) 2010 Matthew Plant. 
  */
@@ -27,7 +27,7 @@
 # define FACT_INTERN_DEPRECATED(type) __attribute__((__deprecated__)) type
 #else
 # define FACT_INTERN_DEPRECATED(type) type
-#endif
+#endif /* (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 1)) */
 
 #define FACT_DEFINE_BIF(name, args) FACT_t name##_func (func_t * scope); \
   BIF name##_BIF = {							\
@@ -39,6 +39,7 @@
 #define FACT_EXTERN_BIF(name) BIF name ## _BIF
 #define FACT_BIF(name) name ## _BIF
 
+#define SAFE // If this is turned on, pointers value will be checked before being dereferenced. 
 #define PARSE_CHECK
 #define DEBUG
 
@@ -49,6 +50,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <setjmp.h>
 #include <math.h>
 #include <endian.h>
 #include <unistd.h>
@@ -80,6 +82,7 @@
 #include "bytecode.h"
 #include "shell.h"
 #include "parser.h"
+#include "sprout.h"
 #include "eval.h"
 #include "mem.h"
 #include "functions.h"

@@ -1,4 +1,5 @@
 #include "FACT.h"
+#include "sprout.h"
 
 word_list
 make_word_list (char **words, bool len_check)
@@ -46,21 +47,11 @@ make_word_list (char **words, bool len_check)
  */
 static unsigned long ip;
 
-/* Begin instruction pointer accessor methods: */
-
-inline unsigned long
-get_ip ( void ) { return ip; }
-
-inline void
-set_ip (unsigned long nip) { ip = nip; }
-
-inline void
-move_ip (unsigned long nip) { ip += nip; }
-
-inline void
-next_inst ( void ) { ip++; }
-
-/* End instruction pointer accessor methods. */
+inline unsigned long get_ip ( void ) { return ip; }    // Get the instruction pointer (value).
+inline unsigned long *ref_ip ( void ) { return &ip; }  // Get the instruction pointer (address).
+inline void set_ip (unsigned long nip) { ip = nip; }   // Set the instruction pointer. 
+inline void move_ip (unsigned long nip) { ip += nip; } // Move the instruction pointer over, equivalent to set_ip (nip + get_ip ()).
+inline void next_inst ( void ) { ip++; }               // Move the instruction pointer over one.
 
 static unsigned long
 get_else (char ** expression)
@@ -174,6 +165,7 @@ eval_expression (func_t *scope, word_list expression)
   /* This will be removed in the future. */
   if (expression.syntax == NULL) 
     return errorman_throw_reg (scope, "syntax error: expected closing ';' or '}'");
+
   while (expression.syntax[0][0] == BYTECODE
          && expression.syntax[0][1] == IGNORE) // Skip all of the ignores.
     {
@@ -207,60 +199,79 @@ eval_expression (func_t *scope, word_list expression)
    * functions, they do the exact same thing to the
    * if_open array.
    */
-  if (is_instruction && (instruction == IFS || instruction == ONE))
+  if (is_instruction)
     {
-      if (instruction == IFS)
-	return_value = if_statement (scope, expression, &getif);
-      else
-	return_value = on_error (scope, expression, &getif);
+      switch (instruction)
+        {
+        case IFS:
+        case ONE:
+          if (instruction == IFS)
+            return_value = if_statement (scope, expression, &getif);
+          else
+            return_value = on_error (scope, expression, &getif);
+          
+          if (!getif)
+            {
+              /* If the conditional evaluated to false, get the place
+               * of the else matching this current if statement, and
+               * evaluate its expression.
+               */
+              index = get_else (expression.syntax);
+              
+              /* If there's no corresponding else statement, just
+               * return whatever if_statement or on_error gave us.
+               */
+              if (expression.syntax[index] == NULL
+                  || expression.syntax[index][0] != BYTECODE
+                  || expression.syntax[index][1] != STATEMENT
+                  || expression.syntax[index][2] != ELS)
+                return return_value;
+              
+              expression.syntax += index;
+              expression.lines  += index;
+              
+              return_value = else_clause (scope, expression);
+            }
+          break;
 
-      if (!getif)
-	{
-	  /* If the conditional evaluated to false, get the place
-	   * of the else matching this current if statement, and
-	   * evaluate its expression.
-	   */
-	  index = get_else (expression.syntax);
+        case ELS:
+          /* If it's an else clause, someone messed up, as those
+           * are never called directly. Therefor, we return an
+           * "unmatched else" error.
+           */
+          return errorman_throw_reg (scope, "unmatched 'else'");
 
-	  /* If there's no corresponding else statement, just
-	   * return whatever if_statement or on_error gave us.
-	   */
-	  if (expression.syntax[index] == NULL
-	      || expression.syntax[index][0] != BYTECODE
-	      || expression.syntax[index][1] != STATEMENT
-	      || expression.syntax[index][2] != ELS)
-	    return return_value;
+        case WHL:
+          return_value = while_loop (scope, expression);
+          break;
 
-	  expression.syntax += index;
-	  expression.lines  += index;
-	  
-	  return_value = else_clause (scope, expression);
-	}
-    }
-  else if (is_instruction && instruction == ELS)
-    {
-      /* If it's an else clause, someone messed up. Therefor
-       * we return an "unmatched else" error.
-       */
-      return errorman_throw_reg (scope, "unmatched 'else'");
-    }
-  else if (is_instruction && instruction == WHL)
-    return_value = while_loop (scope, expression);
-  else if (is_instruction && instruction == FRL)
-    return_value = for_loop (scope, expression);
-  else if (is_instruction && instruction == RTN)
-    {
-      set_ip (1);
-      return_value  = eval (scope, expression);
-      return_signal = true;
-    }
-  else if (is_instruction && instruction == BRK)
-    {
-      if (expression.syntax[0] != NULL
-	  && tokcmp (expression.syntax[0], ";"))
-	return errorman_throw_reg (scope, "break must be alone in an expression");
-      break_signal = true;
-      return_value.v_point = alloc_var ();
+        case FRL:
+          return_value = for_loop (scope, expression);
+          break;
+
+        case RTN:
+          set_ip (1);
+          return_value  = eval (scope, expression);
+          return_signal = true;
+          break;
+
+        case BRK:
+          if (expression.syntax[0] != NULL
+              && tokcmp (expression.syntax[0], ";"))
+            return errorman_throw_reg (scope, "break must be alone in an expression");
+          break_signal = true;
+          return_value.v_point = alloc_var ();
+          break;
+
+        case SPT:
+          // Needs to be fixed to support returning the tid.
+          sprout (scope, expression);
+          get_curr_thread ().expression = expression;
+          get_curr_thread ().ip = get_ip ();
+
+        default:
+          break;
+        }
     }
   else
     {
@@ -269,7 +280,7 @@ eval_expression (func_t *scope, word_list expression)
       expression.lines  -= get_ip ();
       return_value = eval (scope, expression);
     }
-
+  
   /* If we have gotten any signals, we set the return
    * value to the correct ones.
    */
@@ -277,6 +288,36 @@ eval_expression (func_t *scope, word_list expression)
     return_value.return_signal = return_signal;
   if (!return_value.break_signal)
     return_value.break_signal = break_signal;
+
+  if (is_threading ())
+    {
+      // If threading is turned on...
+      if (!setjmp (get_curr_thread ().back))
+        {
+          /* If we have yet to jump back to the scheduler, set the
+           * current thread data to match our current data.
+           */
+
+          // These next two should not make a difference, but are put in anyway.
+          get_curr_thread ().scope = scope;
+          get_curr_thread ().expression = expression; 
+
+          // This is actually important.
+          get_curr_thread ().ip = get_ip ();
+
+          // Jump back to the station.
+          jmp_to_station (-1);
+        }
+      else
+        {
+          /* If we have just jumped back from the scheduler, restore
+           * the current thread data and continue on with our life.
+           */
+          scope = get_curr_thread ().scope;
+          expression = get_curr_thread ().expression;
+          set_ip (get_curr_thread ().ip);
+        }
+    }
 
   return return_value;
 }
@@ -339,10 +380,6 @@ procedure (func_t *scope, word_list expression)
       expression.lines  += length;
     }
 
-  /* Close all open if/on_error blocks, set the signals and
-   * return values to their defualts, and decrease the
-   * recusion depth by one. Then, return.
-   */
   next_inst ();
 
   return_value.return_signal = false;
@@ -517,6 +554,12 @@ eval (func_t * scope, word_list expression)
       hold_break_sig  = false;
       hold_return_sig = false;
     }
+
+  // we skip all ignores so that other functions don't have to deal with them.
+  for (ip = get_ip (); (expression.syntax[ip] != NULL
+                        && (expression.syntax[ip][0] == BYTECODE
+                            && expression.syntax[ip][1] == IGNORE)); ip++) 
+    next_inst ();
       
   /* Depending on whether or not the return value is
    * a variable or a function, we check for a variable
@@ -537,6 +580,6 @@ eval (func_t * scope, word_list expression)
    */
   return_value.return_signal = hold_return_sig;
   return_value.break_signal  = hold_break_sig;
-  
+
   return return_value;
 }

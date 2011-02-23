@@ -55,6 +55,73 @@ combine_strs (char *str1, char *str2)
   return new_string;
 }
 
+char *
+rm_cslashes (char *op)
+{
+  /* rm_cslashes - remove slashes and escape characters in C, replacing
+   * them with their equivalent ascii code.
+   */
+  int    index;
+  int    jndex;
+  char * new;
+
+  new = better_malloc (sizeof (char) * strlen (op));
+
+  for (index = jndex = 0; op[index] != '\0'; jndex++, index++)
+    {
+      if (op[index] == '\\')
+        {
+          switch (op[index + 1])
+            {
+            case 'b':
+              new[jndex] = '\b';
+              break;
+
+            case 'f':
+              new[jndex] = '\f';
+              break;
+
+            case 'n':
+              new[jndex] = '\n';
+              break;
+
+            case 'r':
+              new[jndex] = '\r';
+              break;
+
+            case 't':
+              new[jndex] = '\t';
+              break;
+
+            case '\\':
+              new[jndex] = '\\';
+              break;
+
+            case '"':
+              new[jndex] = '"';
+              break;
+
+            case '\0':
+              new[jndex] = '\\';
+              index--;
+              break;
+              
+            default:
+              new[jndex] = '\\';
+              new[jndex + 1] = op[index + 1];
+            }
+          index++;
+        }
+      else
+        new[jndex] = op[index];
+    }
+
+  new = better_realloc (new, sizeof (char) * (jndex + 1));
+  new[jndex] = '\0';
+
+  return new;
+}
+
 char **
 copy (char **words)
 {

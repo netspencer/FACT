@@ -12,21 +12,21 @@ print_parsing_error (const char *file_name, int line_num)
 bool
 check_for_incompletions (const char *file_name, char *expression)
 {
-  /* There's no need to use a word list, 
-   * so I'm just going to check the string
-   * to make things simpler.
+  /**
+   * check_for_incompletions: Loop through a string and check for
+   * mismatched parentheses, brackets, and curly-braces. Return
+   * true on a mismatch and print the errors. Otherwise, return 
+   * false. Also checks for quotes.
+   *
+   * @file_name - name of the current file (used for printing errors).
+   * @expression - pure, uncut and unparsed expression.
    */
+
   int  p_count;
   int  b_count;
   int  c_count;
   bool in_quote;
 
-  /* Loop through a string and check for
-   * mismatched parentheses, brackets,
-   * and curly-braces. Return true on
-   * a mismatch and print the errors. 
-   * Otherwise, return false. Also quotes.
-   */
 
   for (p_count = b_count = c_count = 0, in_quote = false; // Yes I know false = 0
        *(expression + 1) != '\0'; expression++)
@@ -94,19 +94,10 @@ check_for_errors (linked_word *expression,
     NON_OP  ,
   };
 
-  /* For the record, I hate gotos,
-   * but it just made this so much
-   * easier. The reason I use the goto
-   * for semicolons and not for 
-   * everything is because the semicolons
-   * worry me of stack overflows the
-   * most.
-   */
- JUMP_1:
-  /* ---- If the level is zero or three, let's check for any statements. ---- */
+ new_expression:
+
   if (level == 0 || level == 3)
     {
-      /* ---- Check for an if statement. ---- */
       if (expression->code == IF
 	  || expression->code == ON_ERROR)
 	{
@@ -120,11 +111,13 @@ check_for_errors (linked_word *expression,
 	    return true;
 	  return check_for_errors (expression->next->next, level, current_line, break_ok);
 	}
+      
       if (expression->code == ELSE)
 	{
 	  *current_line += expression->newlines;
 	  return check_for_errors (expression->next, 0, current_line, break_ok);
 	}
+
       if (expression->code == WHILE)
 	{
 	  current_line += expression->newlines;
@@ -137,22 +130,22 @@ check_for_errors (linked_word *expression,
 	    return true;
 	  return check_for_errors (expression->next->next, level, current_line, true);
 	}
+      
       if (expression->code == FOR)
 	{
 	  *current_line += expression->newlines;
 	  return check_for_errors (expression->next, 7, current_line, break_ok);
 	}
     }
-  /* ---- Move through the expression and check for errors. ---- */
-  for (prev_code = OP_START, neg_prev = false; expression != NULL && expression->code != END; expression = expression->next)
+
+  neg_prev = false;
+  for (prev_code = OP_START; expression != NULL && expression->code != END; expression = expression->next)
     {
       *current_line += expression->newlines;
-      /* neg_prev starts out as false, when a negative
-       * sign is hit, neg_prev is set to true for one
-       * iteration. Any minus signs caught during the
-       * time when neg_prev is true will this function
-       * to return false. At the of the iteration,
-       * neg_prev is reset to false.
+      /* neg_prev starts out as false, when a negative sign is hit, neg_prev
+       * is set to true for one iteration. Any minus signs caught during the
+       * period when neg_prev is true will make the function return false
+       * At the of the iteration, neg_prev is reset to false.
        */
       if (level == 6 && (expression->code != OP_BRACKET
 			 && expression->code != UNKNOWN))
@@ -160,114 +153,114 @@ check_for_errors (linked_word *expression,
 	  error = "invalid syntax in definition";
 	  return true;
 	}
-      if (expression->code == OP_CURLY)
-	{
-	  if (prev_code == NON_OP)
-	    {
-	      error = "unexpected '{'";
-	      return false;
-	    }
-	  if (check_for_errors (expression->hidden, 3, current_line, break_ok))
-	    return true;
-	  if (level == 0 || level == 3)
-	    prev_code = OP_START;
-	  else
-	    prev_code = NON_OP;
-	}
-      if (expression->code == CL_CURLY)
-	{
-	  if (level != 3 || (expression->previous != NULL
-			     && expression->previous->code != SEMI
-			     && expression->previous->code != OP_CURLY))
-	    {
-	      if (level != 3)
-		error = "unexpected '}'";
-	      else
-		error = "expected semicolon before closing curly-brace";
-	      return true;
-	    }
-	  return false;
-	}
-      if (expression->code == CL_BRACKET)
-	{
+      
+      switch (expression->code)
+        {
+        case OP_CURLY:
+          if (prev_code == NON_OP)
+            {
+              error = "unexpected '{'";
+              return false;
+            }
+          if (check_for_errors (expression->hidden, 3, current_line, break_ok))
+            return true;
+
+          if (level == 0 || level == 3)
+            {
+              prev_code = OP_START;
+              level = 3;
+              expression = expression->next;
+              goto new_expression;
+            }
+          prev_code = NON_OP;
+          break;
+          
+        case CL_CURLY:
+          if (level != 3 || (expression->previous != NULL
+                             && expression->previous->code != SEMI
+                             && expression->previous->code != OP_CURLY))
+            {
+              error = (level != 3)
+                ? "unexpected '}'"
+                : "expected semicolon before closing curly-brace";
+              return true;
+            }
+          return false;
+          
+        case CL_BRACKET:
 	  if (prev_code == OP_START || (level != 2 && level != 5))
 	    {
 	      error = " unexpected ']'";
 	      return true;
 	    }
-	  return false;
-	}
-      if (expression->code == CL_PAREN)
-	{
-	  if ((expression->previous != NULL
-	       && prev_code == OP_START) || (level != 1 && level != 4))
-	    {
-	      error = "unexpected ')'";
-	      return true;
-	    }
-	  return false;
-	}
-      if (expression->code == SEMI)
-	{
-	  if (level != 0 && level != 3)
-	    {
-	      error = "unexpected ';'";
-	      return true;
-	    }
-	  if (level == 0 && expression->next->code == END)
-	    return false;
-	  level = 3;
-	  expression = expression->next;
-	  goto JUMP_1; /* I HATE THESE SO MUCH! */
-	}
-      if (expression->code == COMMA)
-	{
-	  if (level < 4 || level > 7 || level == 6
-	      || prev_code != NON_OP)
-	    {
-	      error = "unexpected ','";
-	      return true;
-	    }
-	  prev_code = OP_START;
-	  if (level == 7)
-	    level++;
-	}
-      else if (expression->code == THEN)
-	{
-	  if (level != 8 || prev_code != NON_OP)
-	    {
-	      error = "unexpected 'then'";
-	      return true;
-	    }
-	  return check_for_errors (expression->next, 0, current_line, true);
-	}
-      else if (expression->code == BREAK_SIG)
-	{
-	  if (!break_ok)
-	    {
-	      error = "break signals can only be within for or while loops";
-	      return true;
-	    }
-	  if (expression->next->code != END
-	      && expression->next->code != SEMI)
-	    {
-	      error = "break signals must be alone in an expression";
-	      return true;
-	    }
-	  prev_code = NON_OP;
-	}
-      else if (expression->code == RETURN_STAT)
-	{
-	  if (prev_code == NON_OP)
-	    {
-	      error = "unexpected return statement";
-	      return true;
-	    }
-	  prev_code = OP_START;
-	}
-      /* In here: check for other things. */
-      else if (expression->code == OP_PAREN)
-	{
+          return false;
+          
+        case CL_PAREN:
+          if ((expression->previous != NULL
+               && prev_code == OP_START) || (level != 1 && level != 4))
+            {
+              error = "unexpected ')'";
+              return true;
+            }
+          return false;
+          
+        case SEMI:
+          if (level != 0 && level != 3)
+            {
+              error = "unexpected ';'";
+              return true;
+            }
+          if (level == 0 && expression->next->code == END)
+            return false;
+          level = 3;
+          expression = expression->next;
+          goto new_expression;
+
+        case COMMA:
+          if (level < 4 || level > 7 || level == 6
+              || prev_code != NON_OP)
+            {
+              error = "unexpected ','";
+              return true;
+            }
+          prev_code = OP_START;
+          if (level == 7)
+            level++;
+          break;
+          
+        case THEN:
+          if (level != 8 || prev_code != NON_OP)
+            {
+              error = "unexpected 'then'";
+              return true;
+            }
+          return check_for_errors (expression->next, 0, current_line, true);
+          
+        case BREAK_SIG:
+          if (!break_ok)
+            {
+              error = "break signals can only be within for or while loops";
+              return true;
+            }
+          if (expression->next->code != END
+              && expression->next->code != SEMI)
+            {
+            error = "break signals cannot alone in an expression";
+            return true;
+            }
+          prev_code = NON_OP;
+          break;
+          
+        case RETURN_STAT:
+          if (prev_code == NON_OP)
+            {
+              error = "unexpected return statement";
+              return true;
+            }
+          prev_code = OP_START;
+          break;
+
+        case OP_PAREN:
 	  if (prev_code == NON_OP)
 	    {
 	      error = "unexpected '('";
@@ -276,10 +269,10 @@ check_for_errors (linked_word *expression,
 	  if (check_for_errors (expression->hidden, 1, current_line, break_ok))
 	    return true;
 	  prev_code = NON_OP;
-	}
-      else if (expression->code == FUNC_RET
-	       || expression->code == FUNC_OBJ)
-	{
+          break;
+
+        case FUNC_RET:
+        case FUNC_OBJ:
 	  if (prev_code == NON_OP)
 	    {
 	      error = "unexpected function call"; 
@@ -294,9 +287,10 @@ check_for_errors (linked_word *expression,
 	    return true;
 	  expression = expression->next;
 	  prev_code  = NON_OP;
-	}
-      else if (expression->code == DEF || expression->code == DEFUNC)
-	{
+          break;
+
+        case DEF:
+        case DEFUNC:
 	  if (prev_code == NON_OP)
 	    {
 	      error = "unexpected definition";
@@ -305,13 +299,13 @@ check_for_errors (linked_word *expression,
 	  if (check_for_errors (expression->hidden, 6, current_line, break_ok))
 	    return true;
 	  prev_code = NON_OP;
-	}
-      else if (expression->code == OP_BRACKET)
-	{
-	  if (prev_code == OP_START && level != 6)
-	   {
-	     if (check_for_errors (expression->hidden, 5, current_line, break_ok))
-	       return true;
+          break;
+
+        case OP_BRACKET:
+          if (prev_code == OP_START && level != 6)
+            {
+              if (check_for_errors (expression->hidden, 5, current_line, break_ok))
+                return true;
 	    }
 	  else
 	    {
@@ -319,14 +313,33 @@ check_for_errors (linked_word *expression,
 		return true;
 	    }
 	  prev_code = NON_OP;
-	}
-      else if ((expression->code >= COMB_ARR
-		&& expression->code <= MOD_ASSIGN)
-	       || expression->code == SET
-	       || expression->code == IN_SCOPE
-	       || (expression->code >= AND
-		   && expression->code <= MORE_EQ))
-	{
+          break;
+
+        case COMB_ARR:
+        case PLUS:
+        case MINUS:
+        case MULTIPLY:
+        case DIVIDE:
+        case MOD:
+        case NEG:
+        case ADD_ASSIGN:
+        case SUB_ASSIGN:
+        case MULT_ASSIGN:
+        case DIV_ASSIGN:
+        case MOD_ASSIGN:
+        case SET:
+        case IN_SCOPE:
+        case AND:
+        case OR:
+        case BIT_AND:
+        case BIT_IOR:
+        case BIT_XOR:
+        case EQ:
+        case NEQ:
+        case LESS:
+        case MORE:
+        case LESS_EQ:
+        case MORE_EQ:
 	  if (prev_code == OP_START)
 	    {
 	      if (expression->code == MINUS && !neg_prev)
@@ -338,19 +351,20 @@ check_for_errors (linked_word *expression,
 	      return true;
 	    }
 	  prev_code = OP_START;
-	}
-      else if (expression->code == UNKNOWN || expression->code == QUOTE
-	       || expression->code == VARIADIC)
-	{
-	  if (prev_code == NON_OP && level != 6)
+          break;
+          
+        case UNKNOWN:
+        case QUOTE:
+        case VARIADIC:
+          if (prev_code == NON_OP && level != 6)
 	    {
 	      error = combine_strs ("unexpected ", (expression->code == QUOTE) ? "\"" : expression->physical);
 	      return true;
 	    }
 	  prev_code = NON_OP;
-	}
-      else if (expression->code == AT)
-	{
+          break;
+
+        case AT:
 	  if (prev_code == NON_OP)
 	    {
 	      error = "unexpected function setting";
@@ -374,8 +388,13 @@ check_for_errors (linked_word *expression,
 	  if (check_for_errors (expression->next->hidden, 3, current_line, break_ok))
 	    return true;
 	  prev_code = NON_OP;
-	}
+          break;
+
+        default:
+          break;
+        }
       neg_prev = false;
     }
+  
   return false;
 }      

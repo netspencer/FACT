@@ -8,7 +8,6 @@ typedef enum _TYPE_DEFINE
     VAR_TYPE      ,
     FUNCTION_TYPE ,
     ERROR_TYPE    ,
-    MIXED_TYPE    ,
   } type_define;
 
 typedef enum _word_codes

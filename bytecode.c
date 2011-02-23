@@ -23,7 +23,8 @@ static struct
     { STATEMENT, 0x3, "if"       },
     { STATEMENT, 0x4, "on_error" },
     { STATEMENT, 0x5, "return"   },
-    { STATEMENT, 0x6, "while"    },
+    { STATEMENT, 0x6, "sprout"   },
+    { STATEMENT, 0x7, "while"    },
     /* Mathematical instructions */
     { MATH_CALL, 0x00, "!=" },
     { MATH_CALL, 0x01, "%"  },
@@ -77,11 +78,9 @@ static struct
      * category's end variable for a category's start, but
      * I think this makes things a bit nicer.
      */
-    { 0x00, 0x06 }, /* Statements */
-    { 0x07, 0x1a }, /* Math calls */
-    { 0x1b, 0x29 }, /* Primitives -- Note, add three to end when all
-		     * the commented primitives get implemented.
-		     */
+    { 0x00, 0x06 }, // Statements
+    { 0x08, 0x1b }, // Math calls
+    { 0x1c, 0x2a }, // Primitives
   };
 
 inline char *
@@ -231,26 +230,26 @@ compile_constants (char **expression)
    */
 
   bool                   is_string    ;   // Whether or not it is a string.
+  char *                 formatted    ;   // C string with the escape characters formatted. 
   FACT_t                 returned     ;   // For the value returned by num_to_var.
   unsigned int           index        ;   // Index variables.
-  unsigned int           jndex        ;
+  unsigned int           jndex        ;   // 
   unsigned int           newlines     ;   // Number of newlines to skip.
   unsigned long          hold_pointer ;   // Holds the pointer in a ulong type
-  /* Static variables */
+
   static var_t        ** values         ; // Pre-compiled numbers.
   static unsigned int    next_available ; // Size of the values array.
 
-  /* If bytes_in_pointer is not yet set, set it. */
-  if (!bytes_in_pointer)
+ 
+  if (!bytes_in_pointer) // If bytes_in_pointer is not yet set, set it.
     bytes_in_pointer = (sizeof (var_t *) / sizeof (byte));
 
   is_string = false;
   for (index = 0; expression[index] != NULL; index++)
     {
-      /* Skips all newlines. */
-      for (newlines = 0; expression[index][newlines] == '\n'; newlines++);
+      for (newlines = 0; expression[index][newlines] == '\n'; newlines++); // Skips all newlines.
 
-      /* Skip all strings and valid bytecode tokens. */  
+      // Skip all strings and valid bytecode tokens.
       if (expression[index][newlines] == BYTECODE)
 	continue;
       if (expression[index][newlines] == '"')
@@ -270,14 +269,15 @@ compile_constants (char **expression)
 	{
           if (is_string)
             {
-              if (strlen (expression[index]) > 1)
+              formatted = rm_cslashes (expression[index]);
+              if (strlen (formatted) > 1)
                 {
                   returned.v_point = alloc_var ();
-                  returned.v_point->array_up = string_to_array (expression[index], NULL);
-                  mpz_set_si (returned.v_point->array_size, strlen (expression[index]));
+                  returned.v_point->array_up = string_to_array (formatted, NULL);
+                  mpz_set_si (returned.v_point->array_size, strlen (formatted));
                 }
               else
-                returned.v_point = string_to_array (expression[index], NULL);
+                returned.v_point = string_to_array (formatted, NULL);
             }
           else
             returned = num_to_var (expression[index] + newlines);
@@ -318,7 +318,7 @@ compile_constants (char **expression)
           
 	  hold_pointer = (unsigned long) values[jndex];
 
-	  /* Set the instruction's category. */
+	  // Set the instruction's category. 
 	  expression[index][newlines] = BYTECODE;
 	  expression[index][newlines + 1] = NUMBER;
 
@@ -330,7 +330,7 @@ compile_constants (char **expression)
 	    {
 #if (BYTE_ORDER == LITTLE_ENDIAN)
 	      expression[index][jndex + newlines] = (char) (hold_pointer >> (bytes_in_pointer - jndex) * 8);
-#else /* We assume that there is only little and big endian here. */
+#else // We assume that there is only little and big endian here.
 	      expression[index][jndex + newlines] = (char) (hold_pointer << (bytes_in_pointer - jndex) * 8);
 #endif
 	    }

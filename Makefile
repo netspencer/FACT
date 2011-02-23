@@ -9,7 +9,8 @@ SRCS = main.c malloc_replacements.c functions.c string.c    \
 	management.c math.c mem.c shell.c BIFs.c            \
 	comparisons.c parser.c primitives.c eval.c          \
 	errorman.c statements.c utilities.c execfile.c      \
-	mpc_functions.c modules.c error_check.c bytecode.c
+	mpc_functions.c modules.c error_check.c bytecode.c  \
+	sprout.c
 
 LIBS = -lgc -lgmp -ldl 
 

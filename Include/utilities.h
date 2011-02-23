@@ -8,7 +8,8 @@ FACT_INTERN_FUNC (void) set_array (bool *, int);
 FACT_INTERN_FUNC (int) count_until_NULL (char **);
 
 FACT_INTERN_FUNC (bool) compare_var_arrays (var_t *, var_t *, bool);
-
+                        
+FACT_INTERN_FUNC (char * ) rm_cslashes     (char  *         );
 FACT_INTERN_FUNC (char * ) combine_strs    (char  * , char *);
 FACT_INTERN_FUNC (char * ) array_to_string (var_t *         );
 FACT_INTERN_FUNC (char **) copy            (char  **        );

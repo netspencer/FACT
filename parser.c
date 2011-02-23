@@ -3,17 +3,17 @@
 char *
 add_newlines (char *word, int newlines)
 {
-  int    index;
-  int    word_len;
-  char * new_str;
-
-  /* add_newlines - this function, given a string and a value,
+  /**
+   * add_newlines - this function, given a string and a value,
    * returns a string allocated in memory of the passed string
    * combined with the value in newlines at the begining.
    * For example: word = "hello, world!", newlines = "2" would
    * return "\n\nhello, world!"
    */
-
+  int    index;
+  int    word_len;
+  char * new_str;
+  
   if (word[0] == BYTECODE)
     {
       if (word[1] == NUMBER)

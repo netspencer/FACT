@@ -25,12 +25,12 @@
 
 typedef enum bytecode_type 
   {
-    STOP      = 0x0, /* Signifies the end of an expression. */
-    IGNORE    = 0x1, /* Ignore this byte. */
-    STATEMENT = 0x2, /* This includes keywords such as if, else, and return. */
-    MATH_CALL = 0x3, /* +, -, *, etc. */
-    PRIMITIVE = 0x4, /* Some special things. */
-    NUMBER    = 0x5, /* Numbers become stored in a special way, will implement later. */
+    STOP      = 0x0, // Signifies the end of an expression.
+    IGNORE    = 0x1, // Ignore this byte.
+    STATEMENT = 0x2, // This includes keywords such as if, else, and return.
+    MATH_CALL = 0x3, // +, -, *, etc. 
+    PRIMITIVE = 0x4, // Some special things.
+    NUMBER    = 0x5, // Numbers are pre-compiled.
   } bytecode_type;
 
 /* This is a bunch of three letter representations of the FACT
@@ -38,13 +38,14 @@ typedef enum bytecode_type
  */
 enum instruction_set
   {
-    BRK = 0x0,
-    ELS = 0x1,
-    FRL = 0x2,
-    IFS = 0x3,
-    ONE = 0x4,
-    RTN = 0x5,
-    WHL = 0x6,
+    BRK = 0x0, // Break.
+    ELS = 0x1, // Else.
+    FRL = 0x2, // For loop.
+    IFS = 0x3, // If statement.
+    ONE = 0x4, // On_error.
+    RTN = 0x5, // Return.
+    SPT = 0x6, // Sprout.
+    WHL = 0x7, // While loop.
   };
 
 #define byte char
