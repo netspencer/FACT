@@ -44,36 +44,28 @@ comp_prims (const void *op1, const void *op2)
 void
 init_BIFs (func_t *scope)
 {
-  /* There are certain functions that we either
-   * need (such as import) or are better suited
-   * being built in than being a standard library
-   * functions. Those go in here. This function
-   * is loaded once during start-up and then is
-   * forgotten. It should NEVER be called twice.
+  /* There are certain functions that we either need (such as import) or
+   * are better suited being built-in rather than being standard library
+   * functions. Those go in here. This function is loaded once during
+   * start, and then is forgotten. It should NEVER be called twice.
    */
-  func_t * ref     ;
-  func_t * deref   ;
-  func_t * import  ;
-  func_t * size_of ; // Actually written as 'sizeof'.
-  func_t * get_tid ;
 
-  ref     = add_func (scope, "ref"    );
-  deref   = add_func (scope, "deref"  );
-  import  = add_func (scope, "import" );
-  size_of = add_func (scope, "sizeof" );
-  get_tid = add_func (scope, "get_tid");
+  ////////////
+  // General
+  ////////////
+  
+  FACT_INSTALL_BIF (scope, "ref"   , FACT_BIF (ref)   );
+  FACT_INSTALL_BIF (scope, "deref" , FACT_BIF (deref) );
+  FACT_INSTALL_BIF (scope, "print" , FACT_BIF (print) );
+  FACT_INSTALL_BIF (scope, "import", FACT_BIF (import));
+  FACT_INSTALL_BIF (scope, "sizeof", FACT_BIF (sizeof));
 
-  ref->args     = get_words (FACT_BIF (ref).arguments    );
-  deref->args   = get_words (FACT_BIF (deref).arguments  );
-  import->args  = get_words (FACT_BIF (import).arguments );
-  size_of->args = get_words (FACT_BIF (sizeof).arguments );
-  get_tid->args = get_words (FACT_BIF (get_tid).arguments);
+  //////////////////////
+  // Threading related
+  //////////////////////
 
-  ref->extrn_func     = FACT_BIF (ref).function;
-  deref->extrn_func   = FACT_BIF (deref).function;
-  import->extrn_func  = FACT_BIF (import).function;
-  size_of->extrn_func = FACT_BIF (sizeof).function;
-  get_tid->extrn_func = FACT_BIF (get_tid).function;
+  FACT_INSTALL_BIF (scope, "get_tid", FACT_BIF (get_tid));
+  FACT_INSTALL_BIF (scope, "get_thread_status", FACT_BIF (get_thread_status));
 }
 
 int

@@ -103,3 +103,20 @@ FACT_DEFINE_BIF (deref, "def op")
 
   return return_value;
 }
+
+FACT_DEFINE_BIF (print, "def str")
+{
+  /**
+   * print - print out a single string with no additives (such as a
+   * newline or what not). This should be used when printing messages
+   * from seperate threads.
+   *
+   * @str: The string to print.
+   */
+  var_t * str;
+
+  str = get_var (scope, "str");
+  printf ("%s", array_to_string (str)); // Seperation used to remove warnings.
+
+  FACT_get_ui (0); // Always returns 0.
+}

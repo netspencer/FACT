@@ -1,6 +1,6 @@
 CC          = gcc
 BIT         = 64 # Set to either 64 or 32
-CFLAGS      = -ggdb -m$(BIT) -rdynamic
+CFLAGS      = -g -m$(BIT) -rdynamic 
 PROG        = FACT-BETA
 INCLUDE_DIR = ./Include
 API_INC_DIR = ./API_Include
@@ -12,7 +12,7 @@ SRCS = main.c malloc_replacements.c functions.c string.c    \
 	mpc_functions.c modules.c error_check.c bytecode.c  \
 	sprout.c
 
-LIBS = -lgc -lgmp -ldl 
+LIBS = -lgc -lgmp -ldl -lpthread
 
 all: $(PROG)
 	cd ./stdlib ; make ; 

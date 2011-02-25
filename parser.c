@@ -99,6 +99,7 @@ lookup_word (int code, int newlines)
       ";"       ,
       "return"  ,
       "break"   ,
+      "sprout"  ,
     };
 
   return add_newlines (lookup_table[code], newlines);
@@ -189,7 +190,8 @@ get_words (char *start)
   char *  end;
   char ** result;
 
-  /* get_words - the main tokenizing routine. I wrote this code
+  /**
+   * get_words - the main tokenizing routine. I wrote this code
    * when I was really obsessed with being simplistic, and now
    * it looks like this might be the most confusing function in
    * the entire project.
@@ -357,10 +359,6 @@ get_block_code (char *block)
     return MORE_EQ;
   else if (!strcmp (block, "->"))
     return VARIADIC;
-  /*
-  else if (!strcmp (block, "sizeof"))
-    return SIZE;
-  */
   else if (!strcmp (block, "if"))
     return IF;
   else if (!strcmp (block, "on_error"))
@@ -379,6 +377,8 @@ get_block_code (char *block)
     return RETURN_STAT;
   else if (!strcmp (block, "break"))
     return BREAK_SIG;
+  else if (!strcmp (block, "sprout"))
+    return SPROUT;
   else
     return UNKNOWN;
 }

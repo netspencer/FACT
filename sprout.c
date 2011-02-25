@@ -1,133 +1,134 @@
 /* sprout.c - FACT model for concurrency. */
 #include "FACT.h"
 
-bool            threading_status ; // True if we are threading, false otherwise. 
-jmp_buf         station          ; // Jump buffer that jumps us back to the station.
-thread_t      * threads          ; // All the thread data.
-unsigned long   tid              ; // Holds the next available thread id to be used.
-unsigned long   curr_tid         ; // Holds the current thread's id.
+bool threading_status;   // True if concurrency is turned on, false otherwise.
+FACT_thread_t * threads; // Contains all the thread data.
+unsigned long next;      // Value of the next available thread.
 
-void
-scheduler ( void )
+unsigned long
+FACT_get_tid (pthread_t p1)
 {
-  /**
-   * scheduler: rotates between all the threads, executing one expression per
-   * each. 
+  /* FACT_get_tid - searches the thread array for the first instance of
+   * p1. Returns -1 if p1 is not a valid tid.
    */
-  unsigned long original;
+  unsigned long i;
 
-  // If this is the first thread created, set the station jmp_buf and return.
-  if (!setjmp (station))
-    return;
-
-  // Main loop.
- loop:
-
-  /* Increment the current thread by one, accounting for boundries and 
-   * exited/returned threads. We use the variable 'original' to check
-   * if we've hit an infinite loop.
-   */
-  original = curr_tid;
-  do
+  for (i = 0; i < next; i++)
     {
-      curr_tid = (++curr_tid) % tid;
-      
-      if (curr_tid == original)
-        {
-          // Jump back to the main thread if everything has exited.
-          curr_tid = 0;
-          break;
-        }
-    }
-  while (threads[curr_tid].exited);
-  
-  set_ip (threads[curr_tid].ip);
-  
-  if (threads[curr_tid].virgin)
-    {
-      threads[curr_tid].virgin = false;
-      threads[curr_tid].return_status = eval_expression (threads[curr_tid].scope, threads[curr_tid].expression);
-      threads[curr_tid].exited = true;
-
-      goto loop; // Go back to the beginning.
+      if (pthread_equal (p1, threads[i].tid))
+        return i;
     }
 
-  longjmp (threads[curr_tid].back, -1); // Jump back to the thread.
-
-  // NOT REACHED.
-
-  fprintf (stderr, "End of function 'scheduler' reached, aborting.\n");
-  abort ();
+  return -1;
 }
-            
-/**
- * Threading BIFs and statements:
- *  + sprout EXPRESSION - create a new thread running EXPRESSION, returning
- *    the sprouted thread's tid.
- *  + $(get_tid) - get the id of the current thread.
- *  + $(send_to_thread, def tid, def var) - send variable var to tid's queue.  
- *  + $(get_queue_length) - return the number of items in a thread's queue.
- *  + $(get_queue) - return the next available variable in the current thread's
- *    queue.
- */
+
+struct FACT_pthread_wrap // Wrapper for passing arguments through pthreads.
+{
+  func_t        * op1;
+  word_list       op2;
+  unsigned long   op3;
+};
+  
+void *
+thread_wrapper (void *args)
+{
+  // Used as a wrapper between pthreads_create and eval_expression.
+  func_t    * scope        ;
+  word_list   expression   ;
+  unsigned long thread_num ;
+
+  scope = ((struct FACT_pthread_wrap *) args)->op1;
+  expression = ((struct FACT_pthread_wrap *) args)->op2;
+  thread_num = ((struct FACT_pthread_wrap *) args)->op3;
+
+  reset_ip ();
+
+  threads[thread_num].return_status = eval_expression (scope, expression);
+  threads[thread_num].exited = true;
+
+  return (NULL);
+}
 
 FACT_t
 sprout (func_t * scope, word_list expression)
 {
   /* sprout - a statement. Creates a new thread. */
-  static bool not_first;
+  func_t *top;
   unsigned long i;
+  
+  struct FACT_pthread_wrap * args;
 
   expression.syntax++;
   expression.lines++;
 
-  if (!not_first)
+  if (!threading_status)
     {
-      /* If the main thread does not exist yet, sprout it. We do not need to
-       * initialize the thread_data element as it is not an actual thread.
+      /* If concurrency has yet to be turned on, our first task should be
+       * to create the main thread.
        */
-      threads = better_malloc (sizeof (struct thread));
-      
-      threads[0].remove     = false ;
-      threads[0].exited     = false ;
-      threads[0].scope      = scope ;
-      threads[0].root       = NULL  ;
+      threads = better_malloc (sizeof (FACT_thread_t));
 
-      scheduler ();
-      
-      tid      = 1;
-      curr_tid = 0;
-      // The mother thread sets its own expression and ip data.
+      threads[0].tid = pthread_self ();
+      threads[0].exited  = false;
+      threads[0].destroy = false;
+      threads[0].root = NULL;
+
+      next = 1;
+      threading_status = true;
     }
   
   /* Search through all the threads to see if there's one that is ready to
    * be removed and has already exited. We skip the 0th thread as it is
    * the main thread. 
    */
-  for (i = 1; i < tid; i++)
+  for (i = 1; i < next; i++)
     {
-      if (threads[i].exited && threads[i].remove)
+      if (threads[i].exited && threads[i].destroy)
 	break;
     }
-
-  if (i == tid)
+  if (i == next)
     {
-      /* Allocate memory for a new thread. */
-      tid++;
-      threads = better_realloc (threads, sizeof (struct thread) * tid);
+      // Allocate memory for a new thread.
+      next++;
+      threads = better_realloc (threads, sizeof (FACT_thread_t) * next);
     }
 
-  threads[0].remove     = false;
-  threads[0].exited     = false;
-  threads[0].scope      = alloc_func ();
-  threads[0].expression = expression;
-  threads[0].ip         = 0;
-  threads[0].root       = NULL;
+  // Find the topmost scope.
+  for (top = scope; top->up != NULL; top = top->up);
+  
+  args = better_malloc (sizeof (struct FACT_pthread_wrap));
+
+  args->op1 = alloc_func (); // Create a new scope.
+  args->op1->up = top;
+  args->op2 = expression;
+  args->op3 = i;
+
+  pthread_create (&(threads[i].tid), NULL, thread_wrapper, (void *) args);
 
   return FACT_get_ui (i);
 }
 
 FACT_DEFINE_BIF (get_tid, "")
 {
-  return FACT_get_ui (curr_tid);
+  // Get the current thread number.
+  return FACT_get_ui ((threading_status)
+                      ? FACT_get_tid (pthread_self ())
+                      : 0);
+}
+
+FACT_DEFINE_BIF (get_thread_status, "def tid")
+{
+  /**
+   * get_thread_status - returns true if a thread has exited and
+   * false otherwise.
+   *
+   * @tid: The thread id of the thread to test.
+   */
+  unsigned long tid;
+
+  tid = mpc_get_ui ((get_var (scope, "tid"))->data); // Convert the var_t to a ulong.
+  if (tid < 0 || tid >= next) // If the tid is invalid, throw an error.
+    errorman_throw_catchable (scope, "invalid thread id");
+
+  return FACT_get_ui (threads[tid].exited);
 }

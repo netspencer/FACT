@@ -15,49 +15,37 @@
  */
 typedef struct thread
 {
-  bool            virgin        ; // Whether or not the thread has been run before.
-  bool            remove        ; // Whether or not the thread should be deallocated.
-  bool            exited        ; // Whether or not the thread has returned.
-  FACT_t          return_status ; // Value returned by the thread on exit.
-  func_t        * scope         ; // Scope of the thread.
-  jmp_buf         back          ; // Buffer to jump back to.
-  word_list       expression    ; // Expression to be evaluated in the thread.
-  unsigned long   ip            ; // The instruction pointer of the expression.
-  struct queue                    // The variables being passed to the thread.
+  pthread_t tid;          // Thread id.
+  FACT_t return_status;   // Value returned by thread.
+  bool exited;            // True if the thread has returned.
+  bool destroy;           // True if the thread is set to be freed from memory.
+
+  struct queue            // The variables being passed to the thread.
   {         
-    struct queue * next;          // Points to the next value in the queue.
-    var_t        * value;         // Physical value.
-  } * root;                       // Points to the first unread value in the queue.
-} thread_t;
+    struct queue * next;  // Points to the next value in the queue.
+    var_t        * value; // Physical value.
+  } * root;               // Points to the first unread value in the queue.
+} FACT_thread_t;
 
 //////////////////////
 // Global variables.
 //////////////////////
 
-extern bool            threading_status ;
-extern jmp_buf         station          ;
-extern thread_t      * threads          ;
-extern unsigned long   tid              ;
-extern unsigned long   curr_tid         ;
+extern bool threading_status;
+extern FACT_thread_t * threads;
 
-/////////////////////
-// Accessor macros. 
-/////////////////////
+/////////////////////////
+// Function prototypes.
+/////////////////////////
 
-# define is_threading() (threading_status)
-# define jmp_to_station(status) longjmp (station, status)
-# define get_next_tid() (tid)
-# define get_curr_tid() (curr_tid)
-# define get_thread(thread_num) (threads[thread_num])
-# define get_curr_thread() (threads[curr_tid])
+FACT_INTERN_FUNC (unsigned long) FACT_get_tid (pthread_t);
+FACT_INTERN_FUNC (FACT_t) sprout (func_t *, word_list);
 
-//////////////////////////////
-// Statements and functions.
-//////////////////////////////
-
-FACT_INTERN_FUNC (void)   scheduler (void);
-FACT_INTERN_FUNC (FACT_t) sprout    (func_t *, word_list);
+//////////////////////////////////
+// Threading built in functions. 
+//////////////////////////////////
 
 FACT_EXTERN_BIF (get_tid);
+FACT_EXTERN_BIF (get_thread_status);
 
 #endif

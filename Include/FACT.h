@@ -16,10 +16,13 @@
  *      \ \_\     \ \_\ \ \_\\ \_______\  \ \_\
  *       \/_/      \/_/  \/_/ \/_______/   \/_/
  *
- * (C) 2010 Matthew Plant. 
+ * (C) 2010, 2011 Matthew Plant. 
  */
 
-/* Macro definitions. */
+///////////////////////
+// Macro definitions.
+///////////////////////
+
 #define FACT_INTERN_FUNC(type) type
 #define FACT_INLINE_FUNC(type) inline type 
 
@@ -42,11 +45,11 @@
 #define SAFE // If this is turned on, pointers value will be checked before being dereferenced. 
 #define PARSE_CHECK
 #define DEBUG
+#define GC_THREADS // So that GC is reentrant.
 
-/*---------------------------------------------*
- * Library includes: headers that are not part *
- * of the program itself.                      *
- *---------------------------------------------*/
+/////////////////////////////
+// Library header includes.
+/////////////////////////////
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -59,16 +62,14 @@
 #include <stdbool.h>
 #include <assert.h>
 #include <gmp.h>
+#include <pthread.h>
 #include <gc/gc.h>
 #include <getopt.h>
 #include <dlfcn.h>
-#include <pthread.h>
 
-/*---------------------------------------------*
- * Local includes: headers that provide        *
- * definitions of internal functions macros or *
- * data structures.                            *
- *---------------------------------------------*/
+////////////////////////////
+// Source header includes.
+////////////////////////////
 
 #include "typedefs.h"
 #include "mpc_functions.h"

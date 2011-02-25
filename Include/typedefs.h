@@ -1,7 +1,9 @@
 #ifndef TYPEDEFS_H_
 #define TYPEDEFS_H_
 
-/* define all enum types to make my life better ---- */
+//////////////////
+// Enumerations. 
+//////////////////
 
 typedef enum _TYPE_DEFINE
   {   
@@ -66,11 +68,12 @@ typedef enum _word_codes
     SEMI               ,
     RETURN_STAT        ,
     BREAK_SIG          ,
+    SPROUT             ,
   } word_code;
 
-/* end enums ---- */
-
-/* define all data structures ---- */
+/////////////////////
+// Data structures.
+/////////////////////
 
 /* mpc_t is used for arbitrary-precision arithmetic */
 typedef struct
@@ -168,8 +171,6 @@ typedef struct
   char * arguments;
   void *(* function)(func_t *);
 } BIF;
-
-/* end data structures ---- */
 
 #endif
 

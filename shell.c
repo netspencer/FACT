@@ -194,7 +194,8 @@ shell (func_t *main_scope)
 void
 shell (func_t * scope)
 {
-  /* shell - when FACT is run by default it comes to here. The
+  /**
+   * shell - when FACT is run by default it comes to here. The
    * main user interface for FACT, this function grabs an
    * expression of input, parses it, runs it, and repeats. It
    * will continue to do so until the user does a C-d, C-c,
@@ -204,15 +205,12 @@ shell (func_t * scope)
    * @scope  - the scope to use when evaluating expressions.
    */
   char   *  input       ;
-  char   *  hold_input  ; /* Used by the loop that checks for else
-			   * clauses.                               */
+  char   *  hold_input  ; // Used in the main loop to check for else clauses.			   
   char   ** tokenized   ;
-  char   ** hold_tokens ; /* Used by the loop that checks for else
-			   * clauses.                               */
-  byte   ** bytecode    ; /* Complete string to be passed to the
-			   * interpreter.                           */
-  FACT_t    returned    ; /* The value returned by the interpreter. */
-
+  char   ** hold_tokens ; // Also used to check for else clauses.
+  byte   ** bytecode    ; // Final string to be passed to the interpreter.
+  FACT_t    returned    ; // The value returned by the interpreter.
+  
   linked_word  * parsed    ;
   unsigned int   end_line  ;
   unsigned int   hold_line ;

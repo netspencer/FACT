@@ -1,5 +1,4 @@
 #include "FACT.h"
-#include "sprout.h"
 
 word_list
 make_word_list (char **words, bool len_check)
@@ -41,17 +40,84 @@ make_word_list (char **words, bool len_check)
 }
 
 /* This is the instruction pointer, and it points to the next
- * unevaluated token. In order to avoid name space pollution,
- * the variable is accessed through get and set functions, 
- * which act very much like object methods.
+ * unevaluated token. The ip is a pointer to a dynamically
+ * allocated array so that it may accommodate all threads.
+ * Do to the nature of seperate threads accessing the ip, it is 
+ * quite possible that unprotected two different instances of 
+ * get_ip will attempt to reallocate it. We use the safety
+ * mutex to work around this.
  */
-static unsigned long ip;
+unsigned long * ip;
+pthread_mutex_t safety = PTHREAD_MUTEX_INITIALIZER;
 
-inline unsigned long get_ip ( void ) { return ip; }    // Get the instruction pointer (value).
-inline unsigned long *ref_ip ( void ) { return &ip; }  // Get the instruction pointer (address).
-inline void set_ip (unsigned long nip) { ip = nip; }   // Set the instruction pointer. 
-inline void move_ip (unsigned long nip) { ip += nip; } // Move the instruction pointer over, equivalent to set_ip (nip + get_ip ()).
-inline void next_inst ( void ) { ip++; }               // Move the instruction pointer over one.
+//////////////////////////////////////////
+// Instruction pointer accessor methods.
+//////////////////////////////////////////
+
+unsigned long * 
+get_ip_ref (void)
+{
+  /* get_ip_ref - return a pointer to the current thread's
+   * instruction pointer.
+   */
+  unsigned long curr_tid ; // Current thread id.
+  static size_t arr_size ; // Size of the instruction pointer.
+
+  if (ip == NULL)
+    {
+      // ip will only ever be NULL if concurrency is turned off.
+      ip = better_malloc (sizeof (unsigned long));
+      arr_size = 1;
+      return ip;
+    }
+  else if (!threading_status)
+    return ip; // If threading isn't turned on, we only have one option.
+  else
+    {
+      curr_tid = FACT_get_tid (pthread_self ());
+
+      while (curr_tid >= arr_size)
+        {
+          /* If curr_tid is bigger than arr_size, continue looping until
+           * we finally get the chance to reallocate ip.
+           */
+          pthread_mutex_lock (&safety);
+          arr_size = curr_tid + 1;
+          ip = better_realloc (ip, sizeof (unsigned long) * arr_size);
+          pthread_mutex_unlock (&safety);
+        }
+
+      return ip + curr_tid;
+    }
+}
+
+unsigned long
+get_ip (void)
+{
+  return *(get_ip_ref ()); // We just derefrence get_ip_ref.
+}
+
+void
+set_ip (unsigned long nip) // Set the current ip to nip.
+{
+  *(get_ip_ref ()) = nip;
+}
+
+void
+move_ip (unsigned long mip) // Move over the current ip by mip.
+{
+  *(get_ip_ref ()) += mip;
+}
+
+void
+next_inst (void) // Move the current ip over by one.
+{
+  ++*(get_ip_ref ());
+}
+
+//////////////////////////
+// Evaluation functions. 
+//////////////////////////
 
 static unsigned long
 get_else (char ** expression)
@@ -189,7 +255,7 @@ eval_expression (func_t *scope, word_list expression)
        * identifying tokens.
        */
       scope->line += expression.lines[0];
-      set_ip (get_ip () + 1);
+      next_inst ();
     }
   else
     is_instruction = false;
@@ -265,9 +331,8 @@ eval_expression (func_t *scope, word_list expression)
 
         case SPT:
           // Needs to be fixed to support returning the tid.
-          sprout (scope, expression);
-          get_curr_thread ().expression = expression;
-          get_curr_thread ().ip = get_ip ();
+          return_value = sprout (scope, expression);
+          break;
 
         default:
           break;
@@ -288,36 +353,6 @@ eval_expression (func_t *scope, word_list expression)
     return_value.return_signal = return_signal;
   if (!return_value.break_signal)
     return_value.break_signal = break_signal;
-
-  if (is_threading ())
-    {
-      // If threading is turned on...
-      if (!setjmp (get_curr_thread ().back))
-        {
-          /* If we have yet to jump back to the scheduler, set the
-           * current thread data to match our current data.
-           */
-
-          // These next two should not make a difference, but are put in anyway.
-          get_curr_thread ().scope = scope;
-          get_curr_thread ().expression = expression; 
-
-          // This is actually important.
-          get_curr_thread ().ip = get_ip ();
-
-          // Jump back to the station.
-          jmp_to_station (-1);
-        }
-      else
-        {
-          /* If we have just jumped back from the scheduler, restore
-           * the current thread data and continue on with our life.
-           */
-          scope = get_curr_thread ().scope;
-          expression = get_curr_thread ().expression;
-          set_ip (get_curr_thread ().ip);
-        }
-    }
 
   return return_value;
 }

@@ -233,7 +233,7 @@ compile_constants (char **expression)
   char *                 formatted    ;   // C string with the escape characters formatted. 
   FACT_t                 returned     ;   // For the value returned by num_to_var.
   unsigned int           index        ;   // Index variables.
-  unsigned int           jndex        ;   // 
+  unsigned int           jndex        ;
   unsigned int           newlines     ;   // Number of newlines to skip.
   unsigned long          hold_pointer ;   // Holds the pointer in a ulong type
 

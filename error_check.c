@@ -98,9 +98,10 @@ check_for_errors (linked_word *expression,
 
   if (level == 0 || level == 3)
     {
-      if (expression->code == IF
-	  || expression->code == ON_ERROR)
-	{
+      switch (expression->code)
+        {
+        case IF:
+        case ON_ERROR:
 	  *current_line += expression->newlines;
 	  if (expression->next->code != OP_PAREN)
 	    {
@@ -110,16 +111,13 @@ check_for_errors (linked_word *expression,
 	  if (check_for_errors (expression->next->hidden, 1, current_line, false))
 	    return true;
 	  return check_for_errors (expression->next->next, level, current_line, break_ok);
-	}
-      
-      if (expression->code == ELSE)
-	{
-	  *current_line += expression->newlines;
-	  return check_for_errors (expression->next, 0, current_line, break_ok);
-	}
 
-      if (expression->code == WHILE)
-	{
+        case SPROUT: // Sprout error checking behaves the same way as else.
+        case ELSE:
+      	  *current_line += expression->newlines;
+	  return check_for_errors (expression->next, 0, current_line, break_ok);
+
+        case WHILE:
 	  current_line += expression->newlines;
 	  if (expression->next->code != OP_PAREN)
 	    {
@@ -129,13 +127,13 @@ check_for_errors (linked_word *expression,
 	  if (check_for_errors (expression->next->hidden, 1, current_line, false))
 	    return true;
 	  return check_for_errors (expression->next->next, level, current_line, true);
-	}
-      
-      if (expression->code == FOR)
-	{
+        case FOR:
 	  *current_line += expression->newlines;
 	  return check_for_errors (expression->next, 7, current_line, break_ok);
-	}
+
+        default:
+          break; // We continue to the for loop if there are no statements.
+        }
     }
 
   neg_prev = false;
