@@ -26,7 +26,7 @@ check_for_incompletions (const char *file_name, char *expression)
   int  b_count;
   int  c_count;
   bool in_quote;
-
+  char * base = expression;
 
   for (p_count = b_count = c_count = 0, in_quote = false; // Yes I know false = 0
        *(expression + 1) != '\0'; expression++)
@@ -64,6 +64,9 @@ check_for_incompletions (const char *file_name, char *expression)
     printf ("Parsing error in <%s>: %d cases of mismatched curly-braces.\n", file_name, abs (c_count));
   if (in_quote)
     printf ("Parsing error in <%s>: unmatched quotation mark.\n", file_name);
+
+  if (p_count || b_count || c_count)
+    printf ("Error in string: %s.\n", base);
 
   return (p_count || b_count || c_count);
 }
@@ -112,7 +115,6 @@ check_for_errors (linked_word *expression,
 	    return true;
 	  return check_for_errors (expression->next->next, level, current_line, break_ok);
 
-        case SPROUT: // Sprout error checking behaves the same way as else.
         case ELSE:
       	  *current_line += expression->newlines;
 	  return check_for_errors (expression->next, 0, current_line, break_ok);
@@ -201,9 +203,21 @@ check_for_errors (linked_word *expression,
               return true;
             }
           return false;
+
+        case SPROUT:
+          if (level != 0 && level != 3 || prev_code == NON_OP)
+            {
+              error = "unexpected sprout";
+              return true;
+            }
+          if (level == 0 && expression->next->code == END)
+            return false;
+          level = 3;
+          expression = expression->next;
+          goto new_expression;
           
         case SEMI:
-          if (level != 0 && level != 3)
+          if (level != 0 && level != 3 || prev_code != NON_OP)
             {
               error = "unexpected ';'";
               return true;
@@ -239,12 +253,6 @@ check_for_errors (linked_word *expression,
             {
               error = "break signals can only be within for or while loops";
               return true;
-            }
-          if (expression->next->code != END
-              && expression->next->code != SEMI)
-            {
-            error = "break signals cannot alone in an expression";
-            return true;
             }
           prev_code = NON_OP;
           break;

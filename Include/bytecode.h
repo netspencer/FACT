@@ -44,8 +44,7 @@ enum instruction_set
     IFS = 0x3, // If statement.
     ONE = 0x4, // On_error.
     RTN = 0x5, // Return.
-    SPT = 0x6, // Sprout.
-    WHL = 0x7, // While loop.
+    WHL = 0x6, // While loop.
   };
 
 #define byte char

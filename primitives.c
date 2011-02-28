@@ -22,6 +22,7 @@ static struct  _prims
     { "def"   , define       },
     { "defunc", defunc       },
     { "lambda", lambda       },
+    { "sprout", sprout       },
     { "this"  , this         },
     { "up"    , up           },
     { "{"     , lambda_proc  },
@@ -44,10 +45,11 @@ comp_prims (const void *op1, const void *op2)
 void
 init_BIFs (func_t *scope)
 {
-  /* There are certain functions that we either need (such as import) or
-   * are better suited being built-in rather than being standard library
-   * functions. Those go in here. This function is loaded once during
-   * start, and then is forgotten. It should NEVER be called twice.
+  /**
+   * init_BIFs - There are certain functions that we either need (such as import) or
+   * are better suited being built-in rather than being standard library functions.
+   * Those go in here. This function is loaded once during upon the start of every
+   * thread, and then is forgotten. It should NEVER be called twice (per thread).
    */
 
   ////////////
@@ -60,10 +62,19 @@ init_BIFs (func_t *scope)
   FACT_INSTALL_BIF (scope, "import", FACT_BIF (import));
   FACT_INSTALL_BIF (scope, "sizeof", FACT_BIF (sizeof));
 
-  //////////////////////
-  // Threading related
-  //////////////////////
+  ////////////
+  // Casting
+  ////////////
 
+  FACT_INSTALL_BIF (scope, "str", FACT_BIF (str));
+
+  //////////////
+  // Threading 
+  //////////////
+
+  FACT_INSTALL_BIF (scope, "pop", FACT_BIF (pop));
+  FACT_INSTALL_BIF (scope, "send", FACT_BIF (send));
+  FACT_INSTALL_BIF (scope, "queue_size", FACT_BIF (queue_size));
   FACT_INSTALL_BIF (scope, "get_tid", FACT_BIF (get_tid));
   FACT_INSTALL_BIF (scope, "get_thread_status", FACT_BIF (get_thread_status));
 }

@@ -133,7 +133,7 @@ liven_func (func_t *scope, word_list expression)
    new_scope->variadic   = evald.f_point->variadic   ;
 
    if (arg_list.syntax[0] != NULL && tokcmp (expression.syntax[0], ","))
-     return errorman_throw_reg (scope, "expected more arguments");
+     return errorman_throw_reg (scope, combine_strs ("expected more arguments to function ", new_scope->name));
 
    ip++;
    reset_ip ();

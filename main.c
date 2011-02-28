@@ -6,12 +6,11 @@ process_args (int argc, char **argv)
   int          arg;
   var_t      * inter_argc;
   var_t      * inter_argv;
-  FACT_t       file_open;  
   func_t     * scope;
-  static int   cmdln = true;
+  FACT_t       file_open;  
+  static int   cmdln;
 
-  set_bytes_used (0);
- 
+  cmdln       = true;
   scope       = alloc_func ();
   scope->name = "main";
   init_BIFs (scope);
@@ -64,7 +63,7 @@ process_args (int argc, char **argv)
 	  break;
 
 	case 'i':
-	  /* ---- Parse remaining arguments into variables ---- */
+          // If we're executing a file, parse the remaining arguments into variables.
 	  inter_argc = add_var (scope, "argc");
 	  mpc_set_si (&(inter_argc->data), argc - 2);
 
@@ -99,8 +98,10 @@ process_args (int argc, char **argv)
 int
 main (int argc, char **argv)
 {
+  // We don't do very much here.
   atexit (GC_gcollect);
   atexit (close_libs);
+  atexit (thread_cleanup);
 
   GC_INIT ();
   

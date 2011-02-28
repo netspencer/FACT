@@ -48,7 +48,7 @@ make_word_list (char **words, bool len_check)
  * mutex to work around this.
  */
 unsigned long * ip;
-pthread_mutex_t safety = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t safety = PTHREAD_MUTEX_INITIALIZER;
 
 //////////////////////////////////////////
 // Instruction pointer accessor methods.
@@ -329,11 +329,6 @@ eval_expression (func_t *scope, word_list expression)
           return_value.v_point = alloc_var ();
           break;
 
-        case SPT:
-          // Needs to be fixed to support returning the tid.
-          return_value = sprout (scope, expression);
-          break;
-
         default:
           break;
         }
@@ -404,7 +399,7 @@ procedure (func_t *scope, word_list expression)
                  && expression.syntax[length][0] == BYTECODE
 		 && expression.syntax[length][1] == STATEMENT
 		 && expression.syntax[length][2] == ELS)
-	    length += get_else (expression.syntax + length + 1) + 1; // get_exp_length_first (expression.syntax + length, ';');
+	    length += get_else (expression.syntax + length + 1) + 1;
 	}
       else
 	length = get_exp_length_first (expression.syntax, ';');

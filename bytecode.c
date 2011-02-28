@@ -23,8 +23,7 @@ static struct
     { STATEMENT, 0x3, "if"       },
     { STATEMENT, 0x4, "on_error" },
     { STATEMENT, 0x5, "return"   },
-    { STATEMENT, 0x6, "sprout"   },
-    { STATEMENT, 0x7, "while"    },
+    { STATEMENT, 0x6, "while"    },
     /* Mathematical instructions */
     { MATH_CALL, 0x00, "!=" },
     { MATH_CALL, 0x01, "%"  },
@@ -61,10 +60,11 @@ static struct
     { PRIMITIVE, 0x0b, "def"    },
     { PRIMITIVE, 0x0c, "defunc" },
     { PRIMITIVE, 0x0d, "lambda" },
-    { PRIMITIVE, 0x0e, "this"   },
-    { PRIMITIVE, 0x0f, "up"     },
-    /* { PRIMITIVE, 0x10, "{"      }, to be added later. */
-    { PRIMITIVE, 0x11, "||"     },
+    { PRIMITIVE, 0x0e, "sprout" },
+    { PRIMITIVE, 0x0f, "this"   },
+    { PRIMITIVE, 0x10, "up"     },
+    /* { PRIMITIVE, 0x11, "{"      }, to be added later. */
+    { PRIMITIVE, 0x12, "||"     },
   };
 static struct 
 {
@@ -78,9 +78,9 @@ static struct
      * category's end variable for a category's start, but
      * I think this makes things a bit nicer.
      */
-    { 0x00, 0x07 }, // Statements
-    { 0x08, 0x1b }, // Math calls
-    { 0x1c, 0x2a }, // Primitives
+    { 0x00, 0x06 }, // Statements
+    { 0x07, 0x1a }, // Math calls
+    { 0x1b, 0x2a }, // Primitives
   };
 
 inline char *

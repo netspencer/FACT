@@ -3,9 +3,6 @@
 
 #include "FACT.h"
 
-FACT_INTERN_FUNC (void        ) set_bytes_used (unsigned int);
-FACT_INTERN_FUNC (unsigned int) get_bytes_used (void        );
-
 FACT_INTERN_FUNC (void *) FACT_malloc  (size_t                );
 FACT_INTERN_FUNC (void *) FACT_realloc (void *, size_t, size_t);
 FACT_INTERN_FUNC (void  ) FACT_free    (void *, size_t        );

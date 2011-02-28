@@ -66,6 +66,7 @@
 #include <gc/gc.h>
 #include <getopt.h>
 #include <dlfcn.h>
+#include <errno.h>
 
 ////////////////////////////
 // Source header includes.

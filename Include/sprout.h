@@ -15,24 +15,25 @@
  */
 typedef struct thread
 {
-  pthread_t tid;          // Thread id.
-  FACT_t return_status;   // Value returned by thread.
-  bool exited;            // True if the thread has returned.
-  bool destroy;           // True if the thread is set to be freed from memory.
+  pthread_t tid;              // Thread id.
+  FACT_t return_status;       // Value returned by thread.
+  bool exited;                // True if the thread has returned.
+  bool destroy;               // True if the thread is set to be freed from memory.
+  pthread_mutex_t queue_safe; // Protects the queue.
 
-  struct queue            // The variables being passed to the thread.
+  struct queue                // The variables being passed to the thread.
   {         
-    struct queue * next;  // Points to the next value in the queue.
-    var_t        * value; // Physical value.
-  } * root;               // Points to the first unread value in the queue.
+    struct queue * next;      // Points to the next value in the queue.
+    var_t        * value;     // Physical value.
+  } * root;                   // Points to the first unread value in the queue.
 } FACT_thread_t;
 
 //////////////////////
 // Global variables.
 //////////////////////
 
-extern bool threading_status;
-extern FACT_thread_t * threads;
+bool threading_status;   // True if concurrency is turned on, false otherwise.
+FACT_thread_t * threads; // Contains all the thread data.
 
 /////////////////////////
 // Function prototypes.
@@ -40,6 +41,7 @@ extern FACT_thread_t * threads;
 
 FACT_INTERN_FUNC (unsigned long) FACT_get_tid (pthread_t);
 FACT_INTERN_FUNC (FACT_t) sprout (func_t *, word_list);
+FACT_INTERN_FUNC (void) thread_cleanup (void);
 
 //////////////////////////////////
 // Threading built in functions. 
@@ -47,5 +49,8 @@ FACT_INTERN_FUNC (FACT_t) sprout (func_t *, word_list);
 
 FACT_EXTERN_BIF (get_tid);
 FACT_EXTERN_BIF (get_thread_status);
+FACT_EXTERN_BIF (queue_size);
+FACT_EXTERN_BIF (pop);
+FACT_EXTERN_BIF (send);
 
 #endif

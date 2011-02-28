@@ -118,5 +118,35 @@ FACT_DEFINE_BIF (print, "def str")
   str = get_var (scope, "str");
   printf ("%s", array_to_string (str)); // Seperation used to remove warnings.
 
-  FACT_get_ui (0); // Always returns 0.
+  return FACT_get_ui (0); // Always returns 0.
+}
+
+FACT_DEFINE_BIF (str, "def val")
+{
+  /**
+   * str - converts a variable into a string array. If passed an array, it
+   * will only convert the base value.
+   *
+   * @val: value to convert.
+   */
+  char   * str;
+  FACT_t   return_str;
+
+  str = mpc_get_str (get_var (scope, "val")->data);
+
+  return_str.return_signal = false;
+  return_str.break_signal  = false;
+  return_str.type          = VAR_TYPE;
+
+  if (strlen (str) > 1)
+    {
+      return_str.v_point = alloc_var ();
+      return_str.v_point->array_up = string_to_array (str, NULL);
+    }
+  else
+    return_str.v_point = string_to_array (str, NULL);
+
+  mpz_set_si (return_str.v_point->array_size, strlen (str));
+
+  return return_str;
 }

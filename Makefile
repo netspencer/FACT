@@ -1,6 +1,6 @@
 CC          = gcc
 BIT         = 64 # Set to either 64 or 32
-CFLAGS      = -g -m$(BIT) -rdynamic 
+CFLAGS      = -g3 -gdwarf-2 -m$(BIT) -rdynamic 
 PROG        = FACT-BETA
 INCLUDE_DIR = ./Include
 API_INC_DIR = ./API_Include
