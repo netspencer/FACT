@@ -1,5 +1,9 @@
 #include "FACT.h"
 
+/////////////////////
+// Lexer functions:
+/////////////////////
+
 char *
 add_newlines (char *word, int newlines)
 {
@@ -10,9 +14,10 @@ add_newlines (char *word, int newlines)
    * For example: word = "hello, world!", newlines = "2" would
    * return "\n\nhello, world!"
    */
-  int    index;
-  int    word_len;
-  char * new_str;
+  int i;
+  int word_len;
+
+  char *new_str;
   
   if (word[0] == BYTECODE)
     {
@@ -23,14 +28,15 @@ add_newlines (char *word, int newlines)
     }
   else
     word_len = strlen (word);
-  new_str  = better_malloc (sizeof (char) * (word_len + newlines + 1));
 
-  for (index = 0; index < newlines; index++)
-    new_str[index] = '\n';
+  new_str = better_malloc (sizeof (char) * (word_len + newlines + 1));
 
-  while (index < word_len + newlines)
-    new_str[index++] = word[index - newlines];
-  new_str[index] = '\0';
+  for (i = 0; i < newlines; i++)
+    new_str[i] = '\n';
+
+  while (i < word_len + newlines)
+    new_str[i++] = word[i - newlines];
+  new_str[i] = '\0';
 
   return new_str;
 }
@@ -38,7 +44,8 @@ add_newlines (char *word, int newlines)
 char *
 lookup_word (int code, int newlines)
 {
-  /* lookup_word - given a word code and a number of newlines,
+  /**
+   * lookup_word - given a word code and a number of newlines,
    * look up the code in our trusty table and combine it with
    * the number of newlines.
    * IMPORTANT NOTE: code is NOT a word_code type, and does not
@@ -47,7 +54,7 @@ lookup_word (int code, int newlines)
    * subtract it by COMB_ARRAY.
    */
   
-  static char * lookup_table [] =
+  static char *lookup_table [] =
     {
       "~"       ,
       "+"       ,
@@ -111,7 +118,8 @@ is_in_quotes (int character)
   static bool prev_slash;
   static bool is_quote;
 
-  /* is_in_quotes - given a character, check whether or not it is
+  /**
+   * is_in_quotes - given a character, check whether or not it is
    * currently in double quotes (") and return true if it is and 
    * false otherwise.
    * This may look really confusing, but it operates relatively
@@ -149,7 +157,8 @@ is_in_quotes (int character)
 static bool
 isopt (int op1, int op2)
 {
-  /* isopt - returns true when passed characters of the
+  /**
+   * isopt - returns true when passed characters of the
    * following sequences:
    *  ==
    *  +=
@@ -184,11 +193,11 @@ isopt (int op1, int op2)
 char **
 get_words (char *start)
 {
-  int     index; 
-  int     jndex; 
-  bool    is_string;
-  char *  end;
-  char ** result;
+  int  i, j;
+  bool is_string;
+
+  char  *end;
+  char **result;
 
   /**
    * get_words - the main tokenizing routine. I wrote this code
@@ -221,9 +230,9 @@ get_words (char *start)
    *              string token.
    */
   
-  for (index = 0, end = start, is_string = false, result = NULL; *end != '\0'; index++)
+  for (i = 0, end = start, is_string = false, result = NULL; *end != '\0'; i++)
     {
-      result = better_realloc (result, (index + 1) * sizeof (char *));
+      result = better_realloc (result, (i + 1) * sizeof (char *));
 
       while (isspace ((int) *end) && !is_in_quotes ((int) *end) && *end != '\n' && *end != '\0')
 	start = ++end;
@@ -258,17 +267,23 @@ get_words (char *start)
       
       if ((end - start) > 0)
 	{
-	  result[index] = (char *) better_malloc ((end - start + 1) * sizeof(char));
-	  for (jndex = 0; start != end; start++, jndex++)
-            result[index][jndex] = *start;
-	  result[index][jndex] = '\0';
-	  start                = end;
+	  result[i] = (char *) better_malloc ((end - start + 1) * sizeof(char));
+
+          for (j = 0; start != end; start++, j++)
+            result[i][j] = *start;
+
+          result[i][j] = '\0';
+	  start        = end;
 	}
     }
       
-  result[index - 1] = NULL;
-  return (index > 0) ? result : NULL;
+  result[i - 1] = NULL;
+  return (i > 0) ? result : NULL;
 }
+
+///////////////////////
+// Parsing functions: 
+///////////////////////
 
 word_code
 get_block_code (char *block)
@@ -392,16 +407,16 @@ alloc_word (linked_word *set_prev)
    * pre-initialized to zero, but whatever.
    */
   
-  linked_word * temp;
+  linked_word *temp;
 
-  temp              = better_malloc (sizeof (linked_word));
-  temp->newlines    = 0;
-  temp->code        = UNKNOWN;
-  temp->physical    = NULL;
-  temp->hidden      = NULL;
-  temp->hidden_up   = NULL;
-  temp->next        = NULL;
-  temp->previous    = set_prev;
+  temp            = better_malloc (sizeof (linked_word));
+  temp->newlines  = 0;
+  temp->code      = UNKNOWN;
+  temp->physical  = NULL;
+  temp->hidden    = NULL;
+  temp->hidden_up = NULL;
+  temp->next      = NULL;
+  temp->previous  = set_prev;
 
   return temp;
 }
@@ -409,8 +424,8 @@ alloc_word (linked_word *set_prev)
 linked_word *
 create_list (char **words)
 {
-  word_code     w_code;
-  linked_word * base;
+  word_code w_code;
+  linked_word *base;
 
   for (base = alloc_word (NULL); (w_code = get_block_code (words[0])) != END; words++)
     {
@@ -422,13 +437,13 @@ create_list (char **words)
       if (w_code == UNKNOWN)
 	base->physical = words[0];
 
-      base->code     = w_code;
-      base->next     = alloc_word (base);
-      base           = base->next;
+      base->code = w_code;
+      base->next = alloc_word (base);
+      base       = base->next;
     }
   base->code = END;
 
-  /* I don't think this is needed, may remove it. */
+  // I don't think this is needed, may remove it. 
   while (base->previous != NULL)
     base = base->previous;
 
@@ -438,8 +453,8 @@ create_list (char **words)
 linked_word *
 set_list (linked_word *start, word_code stopper) 
 {
-  word_code     w_code;
-  linked_word * temp_link;
+  word_code w_code;
+  linked_word *temp_link;
   
   while ((w_code = start->code) != stopper && w_code != END)
     {
@@ -448,9 +463,10 @@ set_list (linked_word *start, word_code stopper)
 	  start = start->next;
 	  continue;
 	}
-      
-      if (w_code == OP_CURLY)
-	{
+
+      switch (w_code)
+        {
+        case OP_CURLY:
 	  start->hidden         = start->next;
 	  start->next->previous = NULL;
       	  temp_link             = set_list (start->next, CL_CURLY);
@@ -462,9 +478,9 @@ set_list (linked_word *start, word_code stopper)
 	  temp_link->next->previous = start;
 	  temp_link->next           = NULL;
 	  start->hidden->hidden_up  = start;
-	}
-      else if (w_code == OP_BRACKET)
-	{
+          break;
+
+        case OP_BRACKET:
 	  start->hidden         = start->next;
 	  start->next->previous = NULL;
 	  temp_link             = set_list (start->next, CL_BRACKET);
@@ -476,9 +492,9 @@ set_list (linked_word *start, word_code stopper)
 	  temp_link->next->previous = start;
 	  temp_link->next           = NULL;
 	  start->hidden->hidden_up  = start;
-	}
-      else if (w_code == OP_PAREN)
-	{
+          break;
+
+        case OP_PAREN:
 	  start->hidden         = start->next;
 	  start->next->previous = NULL;
 	  temp_link             = set_list (start->next, CL_PAREN);
@@ -491,10 +507,10 @@ set_list (linked_word *start, word_code stopper)
 	  temp_link->next           = NULL;
 
 	  start->hidden->hidden_up = start;
-	}
-      else if (w_code == DEF
-	       || w_code == DEFUNC)
-	{
+          break;
+
+        case DEF:
+        case DEFUNC:
 	  start->hidden         = start->next;
 	  start->next->previous = NULL;
 	  temp_link             = set_list (start->next, UNKNOWN);
@@ -506,9 +522,9 @@ set_list (linked_word *start, word_code stopper)
 	  temp_link->next->previous = start;
 	  temp_link->next           = NULL;
 	  start->hidden->hidden_up  = start;
-	}
-      else if (w_code == QUOTE)
-	{
+          break;
+
+        case QUOTE:
 	  start->hidden         = start->next;
 	  start->next->previous = NULL;
 	  temp_link             = set_list (start->next, QUOTE);
@@ -520,8 +536,12 @@ set_list (linked_word *start, word_code stopper)
 	  temp_link->next->previous = start;
 	  temp_link->next           = NULL;
 	  start->hidden->hidden_up  = start;
-	}
+          break;
 
+        default:
+          break;
+        }
+      
       start = start->next;
     }
   
@@ -531,10 +551,11 @@ set_list (linked_word *start, word_code stopper)
 void
 swap (linked_word *swapping)
 {
-  int           hold_prev_lines;
-  bool          hold_end;
-  linked_word * temp_next;
-  linked_word * temp_prev;
+  int  hold_prev_lines;
+  bool hold_end;
+  
+  linked_word *temp_next;
+  linked_word *temp_prev;
 
   if (swapping->previous == NULL)
     return;
@@ -546,9 +567,9 @@ swap (linked_word *swapping)
       swapping->previous->hidden_up = NULL;
     }
 
-  hold_prev_lines                 = swapping->previous->newlines;
-  swapping->previous->newlines    = swapping->newlines;
-  swapping->newlines              = hold_prev_lines;
+  hold_prev_lines              = swapping->previous->newlines;
+  swapping->previous->newlines = swapping->newlines;
+  swapping->newlines           = hold_prev_lines;
   
   temp_next                    = swapping->next;
   temp_prev                    = swapping->previous->previous;
@@ -564,6 +585,7 @@ swap (linked_word *swapping)
     temp_prev->next = swapping;
 }
 
+// These are just some macros to make my life not a living hell.
 #define isnotMDM(op) (op != MULTIPLY && op != DIVIDE && op != MOD)
 #define isnotAS(op)  (op != COMB_ARR && op != PLUS && op != MINUS)
 #define isnotSE(op)  (op != SET)
@@ -577,9 +599,6 @@ set_neg_array (linked_word *scan)
 {
   while (scan != NULL && scan->next != NULL)
     {
-      /*
-      if (scan->code == MINUS
-      && */
       if ((scan->previous == NULL
 	   || (scan->previous->code >= COMB_ARR
 	       && scan->previous->code <= MOD_ASSIGN)
@@ -606,9 +625,8 @@ set_neg_array (linked_word *scan)
 static void
 precedence_level1 (linked_word *scan)
 {
-  int           pos;
-  linked_word * find_end;
-  linked_word * move_along;
+  linked_word *find_end;
+  linked_word *move_along;
 
   while (scan != NULL && scan->next != NULL)
     {
@@ -618,8 +636,6 @@ precedence_level1 (linked_word *scan)
 	case NOP_BRACKET:
 	case OP_BRACKET:
 	case OP_PAREN:
-	  //case DEF:
-	  //case DEFUNC:
 	  rev_shunting_yard (scan->hidden);
 	  break;
 
@@ -692,7 +708,7 @@ precedence_level1 (linked_word *scan)
 void
 precedence_level2 (linked_word *scan)
 {
-  linked_word * hold;
+  linked_word *hold;
 
   while (scan != NULL && scan->next != NULL)
     {
@@ -771,7 +787,7 @@ precedence_level3 (linked_word *scan)
 void
 precedence_level4 (linked_word *scan)
 {
-  linked_word * hold;
+  linked_word *hold;
 
   while (scan != NULL && scan->next != NULL)
     {
@@ -928,10 +944,6 @@ precedence_level6 (linked_word *scan)
       scan = scan->next;
     }
 }
-
-/* IT'S SO ANNOYING HOW EACH BITWISE OPERATION HAS ITS OWN PRECEDENCE LEVEL.
- * JESUS.
- */
 
 void
 precedence_level7 (linked_word *scan)
@@ -1246,90 +1258,89 @@ set_link (linked_word *scan)
 char **
 convert_link (linked_word *list)
 {
-  char         ** result;
-  unsigned int    index;
+  unsigned int i;
+  char **result;
+
         
   result = better_malloc (sizeof (char *));
 
-  for (index = 0; list != NULL; list = list->next, index++)
+  for (i = 0; list != NULL; list = list->next, i++)
     {
       if (list->code == UNKNOWN)
-	result[index] = add_newlines (list->physical, list->newlines);
+	result[i] = add_newlines (list->physical, list->newlines);
       else if (list->code > UNKNOWN)
-	result[index] = lookup_word (list->code - COMB_ARR, list->newlines);
+	result[i] = lookup_word (list->code - COMB_ARR, list->newlines);
 
-      result = better_realloc (result, sizeof (char **) * (index + 1));
+      result = better_realloc (result, sizeof (char **) * (i + 2)); // + 2 for the NULL terminator.
     }
 
-  result[index] = NULL;
+  result[i] = NULL;
   return result;
 }
 
 static inline int
 get_end_block (int block)
 {
-  /* I'm not going to make this a giant return (cond) ? : okay? */
-  if (block == '(')
-    return ')';
-  if (block == '['
-      || block == '!')
-    return ']';
-  if (block == '{')
-    return '}';
-  /* NOTREACHED */
-  return 0;
+  switch (block)
+    {
+    case '(': return ')';
+    case '[':
+    case '!': return ']';
+    case '{': return '{';
+    default: return 0; // NOTREACHED
+    }
 }
 
 int
 get_exp_length (char **words, int end_block)
 {
+  int i;
   int lines;
-  int index;
-
-  for (index = 0; words[index] != NULL; index++)
+ 
+  for (i = 0; words[i] != NULL; i++)
     {
-      for (lines = 0; words[index][lines] == '\n'; lines++);
+      for (lines = 0; words[i][lines] == '\n'; lines++);
 
-      if (words[index][lines] == '\0'
-	  || words[index][lines] == end_block)
+      if (words[i][lines] == '\0'
+	  || words[i][lines] == end_block)
 	break;
       
-      if (words[index][lines] == '('
-	  || words[index][lines] == '['
-	  || (words[index][lines] == '!'
-	      && words[index][lines + 1] == '[')
-	  || words[index][lines] == '{')
-	index += get_exp_length (words + index + 1,
-				 get_end_block (words[index][lines]));
+      if (words[i][lines] == '('
+	  || words[i][lines] == '['
+	  || (words[i][lines] == '!'
+	      && words[i][lines + 1] == '[')
+	  || words[i][lines] == '{')
+	i += get_exp_length (words + i + 1,
+                             get_end_block (words[i][lines]));
     }
 
-  return (words[index] == NULL) ? index : index + 1;
+  return (words[i] == NULL) ? i : i + 1;
 }
 
 int
 get_exp_length_first (char **words, int end_block)
 {
+  int i;
   int lines;
-  int index;
 
-  for (index = 0; words[index] != NULL; index++)
+  for (i = 0; words[i] != NULL; i++)
     {
-      for (lines = 0; words[index][lines] == '\n'; lines++);
+      for (lines = 0; words[i][lines] == '\n'; lines++);
 
-      if (words[index][lines] == '\0'
-	  || words[index][lines] == end_block)
+      if (words[i][lines] == '\0'
+	  || words[i][lines] == end_block)
 	break;
       
-      if (words[index][lines] == '('
-	  || words[index][lines] == '['
-	  || (words[index][lines] == '!'
-	      && words[index][lines + 1] == '['))
+      if (words[i][lines] == '('
+	  || words[i][lines] == '['
+	  || (words[i][lines] == '!'
+	      && words[i][lines + 1] == '['))
 	  
-	index += get_exp_length (words + index + 1,
-				 get_end_block (words[index][lines]));
-      else if (words[index][lines] == '{')
-	return index + get_exp_length (words + index + 1, '}') + 1;
+	i += get_exp_length (words + i + 1,
+                             get_end_block (words[i][lines]));
+      else if (words[i][lines] == '{')
+	return i + get_exp_length (words + i + 1, '}') + 1;
     }
 
-  return (words[index] == NULL) ? index : index + 1;
+  return (words[i] == NULL) ? i : i + 1;
 }

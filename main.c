@@ -3,12 +3,14 @@
 void
 process_args (int argc, char **argv)
 {
-  int          arg;
-  var_t      * inter_argc;
-  var_t      * inter_argv;
-  func_t     * scope;
-  FACT_t       file_open;  
-  static int   cmdln;
+  int    arg;
+  FACT_t file_open;
+  
+  var_t  *inter_argc;
+  var_t  *inter_argv;
+  func_t *scope;
+
+  static int cmdln;
 
   cmdln       = true;
   scope       = alloc_func ();
@@ -98,16 +100,30 @@ process_args (int argc, char **argv)
 int
 main (int argc, char **argv)
 {
-  // We don't do very much here.
+  // Set exit routines
   atexit (GC_gcollect);
   atexit (close_libs);
   atexit (thread_cleanup);
 
+  // Start the garbage collector
   GC_INIT ();
-  
+
+  // Set up GMP library
   mp_set_memory_functions (&FACT_malloc,
 			   &FACT_realloc,
 			   &FACT_free);
+
+  // Start the main thread
+  threads = better_malloc (sizeof (FACT_thread_t));
+  threads[0].tid = pthread_self ();
+  threads[0].exited  = false;
+  threads[0].destroy = false;
+  threads[0].root = NULL;  
+  pthread_mutex_init (&threads[0].safety, NULL);
+
+  // Process the arguments and start the interpreter.
   process_args (argc, argv);
+
+  // Exit.
   exit (0);
 }

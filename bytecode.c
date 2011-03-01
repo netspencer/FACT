@@ -1,22 +1,20 @@
 #include "FACT.h"
 
-static unsigned byte bytes_in_pointer; /* The size of a pointer divided by the size of a single byte. */
-
 /* This is a list of every bytecode instruction in every
  * category. Perhaps there are "better" or more effecient
  * ways to organize this, but I find this extremely clean.
  */
 static struct
 {
-  const byte   category_byte    ;
-  const byte   instruction_byte ;
-  const char * id_token         ;
+  const byte category_byte;
+  const byte instruction_byte;
+  const char *id_token;
 } instructions [] =
   {
-    /* NOTE: these are sorted based on alphabetical order, so that
-     * making it a lot possible to do bin search.
-     */
-    /* Conditional statement instructions */
+    //////////////////////////
+    // Primitive statements:
+    //////////////////////////
+    
     { STATEMENT, 0x0, "break"    },
     { STATEMENT, 0x1, "else"     },
     { STATEMENT, 0x2, "for"      },
@@ -24,7 +22,11 @@ static struct
     { STATEMENT, 0x4, "on_error" },
     { STATEMENT, 0x5, "return"   },
     { STATEMENT, 0x6, "while"    },
-    /* Mathematical instructions */
+
+    ////////////////
+    // Math calls:
+    ////////////////
+    
     { MATH_CALL, 0x00, "!=" },
     { MATH_CALL, 0x01, "%"  },
     { MATH_CALL, 0x02, "%=" },
@@ -45,13 +47,17 @@ static struct
     { MATH_CALL, 0x11, "`"  },
     { MATH_CALL, 0x12, "|"  },
     { MATH_CALL, 0x13, "~"  },
-    /* Primitive instructions */
-    /* { PRIMITIVE, 0x00, "!["  }, to be added later. */
+
+    /////////////////////
+    // Primitive calls:
+    /////////////////////
+
+    // { PRIMITIVE, 0x00, "!["  }, to be added later.
     { PRIMITIVE, 0x01, "\""     },
     { PRIMITIVE, 0x02, "$"      },
     { PRIMITIVE, 0x03, "&"      },
     { PRIMITIVE, 0x04, "&&"     },
-    /* { PRIMITIVE, 0x05, "("   }, to be added later. */
+    // { PRIMITIVE, 0x05, "("   }, to be added later. 
     { PRIMITIVE, 0x06, "--"     },
     { PRIMITIVE, 0x07, ":"      },
     { PRIMITIVE, 0x08, "="      },
@@ -63,13 +69,13 @@ static struct
     { PRIMITIVE, 0x0e, "sprout" },
     { PRIMITIVE, 0x0f, "this"   },
     { PRIMITIVE, 0x10, "up"     },
-    /* { PRIMITIVE, 0x11, "{"      }, to be added later. */
+    // { PRIMITIVE, 0x11, "{"   }, to be added later.
     { PRIMITIVE, 0x12, "||"     },
   };
 static struct 
 {
-  int start ;
-  int end   ;
+  int start;
+  int end;
 } ends [] =
   {
     /* This is a list of every instruction category's (from
@@ -91,12 +97,12 @@ get_bcode_label (byte *byte_code)
    * valid bytecode or if it's a stop/ignore/number/string.
    */
 
-  /* bsearch variables */
-  int end   ;
-  int mid   ;
-  int start ;
+  // bsearch variables
+  int end;
+  int mid;
+  int start;
 
-  /* Check for validity of the code. */
+  // Check for validity of the code
   if (byte_code == NULL || byte_code[0] != BYTECODE
       || (byte_code[1] <= IGNORE || byte_code[1] >= NUMBER))
     return NULL;
@@ -123,6 +129,9 @@ get_bcode_label (byte *byte_code)
   /* If nothing was found, return NULL */
   return NULL;
 }
+
+#define SET_SIZE (sizeof (ends) / sizeof (ends[0]))
+#define bytes_in_pointer (sizeof (var_t *) / sizeof (byte))
   
 void
 compile_to_bytecode (char **expression)
@@ -133,61 +142,50 @@ compile_to_bytecode (char **expression)
    * bytecode instruction, as listed by the structure aptly named
    * 'instructions'. When we are done, send the expression to
    * compile_numbers.
-   */
-  
-  /* bsearch variables */
-  int end   ;
-  int mid   ;
-  int start ;
-  /* index variables */
-  unsigned int index    ;
-  unsigned int jndex    ;
-  unsigned int newlines ;
-  /* static variables */
-  static   int SET_SIZE ;
+   */ 
+  int end;      
+  int mid;
+  int start;  
+  unsigned int i, j;  
+  unsigned int newlines;
 
-  /* If SET_SIZE is not set, then set it. */
-  if (!SET_SIZE)
-    SET_SIZE = (sizeof (ends) / sizeof (ends[0]));
-
-  for (index = 0; expression[index] != NULL; index++)
+  for (i = 0; expression[i] != NULL; i++)
     {
-      /* Get the number of newlines in the token. */
-      for (newlines = 0; expression[index][newlines] == '\n'; newlines++)
-	;
-      /* Skip all strings. */
-      if (expression[index][newlines] == '"')
+      for (newlines = 0; expression[i][newlines] == '\n'; newlines++); // Get the number of newlines in the token.
+
+      if (expression[i][newlines] == '"')
 	{
-	  index++;
+          // Skip all strings.
+	  i++;
 	  continue;
 	}
+      
       /* Sweep through every category using binary search to find if
        * the current token has a valid bytecode replacement. 
        */
-      for (jndex = 0; jndex < SET_SIZE; jndex++)
+      for (j = 0; j < SET_SIZE; j++)
 	{
-	  start = ends[jndex].start;
-	  end   = ends[jndex].end;
+          end   = ends[j].end;
+	  start = ends[j].start;
 
 	  do
 	    {
-	      int relation; /* This is the value of the first strcmp, so
-			     * we don't have three really annoying
-			     * expressions that no one can understand.
-			     */
+	      int relation;
+              
 	      mid = start + (end - start) / 2;
-	      relation = strcmp (expression[index] + newlines,  instructions[mid].id_token);
+	      relation = strcmp (expression[i] + newlines, instructions[mid].id_token);
 	      
 	      if (relation < 0)
 		end = mid - 1;
 	      else if (relation > 0)
 		start = mid + 1;
-	      else /* Relation can not be accessed in the while conditional. */
+	      else
 		break;
 	    } while (end >= start);
-	  if (end >= start)
+
+          if (end >= start)
 	    {
-	      /* Set the instruction. */
+	      //  Set the instruction. 
 
 	      /* If newlines is not zero, that means that at one
 	       * point we allocated memory for the token instead
@@ -195,25 +193,23 @@ compile_to_bytecode (char **expression)
 	       * realloc as to be more conservative with memory
 	       * usage.
 	       */
-	      if (newlines)
-		expression[index] = better_realloc (expression[index], sizeof (byte) * (3 + newlines));
-	      else
-		expression[index] = better_malloc (sizeof (byte) * 3);
+              expression[i] = (newlines)
+                ? better_realloc (expression[i], sizeof (byte) * (3 + newlines))
+                : better_malloc (sizeof (byte) * 3);
 
 	      /* This is where we actually set the instruction.
 	       * Since we used realloc, the newlines are retained
 	       * and do not need to be set.
 	       */
-	      expression[index][newlines] = BYTECODE;
-	      expression[index][newlines + 1] = instructions[mid].category_byte;
-	      expression[index][newlines + 2] = instructions[mid].instruction_byte;
+	      expression[i][newlines] = BYTECODE;
+	      expression[i][newlines + 1] = instructions[mid].category_byte;
+	      expression[i][newlines + 2] = instructions[mid].instruction_byte;
 	      break;
 	    }	
 	}
     }
 
-  /* Compile any numbers. */
-  compile_constants (expression);
+  compile_constants (expression); // Compile any numbers or strings.
 }
 
 void
@@ -229,47 +225,43 @@ compile_constants (char **expression)
    * depending on the architecture.
    */
 
-  bool                   is_string    ;   // Whether or not it is a string.
-  char *                 formatted    ;   // C string with the escape characters formatted. 
-  FACT_t                 returned     ;   // For the value returned by num_to_var.
-  unsigned int           index        ;   // Index variables.
-  unsigned int           jndex        ;
-  unsigned int           newlines     ;   // Number of newlines to skip.
-  unsigned long          hold_pointer ;   // Holds the pointer in a ulong type
+  bool          is_string;            // Whether or not it is a string.
+  FACT_t        returned;             // For the value returned by num_to_var.
+  unsigned int  i, j;                 // Index variables.
+  unsigned int  newlines;             // Number of newlines to skip.
+  unsigned long hold_pointer;         // Holds the pointer in a ulong type
 
-  static var_t        ** values         ; // Pre-compiled numbers.
-  static unsigned int    next_available ; // Size of the values array.
+  char *formatted;                    // C string with the escape characters formatted. 
 
- 
-  if (!bytes_in_pointer) // If bytes_in_pointer is not yet set, set it.
-    bytes_in_pointer = (sizeof (var_t *) / sizeof (byte));
+  static unsigned int next_available; // Size of the values array.
+  static var_t **values;              // Pre-compiled numbers.
 
   is_string = false;
-  for (index = 0; expression[index] != NULL; index++)
+  for (i = 0; expression[i] != NULL; i++)
     {
-      for (newlines = 0; expression[index][newlines] == '\n'; newlines++); // Skips all newlines.
+      for (newlines = 0; expression[i][newlines] == '\n'; newlines++); // Skips all newlines.
 
       // Skip all strings and valid bytecode tokens.
-      if (expression[index][newlines] == BYTECODE)
+      if (expression[i][newlines] == BYTECODE)
 	continue;
-      if (expression[index][newlines] == '"')
+      if (expression[i][newlines] == '"')
 	{
-          expression[index] = (newlines)
-            ? better_realloc (expression[index], sizeof (byte) * (newlines + 2))
+          expression[i] = (newlines)
+            ? better_realloc (expression[i], sizeof (byte) * (newlines + 2))
             : better_malloc (sizeof (byte) * 2);
-          expression[index][newlines] = BYTECODE;
-          expression[index][newlines + 1] = IGNORE;
+          expression[i][newlines] = BYTECODE;
+          expression[i][newlines + 1] = IGNORE;
           
           if (is_string = !is_string)
-            index++;
+            i++;
           else
             continue;
 	}
-      if (is_string || isnum (expression[index] + newlines))
+      if (is_string || isnum (expression[i] + newlines))
 	{
           if (is_string)
             {
-              formatted = rm_cslashes (expression[index]);
+              formatted = rm_cslashes (expression[i]);
               if (strlen (formatted) > 1)
                 {
                   returned.v_point = alloc_var ();
@@ -280,7 +272,7 @@ compile_constants (char **expression)
                 returned.v_point = string_to_array (formatted, NULL);
             }
           else
-            returned = num_to_var (expression[index] + newlines);
+            returned = num_to_var (expression[i] + newlines);
 
           /* Loop through all the variables and see if the
 	   * value has already been entered. I'm not going to
@@ -288,23 +280,23 @@ compile_constants (char **expression)
 	   * bsearch here, so it might be a little slow for
 	   * the time being.
 	   */
-	  for (jndex = 0; jndex < next_available; jndex++)
+	  for (j = 0; j < next_available; j++)
 	    {
-	      if (compare_var_arrays (values[jndex], returned.v_point, true))
+	      if (compare_var_arrays (values[j], returned.v_point, true))
 		break;
 	    }
 	  /* If jndex equals next_available, that means the
 	   * value is not already in the list, so we add it.
 	   */
-	  if (jndex == next_available)
+	  if (j == next_available)
 	    {
 	      next_available++;
 	      values = better_realloc (values, sizeof (var_t *) * next_available);
-	      values[jndex] = returned.v_point;
+	      values[j] = returned.v_point;
 	      /* We lock the variable so it can not be edited, which would
 	       * mess things up a fair bit.
 	       */
-	      values[jndex]->locked = true;
+	      values[j]->locked = true;
 	    }
 	  /* Set the bytecode instruction. */
 
@@ -312,26 +304,26 @@ compile_constants (char **expression)
 	   * compile_to_bytecode. For an explanation for the realloc,
 	   * read the comment there.
 	   */
-          expression[index] = (newlines)
-            ? better_realloc (expression[index], sizeof (byte) * (2 + bytes_in_pointer + newlines))
+          expression[i] = (newlines)
+            ? better_realloc (expression[i], sizeof (byte) * (2 + bytes_in_pointer + newlines))
             : better_malloc (sizeof (byte) * (2 + bytes_in_pointer));
           
-	  hold_pointer = (unsigned long) values[jndex];
+	  hold_pointer = (unsigned long) values[j];
 
 	  // Set the instruction's category. 
-	  expression[index][newlines] = BYTECODE;
-	  expression[index][newlines + 1] = NUMBER;
+	  expression[i][newlines] = BYTECODE;
+	  expression[i][newlines + 1] = NUMBER;
 
 	  /* This is a little bit complicated. I hope I already explained
 	   * it. If not, I'll do it later.
 	   */
 	  newlines++;
-	  for (jndex = 1; jndex <= bytes_in_pointer; jndex++)
+	  for (j = 1; j <= bytes_in_pointer; j++)
 	    {
 #if (BYTE_ORDER == LITTLE_ENDIAN)
-	      expression[index][jndex + newlines] = (char) (hold_pointer >> (bytes_in_pointer - jndex) * 8);
+	      expression[i][j + newlines] = (char) (hold_pointer >> (bytes_in_pointer - j) * 8);
 #else // We assume that there is only little and big endian here.
-	      expression[index][jndex + newlines] = (char) (hold_pointer << (bytes_in_pointer - jndex) * 8);
+	      expression[i][j + newlines] = (char) (hold_pointer << (bytes_in_pointer - j) * 8);
 #endif
 	    }
 	}

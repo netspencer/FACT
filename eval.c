@@ -39,17 +39,6 @@ make_word_list (char **words, bool len_check)
   return expression;
 }
 
-/* This is the instruction pointer, and it points to the next
- * unevaluated token. The ip is a pointer to a dynamically
- * allocated array so that it may accommodate all threads.
- * Do to the nature of seperate threads accessing the ip, it is 
- * quite possible that unprotected two different instances of 
- * get_ip will attempt to reallocate it. We use the safety
- * mutex to work around this.
- */
-unsigned long * ip;
-static pthread_mutex_t safety = PTHREAD_MUTEX_INITIALIZER;
-
 //////////////////////////////////////////
 // Instruction pointer accessor methods.
 //////////////////////////////////////////
@@ -57,38 +46,15 @@ static pthread_mutex_t safety = PTHREAD_MUTEX_INITIALIZER;
 unsigned long * 
 get_ip_ref (void)
 {
-  /* get_ip_ref - return a pointer to the current thread's
-   * instruction pointer.
+  /**
+   * get_ip_ref - return a pointer to the current thread's instruction
+   * pointer. Completely reentrant.
    */
-  unsigned long curr_tid ; // Current thread id.
-  static size_t arr_size ; // Size of the instruction pointer.
+  unsigned long curr_tid; // Current thread id.
 
-  if (ip == NULL)
-    {
-      // ip will only ever be NULL if concurrency is turned off.
-      ip = better_malloc (sizeof (unsigned long));
-      arr_size = 1;
-      return ip;
-    }
-  else if (!threading_status)
-    return ip; // If threading isn't turned on, we only have one option.
-  else
-    {
-      curr_tid = FACT_get_tid (pthread_self ());
-
-      while (curr_tid >= arr_size)
-        {
-          /* If curr_tid is bigger than arr_size, continue looping until
-           * we finally get the chance to reallocate ip.
-           */
-          pthread_mutex_lock (&safety);
-          arr_size = curr_tid + 1;
-          ip = better_realloc (ip, sizeof (unsigned long) * arr_size);
-          pthread_mutex_unlock (&safety);
-        }
-
-      return ip + curr_tid;
-    }
+  curr_tid = FACT_get_tid ();
+  assert (curr_tid != -1);
+  return &(threads[curr_tid].ip);
 }
 
 unsigned long
@@ -207,14 +173,13 @@ eval_expression (func_t *scope, word_list expression)
    * @scope: scope to evaluate the expression in.
    * @expression: expression to evaluate.
    */
-  int    index          ;
-  int    jndex          ;
-  byte   instruction    ; 
-  bool   is_instruction ;
-  bool   return_signal  ;
-  bool   break_signal   ;
-  bool   getif          ;
-  FACT_t return_value   ;
+  int    i;
+  byte   instruction;
+  bool   getif;
+  bool   break_signal;
+  bool   return_signal;
+  bool   is_instruction;
+  FACT_t return_value;
 
   /* Init routines -- Set the default return value to var,
    * set the signals to their default off, and increase
@@ -282,19 +247,19 @@ eval_expression (func_t *scope, word_list expression)
                * of the else matching this current if statement, and
                * evaluate its expression.
                */
-              index = get_else (expression.syntax);
+              i = get_else (expression.syntax);
               
               /* If there's no corresponding else statement, just
                * return whatever if_statement or on_error gave us.
                */
-              if (expression.syntax[index] == NULL
-                  || expression.syntax[index][0] != BYTECODE
-                  || expression.syntax[index][1] != STATEMENT
-                  || expression.syntax[index][2] != ELS)
+              if (expression.syntax[i] == NULL
+                  || expression.syntax[i][0] != BYTECODE
+                  || expression.syntax[i][1] != STATEMENT
+                  || expression.syntax[i][2] != ELS)
                 return return_value;
               
-              expression.syntax += index;
-              expression.lines  += index;
+              expression.syntax += i;
+              expression.lines  += i;
               
               return_value = else_clause (scope, expression);
             }
@@ -355,9 +320,9 @@ eval_expression (func_t *scope, word_list expression)
 FACT_t
 procedure (func_t *scope, word_list expression)
 {
-  int           length       ;
-  FACT_t        return_value ;
-  unsigned long ip           ;
+  int           length;
+  FACT_t        return_value;
+  unsigned long ip;
 
   expression.syntax += get_ip ();
   expression.lines  += get_ip ();
@@ -379,7 +344,7 @@ procedure (func_t *scope, word_list expression)
 	   * malform the signal, we set the ip to after
 	   * the closing '}' and return.
 	   */
-	  set_ip (ip + get_exp_length (expression.syntax, '}'));
+	  set_ip (get_exp_length (expression.syntax, '}') + 1);
 	  return return_value;
 	}
 
@@ -431,8 +396,8 @@ static bool ignore_signals;
 FACT_t
 lambda_proc (func_t *scope, word_list expression)
 {
-  func_t * new_scope;
-  FACT_t   return_value;
+  FACT_t return_value;
+  func_t *new_scope;
 
   /* Here we make a new scope for the procedure. This allows
    * for a psuedo-lambda class, that doesn't take any aguments.
@@ -469,17 +434,18 @@ eval (func_t * scope, word_list expression)
    * @expression: Word list that contains every instruction in
    *              the expression.
    */
-  int      index           ;
-  int      call_num        ;
-  bool     hold_break_sig  ;
-  bool     hold_return_sig ;
-  char   * current_token   ;
-  var_t  * hold_var        ;
-  func_t * hold_func       ;
-  FACT_t   return_value    ;
+  int    i;
+  int    call_num;
+  bool   hold_break_sig;
+  bool   hold_return_sig;
+  FACT_t return_value;
   
-  unsigned long ip           ;
-  unsigned long hold_pointer ;
+  unsigned long ip;
+  unsigned long hold_pointer;
+
+  char   *current_token;
+  var_t  *hold_var;
+  func_t *hold_func;
   
   static unsigned byte bytes ;
 
@@ -531,14 +497,14 @@ eval (func_t * scope, word_list expression)
 	  return_value.type = VAR_TYPE;
 	  hold_pointer = 0;
 	  
-	  for (index = 0; index < bytes; index++)
+	  for (i = 0; i < bytes; i++)
 	    {
 #if (BYTE_ORDER == LITTLE_ENDIAN)
 	      hold_pointer <<= 8;
 #else /* We assume big and little are the only values available */
 	      hold_pointer >>= 8;
 #endif
-	      hold_pointer += (unsigned char) current_token[index + 2];
+	      hold_pointer += (unsigned char) current_token[i + 2];
 	    }
 	  return_value.v_point = (var_t *) hold_pointer;
 	}      
