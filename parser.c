@@ -1286,7 +1286,7 @@ get_end_block (int block)
     case '(': return ')';
     case '[':
     case '!': return ']';
-    case '{': return '{';
+    case '{': return '}';
     default: return 0; // NOTREACHED
     }
 }

@@ -1,8 +1,7 @@
 /* sprout.c - FACT model for concurrency. */
 #include "FACT.h"
 
-static unsigned long   next = 1; // Points to the next available thread.
-static pthread_mutex_t threads_safety = PTHREAD_MUTEX_INITIALIZER;
+static unsigned long next = 1; // Points to the next available thread.
 
 unsigned long
 FACT_get_tid ( void )
@@ -37,25 +36,23 @@ thread_wrapper (void *arg)
 
   // Get the expression and the current tid.
   expression = *((word_list *) arg);
-  thread_num = FACT_get_tid ();
+  thread_num = FACT_get_tid_safe ();
 
-  /* Reset the instruction pointer in case this thread is being
-   * re-used.
-   */
-  reset_ip (); 
+  threads[thread_num].exited = threads[thread_num].destroy = false;
+  threads[thread_num].root = NULL;
+  threads[thread_num].ip = 0;
+  pthread_mutex_init (&(threads[thread_num].safety), NULL);  
 
   // Create the new scope and initialize its BIFs.
   scope = alloc_func ();
   init_BIFs (scope);
-
-  pthread_mutex_init (&threads[thread_num].safety, NULL);
   
-  new_tree = NULL;
-  for (i = 0; expression.syntax[i] != NULL; i++)
+  for (i = 0, new_tree = NULL; expression.syntax[i] != NULL; i++)
     {
       new_tree = better_realloc (new_tree, sizeof (char *) * (i + 2)); // The + 2 is for the NULL terminator.
       new_tree[i] = expression.syntax[i];
     }
+  
   new_tree[i] = NULL;
   expression.syntax = new_tree;
 
@@ -66,6 +63,7 @@ thread_wrapper (void *arg)
   if (threads[thread_num].return_status.type == ERROR_TYPE)
     errorman_dump (threads[thread_num].return_status.error);
 
+  pthread_mutex_destroy (&threads[thread_num].safety);
   pthread_exit (NULL);
 }
 
@@ -91,11 +89,9 @@ sprout (func_t * scope, word_list expression)
   if (i == next)
     {
       // Allocate memory for a new thread.
-      threads = better_realloc (threads, sizeof (FACT_thread_t) * (next + 1));
-      next++;      
+      next++;
+      threads = better_realloc (threads, sizeof (FACT_thread_t) * next);
     }
-
-  threads[i].root = NULL;
 
   arg = better_malloc (sizeof (word_list));
   *arg = expression;
@@ -109,7 +105,7 @@ FACT_DEFINE_BIF (get_tid, NOARGS)
   /**
    * get_tid - Get the current thread number.
    */
-  return FACT_get_ui (FACT_get_tid ());
+  return FACT_get_ui (FACT_get_tid_safe ());
 }
 
 FACT_DEFINE_BIF (get_thread_status, "def tid")
@@ -134,11 +130,15 @@ FACT_DEFINE_BIF (queue_size, NOARGS)
   /**
    * queue_size - get the size of the queue of the current thread.
    */
+  unsigned long tid;
   unsigned long count;
   struct queue *curr;
+
+  tid = FACT_get_tid_safe ();
+  assert (tid != -1);
   
   count = 0;
-  for (curr = threads[FACT_get_tid ()].root; curr != NULL; curr = curr->next)
+  for (curr = threads[tid].root; curr != NULL; curr = curr->next)
     count++;
 
   return FACT_get_ui (count);
@@ -154,8 +154,10 @@ FACT_DEFINE_BIF (pop, NOARGS)
   FACT_t return_value;
   FACT_thread_t *current_thread;
 
-  current_thread = threads + FACT_get_tid ();
+  current_thread = threads + FACT_get_tid_safe ();
   return_value.type = VAR_TYPE;
+
+  assert (current_thread >= threads);
 
   // Wait until the mutex of the thread is unlocked, then lock it.
   while (pthread_mutex_trylock (&current_thread->safety) == EBUSY)
@@ -198,6 +200,9 @@ FACT_DEFINE_BIF (send, "def tid, def msg")
     errorman_throw_catchable (scope, "invalid thread id");
 
   current_thread = threads + tid;
+
+  if (current_thread->exited)
+    errorman_throw_catchable (scope, "thread has already exited");
   
   // Wait until the mutex of the thread is unlocked, then lock it.
   while (pthread_mutex_trylock (&current_thread->safety) == EBUSY)

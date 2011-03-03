@@ -50,11 +50,7 @@ get_ip_ref (void)
    * get_ip_ref - return a pointer to the current thread's instruction
    * pointer. Completely reentrant.
    */
-  unsigned long curr_tid; // Current thread id.
-
-  curr_tid = FACT_get_tid ();
-  assert (curr_tid != -1);
-  return &(threads[curr_tid].ip);
+  return &(threads[FACT_get_tid_safe ()].ip);
 }
 
 unsigned long
@@ -182,8 +178,7 @@ eval_expression (func_t *scope, word_list expression)
   FACT_t return_value;
 
   /* Init routines -- Set the default return value to var,
-   * set the signals to their default off, and increase
-   * the recursion depth by one. 
+   * and set the signals to their default off.
    */
   return_value.type = VAR_TYPE;  
   return_signal = false;
@@ -260,7 +255,7 @@ eval_expression (func_t *scope, word_list expression)
               
               expression.syntax += i;
               expression.lines  += i;
-              
+
               return_value = else_clause (scope, expression);
             }
           break;
@@ -386,13 +381,6 @@ procedure (func_t *scope, word_list expression)
   return return_value;
 }
 
-/* When ignore_signals is set to true, it overides the default
- * setting for eval to reset the return and break value to false.
- * This will be removed in the future. This variable is ONLY used
- * by lambda_proc and eval.
- */
-static bool ignore_signals;
-
 FACT_t
 lambda_proc (func_t *scope, word_list expression)
 {
@@ -413,12 +401,9 @@ lambda_proc (func_t *scope, word_list expression)
   new_scope->file_name = scope->file_name ;
   new_scope->up        = scope            ;
 
-  /* Here is where the procedure is actually run (see procedure). */
-  
+  // Here is where the procedure is actually run (see procedure).  
   return_value = procedure (new_scope, expression);
   scope->line  = new_scope->line;
-
-  ignore_signals = true;
 
   return return_value;
 }
@@ -436,8 +421,8 @@ eval (func_t * scope, word_list expression)
    */
   int    i;
   int    call_num;
-  bool   hold_break_sig;
-  bool   hold_return_sig;
+  bool   break_signal;
+  bool   return_signal;
   FACT_t return_value;
   
   unsigned long ip;
@@ -536,27 +521,17 @@ eval (func_t * scope, word_list expression)
 	return errorman_throw_reg (scope, combine_strs ("cannot evaluate ", current_token));
     }
 
-  /* Hold the return signals if ignore_signals is true.
-   * Otherwise, set them to false.
-   */
-  if (ignore_signals)
-    {
-      hold_break_sig  = return_value.break_signal;
-      hold_return_sig = return_value.return_signal;
-      ignore_signals  = false;
-    }
-  else
-    {
-      hold_break_sig  = false;
-      hold_return_sig = false;
-    }
-
   // we skip all ignores so that other functions don't have to deal with them.
   for (ip = get_ip (); (expression.syntax[ip] != NULL
                         && (expression.syntax[ip][0] == BYTECODE
                             && expression.syntax[ip][1] == IGNORE)); ip++) 
     next_inst ();
-      
+
+
+  // Set the signals.
+  break_signal  = return_value.break_signal;
+  return_signal = return_value.return_signal;
+
   /* Depending on whether or not the return value is
    * a variable or a function, we check for a variable
    * array or a function array. This includes numbers,
@@ -569,13 +544,9 @@ eval (func_t * scope, word_list expression)
   else if (return_value.type == FUNCTION_TYPE)
     return_value = get_array_func (return_value.f_point, scope, expression);
 
-  /* Since we are not at the start of an expression,
-   * we cannot return a value or break from a loop.
-   * Thus, we set the respective signals to off for
-   * protection.
-   */
-  return_value.return_signal = hold_return_sig;
-  return_value.break_signal  = hold_break_sig;
-
+  // Restore the signals.
+  return_value.break_signal  = break_signal;
+  return_value.return_signal = return_signal;
+  
   return return_value;
 }

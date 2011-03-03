@@ -3,11 +3,10 @@
 /* This is almost deprecated! Almost! */
 static struct  _prims
 {
-  const char * name;
-  FACT_t    (* function)(func_t *, word_list);
+  const char *name;
+  FACT_t    (*function)(func_t *, word_list);
 } primitives [] =
   {
-    /* Sorted in ascii order, I guess. */
     { "!["    , return_array },
     { "\""    , new_string   }, /* To be removed and replaced with bcode instruction. */
     { "$"     , run_func     },
@@ -28,13 +27,12 @@ static struct  _prims
     { "{"     , lambda_proc  },
     { "||"    , or           },
   };
-static int num_of_prims;
 
 static int
 comp_prims (const void *op1, const void *op2)
 {
-  struct _prims * p1;
-  struct _prims * p2;
+  struct _prims *p1;
+  struct _prims *p2;
 
   p1 = (struct _prims *) op1;
   p2 = (struct _prims *) op2;
@@ -82,39 +80,48 @@ init_BIFs (func_t *scope)
 int
 isprim (char *word)
 {
-  /* isprim - check to see if a token is a valid primitive.
+  /**
+   * isprim - check to see if a token is a valid primitive.
    * This function will be deprecated very soon, but for now
    * is legitamitely (and unfortunately) necessary. It 
    * returns -1 if no primitive is found. Otherwise, it
    * returns the place in the "primitives" struct array where
    * it was found (which is 0 or positive, if you didn't know).
    */
-  struct _prims   key;
-  struct _prims * result;
+  struct _prims key;
+  struct _prims *result;
 
-  /* Set num_of_prims if it isn't set already. */
-  if (!num_of_prims)
-    num_of_prims = ((sizeof (primitives)) / sizeof (struct _prims));
-  
   key.name = word; 
-  result = bsearch (&key, primitives, num_of_prims, sizeof (struct _prims), comp_prims);
+  result = bsearch (&key, primitives, ((sizeof (primitives)) / sizeof (struct _prims)), sizeof (struct _prims), comp_prims);
 
-  if (result == NULL)
-    return -1;
-  else
-    return result - primitives;
+  return (result == NULL)
+    ? -1
+    : result - primitives;
 }
 
 FACT_t
 run_prim (func_t *scope, word_list expression, int prim_num)
 {
-  /* run_prim - this function is incredibly simple, and many
+  /**
+   * run_prim - this function is incredibly simple, and many
    * may question its very existance. Simply put, this will
    * become slightly more complicated in the future, but not 
    * for a little while. Bare with me.
    */
+  FACT_t return_value;
   
-  return primitives[prim_num].function (scope, expression);
+  return_value = primitives[prim_num].function (scope, expression);
+
+  /* If the primitive isn't a procedure ('{'), set the signals
+   * to their defaults. Otherwise, leave them alone.
+   */
+  if (prim_num != 17)
+    {
+      return_value.break_signal  = false;
+      return_value.return_signal = false;
+    }
+
+  return return_value;
 }
 
 FACT_t
@@ -172,6 +179,10 @@ eval_math (func_t *scope, word_list expression, int call_num)
    */
   if (return_value.type == ERROR_TYPE)
     return_value.error.scope = scope;
+
+  // Set the signals to their defaults.
+  return_value.break_signal  = false;
+  return_value.return_signal = false;
 
   return return_value;
 }

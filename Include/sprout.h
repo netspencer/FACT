@@ -53,4 +53,26 @@ FACT_EXTERN_BIF (queue_size);
 FACT_EXTERN_BIF (pop);
 FACT_EXTERN_BIF (send);
 
+//////////////////////
+// Inline functions.
+//////////////////////
+
+static inline unsigned long
+FACT_get_tid_safe ( void )
+{
+  /**
+   * FACT_get_tid_safe - wraps around the regular FACT_get_tid
+   * function, continueing to get input until we recieve a value 
+   * other than -1.
+   * WARNING: May result in infinite loops if used improperly!
+   */
+  unsigned long tid;
+  
+  do
+    tid = FACT_get_tid ();
+  while (tid == -1);
+
+  return tid;
+}
+
 #endif
