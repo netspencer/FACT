@@ -43,7 +43,7 @@ make_word_list (char **words, bool len_check)
 // Instruction pointer accessor methods.
 //////////////////////////////////////////
 
-unsigned long * 
+inline unsigned long * 
 get_ip_ref (void)
 {
   /**
@@ -53,28 +53,31 @@ get_ip_ref (void)
   return &(threads[FACT_get_tid_safe ()].ip);
 }
 
-unsigned long
+inline unsigned long
 get_ip (void)
 {
   return *(get_ip_ref ()); // We just derefrence get_ip_ref.
 }
 
-void
+inline void
 set_ip (unsigned long nip) // Set the current ip to nip.
 {
-  *(get_ip_ref ()) = nip;
+  // WARNING: infinite loop possible!
+  do 
+    *(get_ip_ref ()) = nip;
+  while (*(get_ip_ref ()) != nip);
 }
 
-void
+inline void
 move_ip (unsigned long mip) // Move over the current ip by mip.
 {
-  *(get_ip_ref ()) += mip;
+  set_ip (get_ip () + mip); // We use set_ip and get_ip to avoid redundancy.
 }
 
-void
+inline void
 next_inst (void) // Move the current ip over by one.
 {
-  ++*(get_ip_ref ());
+  move_ip (1);
 }
 
 //////////////////////////
