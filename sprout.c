@@ -6,7 +6,8 @@ static unsigned long next = 1; // Points to the next available thread.
 unsigned long
 FACT_get_tid ( void )
 {
-  /* FACT_get_tid - searches the thread array for the first instance of
+  /**
+   * FACT_get_tid - searches the thread array for the first instance of
    * pthread_self (). If the current thread is not allocated (which
    * should never happens), we return -1. 
    */
@@ -24,7 +25,8 @@ FACT_get_tid ( void )
 void *
 thread_wrapper (void *arg)
 {
-  /* thread_wrapper - Used as a wrapper between pthreads_create and
+  /**
+   * thread_wrapper - Used as a wrapper between pthreads_create and
    * eval_expression. Also creates the scope for the thread.
    */
   word_list     expression;
@@ -70,10 +72,20 @@ thread_wrapper (void *arg)
 FACT_t
 sprout (func_t * scope, word_list expression)
 {
-  /* sprout - a statement. Creates a new thread. */
+  /**
+   * sprout - Create a new thread and manage the threads array accordingly. Returns
+   * the id of the thread created.
+   *
+   * @TODO:
+   * As of now, there is no mutex protecting the threads array. Sprouting a thread from
+   * a thread other than the main thread (while the main thread is sprouting a thread)
+   * will cause a terrible race condition that will almost certainly end in a seg fault.
+   * This should really be fixed.
+   */
   unsigned long i;
   word_list *arg;
 
+    
   expression.syntax += get_ip ();
   expression.lines  += get_ip ();
 
@@ -179,7 +191,8 @@ FACT_DEFINE_BIF (send, "def tid, def msg")
 {
   /**
    * send - send a message to a thread. Throws an error if the tid
-   * is invalid or the thread has exited.
+   * is invalid or the thread has exited. This thread uses busy
+   * wait, and is therefor the jankiest thing you will every see.
    *
    * @tid: Thread id of the thread to send to.
    * @msg: Message to send to the thread.
@@ -211,18 +224,26 @@ FACT_DEFINE_BIF (send, "def tid, def msg")
   // If the queue is empty, set root.
   if (current_thread->root == NULL)
     {
-      current_thread->root = better_malloc (sizeof (struct queue));
-      current_thread->root->next  = NULL;
-      current_thread->root->value = msg;
+      do
+        {
+          current_thread->root = better_malloc (sizeof (struct queue));
+          current_thread->root->next  = NULL;
+          current_thread->root->value = msg;
+        }
+      while (current_thread->root == NULL);
     }
   else
     {
-      // Otherwise, move to the second to last value in the stack.
-      for (curr = current_thread->root; curr->next != NULL; curr = curr->next)
-        ; // Do nothing.
-      curr->next = better_malloc (sizeof (struct queue));
-      curr->next->next  = NULL;
-      curr->next->value = msg;
+      do
+        {
+          // Otherwise, move to the second to last value in the stack.
+          for (curr = current_thread->root; curr->next != NULL; curr = curr->next)
+            ; // Do nothing.
+          curr->next = better_malloc (sizeof (struct queue));
+          curr->next->next  = NULL;
+          curr->next->value = msg;
+        }
+      while (curr->next == NULL);
     }
 
   pthread_mutex_unlock (&current_thread->safety);

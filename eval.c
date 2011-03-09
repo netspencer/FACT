@@ -495,6 +495,7 @@ eval (func_t * scope, word_list expression)
 	      hold_pointer += (unsigned char) current_token[i + 2];
 	    }
 	  return_value.v_point = (var_t *) hold_pointer;
+          return_value.break_signal = return_value.return_signal = false;
 	}      
     }
   else
@@ -514,11 +515,13 @@ eval (func_t * scope, word_list expression)
 	{
 	  return_value.v_point = hold_var;
 	  return_value.type    = VAR_TYPE;
+          return_value.break_signal = return_value.return_signal = false;
 	}     
       else if ((hold_func = get_func (scope, current_token)) != NULL)
 	{
 	  return_value.f_point = hold_func;
 	  return_value.type    = FUNCTION_TYPE;
+          return_value.break_signal = return_value.return_signal = false;
 	}
       else
 	return errorman_throw_reg (scope, combine_strs ("cannot evaluate ", current_token));

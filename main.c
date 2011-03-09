@@ -124,6 +124,9 @@ main (int argc, char **argv)
   // Process the arguments and start the interpreter.
   process_args (argc, argv);
 
+  // Destroy the main mutex.
+  pthread_mutex_destroy (&threads[0].safety, NULL);
+
   // Exit.
   exit (0);
 }
