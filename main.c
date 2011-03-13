@@ -61,7 +61,6 @@ process_args (int argc, char **argv)
 
 	  if (file_open.type == ERROR_TYPE)
 	    errorman_dump (file_open.error);
-
 	  break;
 
 	case 'i':
@@ -114,18 +113,19 @@ main (int argc, char **argv)
 			   &FACT_free);
 
   // Start the main thread
-  threads = better_malloc (sizeof (FACT_thread_t));
+  // threads = better_malloc (sizeof (FACT_thread_t));
   threads[0].tid = pthread_self ();
   threads[0].exited  = false;
   threads[0].destroy = false;
-  threads[0].root = NULL;  
-  pthread_mutex_init (&threads[0].safety, NULL);
+  threads[0].root = NULL;
+  threads[0].queue_size = 0;
+  //  pthread_mutex_init (&threads[0].safety, NULL);
 
   // Process the arguments and start the interpreter.
   process_args (argc, argv);
 
   // Destroy the main mutex.
-  pthread_mutex_destroy (&threads[0].safety, NULL);
+  //  pthread_mutex_destroy (&threads[0].safety);
 
   // Exit.
   exit (0);

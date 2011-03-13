@@ -29,8 +29,8 @@ run_file (func_t *scope, const char *filename, bool silent)
 
   if (fp == NULL)
     {
-      return errorman_throw_reg (scope, "could not open file");
       scope->name = hold_fn;
+      return errorman_throw_reg (scope, "could not open file");
     }
 
   end_line = 1;
@@ -126,3 +126,47 @@ run_file (func_t *scope, const char *filename, bool silent)
         }
     }
 }
+
+#ifdef LOAD_FILE_FIXED
+FACT_t 
+run_file (func_t *scope, const char *file_name, bool silent)
+{
+  /**
+   * run_file - load and run a file.
+   *
+   * @silent: whether or not to print trivial info.
+   * 
+   * @TODO: Currently we just load the entire file into memory and parse it. This
+   * should probably be fixed so that only parts of the file are loaded at a time.
+   * Right now though, this works fine.
+   */
+  int i, c;
+  int hold_line;  
+
+  char        *contents;   // Contents of the file.
+  char        *parsed;     // Contents of the file, parsed.
+  char        *hold_fname; // Holds the old filename.
+  FILE        *fp;
+  linked_word *formatted;
+
+  if (!silent)
+    printf ("Opening file <%s>.\n", file_name);
+
+  if ((fp = fopen (filename, "r")) == NULL)
+    errorman_throw_catchable (scope, "could not open file");
+
+  hold_line   = scope->line;
+  scope->line = 1;
+  hold_fname  = scope->name;
+  scope->name = scope->file_name = (char *) file_name;
+
+  // Load all of the contents of the file into contents.
+  contents = NULL;
+  for (i = 0; (c = fgetc (fp)) != EOF; i++)
+    {
+      contents = better_realloc (contents, sizeof (char) * (i + 1));
+      contents[i] = c;
+    }
+  
+}
+#endif

@@ -434,8 +434,6 @@ eval (func_t * scope, word_list expression)
   char   *current_token;
   var_t  *hold_var;
   func_t *hold_func;
-  
-  static unsigned byte bytes ;
 
   /* Get the instruction pointer (ip), and then set the
    * current_token (using the ip). Then, move the ip one
@@ -465,10 +463,6 @@ eval (func_t * scope, word_list expression)
    */
   if (current_token[0] == BYTECODE)
     {
-      /* If bytes isn't set, set it. */
-      if (!bytes)
-	bytes = (sizeof (var_t *) / sizeof (char));
-      
       /* check which category it's from */
       if (current_token[1] == MATH_CALL)
 	return_value = eval_math (scope, expression, (int) current_token[2]);
@@ -485,7 +479,7 @@ eval (func_t * scope, word_list expression)
 	  return_value.type = VAR_TYPE;
 	  hold_pointer = 0;
 	  
-	  for (i = 0; i < bytes; i++)
+	  for (i = 0; i < BYTES_IN_POINTER; i++)
 	    {
 #if (BYTE_ORDER == LITTLE_ENDIAN)
 	      hold_pointer <<= 8;
@@ -500,14 +494,12 @@ eval (func_t * scope, word_list expression)
     }
   else
     {
-      /* If it is not a bytecode instruction, then we
-       * check to see if it's a variable or a function.
-       * If it is neither, we return an un-catchable
-       * error. We have to do this check every time
-       * because variables/function cannot be known
-       * for sure to exist. For example, one odd thing
-       * a user can legitamitely do is conditionally
-       * define differently named variables/functions.
+      /* If it is not a bytecode instruction, then we check to see if it's
+       * a variable or a function. If it's neither, we return an un-catchable
+       * error. We have to do this check every time because variables/function
+       * cannot be known for sure to exist. For example, one odd thing a user
+       * can legitamitely do is conditionally define differently named
+       * variables/functions.
        */
       if ((call_num = isprim (current_token)) != -1)
 	return_value = run_prim (scope, expression, call_num);

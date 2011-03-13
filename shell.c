@@ -204,16 +204,16 @@ shell (func_t * scope)
    *
    * @scope  - the scope to use when evaluating expressions.
    */
-  char   *  input       ;
-  char   *  hold_input  ; // Used in the main loop to check for else clauses.			   
-  char   ** tokenized   ;
-  char   ** hold_tokens ; // Also used to check for else clauses.
-  byte   ** bytecode    ; // Final string to be passed to the interpreter.
-  FACT_t    returned    ; // The value returned by the interpreter.
+  FACT_t       returned;     // The value returned by the interpreter.
+  unsigned int end_line;     // ...
+  unsigned int hold_line;    // ...
   
-  linked_word  * parsed    ;
-  unsigned int   end_line  ;
-  unsigned int   hold_line ;
+  char         *input;
+  char         *hold_input;  // Used in the main loop to check for else clauses.
+  char        **tokenized;   // input, tokenized.
+  char        **hold_tokens; // Also used to check for else clauses.
+  byte        **bytecode;    // Final string to be passed to the interpreter.
+  linked_word  *parsed;
 
   /* Before we start, print out the copyright info, logo and
    * a guide to some helpful functions.
@@ -229,14 +229,14 @@ shell (func_t * scope)
   hold_input       = NULL    ;
   scope->file_name = "stdin" ;
 
-  for ( ; ; ) /* Heh, that looks like a spider. */
+  for (;;) // Heh, that looks like a spider.
     {
-      /* Set the line number to end_line, in case we missed
-       * any while evaluating the last expression.
+      /* Set the line number to end_line, in case we missed any while evaluating
+       * the last expression.
        */
       scope->line = end_line;
 
-      /* Then, get raw input for an entire expression. */
+      // Then, get raw input for an entire expression.
       if (hold_input == NULL)
 	input = get_input (stdin, &end_line, "S>", "C>");
       else
@@ -245,32 +245,27 @@ shell (func_t * scope)
 	  hold_input = NULL;
 	}
 
-      /* We do two checks for EOF signals: once before
-       * tokenizing, and once after. I am not completely
-       * sure as to why this is the case, but I do 
-       * remember at some point it didn't exit so I
-       * added the second check.
+      /* We do two checks for EOF signals: once before tokenizing, and once after.
+       * I am not completely sure as to why this is the case, but I do remember at
+       * some point it didn't exit so I added the second check.
        */
       if (input == NULL)
 	break;
 
-      /* Check for incompletions, and if there are any
-       * skip to the next expression.
-       */
+      // Check for incompletions, and if there are any skip to the next expression.
       if (check_for_incompletions ("stdin", input))
 	continue;
 
-      /* Tokenize the input. */
+      // Tokenize the input.
       tokenized = get_words (input);
 
       if (tokenized == NULL)
 	break;
       
-      /* If the first token in the expression is if/on_error,
-       * continue to get input as long as the first token is
-       * else. I could forsee this being an issue in places
-       * where the else is placed erroneosly, but
-       * that'll be fixed later I assume.
+      /* If the first token in the expression is if/on_error, continue to get input
+       * as long as the first token is else. I could forsee this being an issue in
+       * places where the else is placed erroneosly, but that'll be fixed later I
+       * assume.
        */ 
       if ((tokenized[0][0] == '\n'
 	   && (!tokcmp (tokenized[1], "if")
@@ -280,16 +275,16 @@ shell (func_t * scope)
 	{
 	  for ( ; ; )
 	    {
-	      /* Go through all the steps we went through from
-	       * the start of the loop down to here.
+	      /* Go through all the steps we went through from the start of the loop
+               * down to here.
 	       */
 	      hold_input = get_input (stdin, &end_line, "E>", "C>");
 
-	      /* Check for all errors in a really condensed form. */
+	      // Check for all errors in a really condensed form.
 	      if (hold_input == NULL || check_for_incompletions ("stdin", hold_input)
 		  || (hold_tokens = get_words (hold_input)) == NULL)
 		break;
-	      /* Check to see if the statement starts with else. */
+	      // Check to see if the statement starts with else.
 	      if ((hold_tokens[0][0] == '\n'
 		   && !tokcmp (hold_tokens[1], "else"))
 		  || !tokcmp (hold_tokens[0], "else"))
@@ -305,14 +300,12 @@ shell (func_t * scope)
 	  tokenized = get_words (input);
 	}
 
-      /* Convert the tokens to a list, and then set the
-       * list. Setting the list does some stuff that
-       * makes converting to polish notation a lot
-       * easier. For more information, read the function
-       * docs.
+      /* Convert the tokens to a list, and then set the list. Setting the list does
+       * some stuff that makes converting to polish notation a lot easier. For more
+       * information, read the function docs.
        */
-      parsed = create_list (tokenized  ) ;
-      parsed = set_list    (parsed, END) ;
+      parsed = create_list (tokenized);
+      parsed = set_list (parsed, END);
 
       /* Because the value set_list is not guaranteed
        * to point to the beginning of the list, we

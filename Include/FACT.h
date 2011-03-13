@@ -42,6 +42,7 @@
 #define FACT_EXTERN_BIF(name) BIF name ## _BIF
 #define FACT_BIF(name) name ## _BIF
 
+#define BYTES_IN_POINTER (sizeof (void *) / sizeof (char))
 #define SAFE // If this is turned on, pointers value will be checked before being dereferenced. 
 #define PARSE_CHECK
 #define DEBUG
@@ -53,7 +54,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <setjmp.h>
+#include <limits.h>
 #include <math.h>
 #include <endian.h>
 #include <unistd.h>

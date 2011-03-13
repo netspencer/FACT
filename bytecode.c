@@ -131,7 +131,6 @@ get_bcode_label (byte *byte_code)
 }
 
 #define SET_SIZE (sizeof (ends) / sizeof (ends[0]))
-#define bytes_in_pointer (sizeof (var_t *) / sizeof (byte))
   
 void
 compile_to_bytecode (char **expression)
@@ -305,8 +304,8 @@ compile_constants (char **expression)
 	   * read the comment there.
 	   */
           expression[i] = (newlines)
-            ? better_realloc (expression[i], sizeof (byte) * (2 + bytes_in_pointer + newlines))
-            : better_malloc (sizeof (byte) * (2 + bytes_in_pointer));
+            ? better_realloc (expression[i], sizeof (byte) * (2 + BYTES_IN_POINTER + newlines))
+            : better_malloc (sizeof (byte) * (2 + BYTES_IN_POINTER));
           
 	  hold_pointer = (unsigned long) values[j];
 
@@ -318,12 +317,12 @@ compile_constants (char **expression)
 	   * it. If not, I'll do it later.
 	   */
 	  newlines++;
-	  for (j = 1; j <= bytes_in_pointer; j++)
+	  for (j = 1; j <= BYTES_IN_POINTER; j++)
 	    {
 #if (BYTE_ORDER == LITTLE_ENDIAN)
-	      expression[i][j + newlines] = (char) (hold_pointer >> (bytes_in_pointer - j) * 8);
+	      expression[i][j + newlines] = (char) (hold_pointer >> (BYTES_IN_POINTER - j) * 8);
 #else // We assume that there is only little and big endian here.
-	      expression[i][j + newlines] = (char) (hold_pointer << (bytes_in_pointer - j) * 8);
+	      expression[i][j + newlines] = (char) (hold_pointer << (BYTES_IN_POINTER - j) * 8);
 #endif
 	    }
 	}

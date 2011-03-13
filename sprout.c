@@ -2,6 +2,7 @@
 #include "FACT.h"
 
 static unsigned long next = 1; // Points to the next available thread.
+// static pthread_mutex_t thread_lock = PTHREAD_MUTEX_INITIALIZER;
 
 unsigned long
 FACT_get_tid ( void )
@@ -40,11 +41,6 @@ thread_wrapper (void *arg)
   expression = *((word_list *) arg);
   thread_num = FACT_get_tid_safe ();
 
-  threads[thread_num].exited = threads[thread_num].destroy = false;
-  threads[thread_num].root = NULL;
-  threads[thread_num].ip = 0;
-  pthread_mutex_init (&(threads[thread_num].safety), NULL);  
-
   // Create the new scope and initialize its BIFs.
   scope = alloc_func ();
   init_BIFs (scope);
@@ -65,7 +61,7 @@ thread_wrapper (void *arg)
   if (threads[thread_num].return_status.type == ERROR_TYPE)
     errorman_dump (threads[thread_num].return_status.error);
 
-  pthread_mutex_destroy (&threads[thread_num].safety);
+  //  pthread_mutex_destroy (&threads[thread_num].safety);
   pthread_exit (NULL);
 }
 
@@ -84,10 +80,11 @@ sprout (func_t * scope, word_list expression)
    */
   unsigned long i;
   word_list *arg;
-
     
   expression.syntax += get_ip ();
-  expression.lines  += get_ip ();
+  expression.lines += get_ip ();
+  arg = better_malloc (sizeof (word_list));
+  *arg = expression;
 
   /* Search through all the threads to see if there's one that is ready to
    * be removed and has already exited. We skip the 0th thread as it is
@@ -98,16 +95,23 @@ sprout (func_t * scope, word_list expression)
       if (threads[i].exited && threads[i].destroy)
 	break;
     }
+
   if (i == next)
     {
       // Allocate memory for a new thread.
-      next++;
-      threads = better_realloc (threads, sizeof (FACT_thread_t) * next);
+      // threads = better_realloc (threads, sizeof (FACT_thread_t) * (next + 1));
+      threads[i].exited = threads[i].destroy = false;
+      threads[i].root = NULL;
+      threads[i].ip = 0;
+      threads[i].queue_size = 0;
     }
 
-  arg = better_malloc (sizeof (word_list));
-  *arg = expression;
   pthread_create (&(threads[i].tid), NULL, thread_wrapper, (void *) arg);
+
+  if (i == next)  
+    next++; // We increment next here to prevent accessing data that isn't ready yet.
+
+  //  pthread_mutex_unlock (&threads_lock);
 
   return FACT_get_ui (i);
 }
@@ -142,16 +146,23 @@ FACT_DEFINE_BIF (queue_size, NOARGS)
   /**
    * queue_size - get the size of the queue of the current thread.
    */
+  int i;
+  int count;
   unsigned long tid;
-  unsigned long count;
   struct queue *curr;
 
   tid = FACT_get_tid_safe ();
-  assert (tid != -1);
-  
-  count = 0;
-  for (curr = threads[tid].root; curr != NULL; curr = curr->next)
-    count++;
+
+  for (count = i = 0; i < next; i++)
+    {
+      if (i == (int) tid)
+        continue;
+      for (curr = threads[i].root; curr != NULL; curr = curr->next)
+        {
+          if (curr->destination == (int) tid && !curr->popped)
+            count++;
+        }
+    }
 
   return FACT_get_ui (count);
 }
@@ -161,28 +172,51 @@ FACT_DEFINE_BIF (pop, NOARGS)
   /**
    * pop - pop the first value in the queue of a thread, returning 
    * and removing it. If there are no values in the queue, it throws
-   * an error. This function is completely reentrant.
+   * an error. This function is completely reentrant, because the
+   * queue values are handled in seperate threads.
    */
+  int    i;
+  int    best;
+  int    worst;
   FACT_t return_value;
-  FACT_thread_t *current_thread;
-
-  current_thread = threads + FACT_get_tid_safe ();
-  return_value.type = VAR_TYPE;
-
-  assert (current_thread >= threads);
-
-  // Wait until the mutex of the thread is unlocked, then lock it.
-  while (pthread_mutex_trylock (&current_thread->safety) == EBUSY)
-    ; // Do nothing.
+  unsigned long tid;
   
-  if (current_thread->root == NULL)
+  struct queue *curr;
+  struct queue *closest;
+  
+  tid = FACT_get_tid_safe ();
+  best = INT_MAX;
+  worst = 0;
+  closest = NULL;
+  return_value.type = VAR_TYPE;  
+  
+  for (i = 0; i < next; i++)
+    {
+      if (i == (int) tid)
+        continue;
+      for (curr = threads[i].root; curr != NULL; curr = curr->next)
+        {
+          if (tid == (unsigned long) curr->destination && !curr->popped) 
+            {
+              if (best > curr->position)
+                {
+                  closest = curr;
+                  best = curr->position;
+                }
+              else if (worst < curr->position)
+                worst = curr->position;
+            }
+        }
+    }
+
+  if (closest == NULL)
     errorman_throw_catchable (scope, "current thread's queue is empty");
 
-  // Pop the first first value and set root to the next value.
-  return_value.v_point = current_thread->root->value;
-  current_thread->root = current_thread->root->next;
-
-  pthread_mutex_unlock (&current_thread->safety);
+  return_value.v_point = closest->value;
+  closest->popped = true;
+  threads[FACT_get_tid_safe ()].queue_size = (worst == closest->position)
+    ? worst
+    : worst + 1;
 
   return return_value;
 }
@@ -191,8 +225,7 @@ FACT_DEFINE_BIF (send, "def tid, def msg")
 {
   /**
    * send - send a message to a thread. Throws an error if the tid
-   * is invalid or the thread has exited. This thread uses busy
-   * wait, and is therefor the jankiest thing you will every see.
+   * is invalid or the thread has exited.
    *
    * @tid: Thread id of the thread to send to.
    * @msg: Message to send to the thread.
@@ -202,6 +235,7 @@ FACT_DEFINE_BIF (send, "def tid, def msg")
   var_t         *msg;
   FACT_thread_t *current_thread;
   struct queue  *curr;
+  struct queue  *set;
 
   // Get the arguments
   tid = mpc_get_ui ((get_var (scope, "tid"))->data);
@@ -212,41 +246,34 @@ FACT_DEFINE_BIF (send, "def tid, def msg")
   if (tid < 0 || tid >= next || threads[tid].exited) // If the tid is invalid, throw an error.
     errorman_throw_catchable (scope, "invalid thread id");
 
-  current_thread = threads + tid;
+  current_thread = threads + FACT_get_tid_safe ();
 
   if (current_thread->exited)
     errorman_throw_catchable (scope, "thread has already exited");
-  
-  // Wait until the mutex of the thread is unlocked, then lock it.
-  while (pthread_mutex_trylock (&current_thread->safety) == EBUSY)
-    ; // Do nothing.
-
+ 
   // If the queue is empty, set root.
   if (current_thread->root == NULL)
     {
-      do
-        {
-          current_thread->root = better_malloc (sizeof (struct queue));
-          current_thread->root->next  = NULL;
-          current_thread->root->value = msg;
-        }
-      while (current_thread->root == NULL);
+      current_thread->root = better_malloc (sizeof (struct queue));
+      set = current_thread->root;
     }
   else
     {
-      do
-        {
-          // Otherwise, move to the second to last value in the stack.
-          for (curr = current_thread->root; curr->next != NULL; curr = curr->next)
-            ; // Do nothing.
-          curr->next = better_malloc (sizeof (struct queue));
-          curr->next->next  = NULL;
-          curr->next->value = msg;
-        }
-      while (curr->next == NULL);
+      // Otherwise, move to the second to last value in the stack.
+      for (curr = current_thread->root; curr->next != NULL && !curr->next->popped; curr = curr->next)
+        ; // Do nothing.
+      curr->next = better_malloc (sizeof (struct queue));
+      set = curr->next;
     }
 
-  pthread_mutex_unlock (&current_thread->safety);
+  set->next = NULL;
+  set->value = msg;
+  set->position = threads[tid].queue_size;
+  set->destination = tid;
+  set->popped = false;
+
+  // We aren't really concerned over race conditions.
+  threads[tid].queue_size++;
   return FACT_get_ui (0);
 } 
 

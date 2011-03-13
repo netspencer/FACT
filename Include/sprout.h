@@ -3,6 +3,8 @@
 
 #include "FACT.h"
 
+#define MAX_THREADS 100
+
 ////////////////////
 // Typedefs/enums.
 ////////////////////
@@ -15,25 +17,28 @@
  */
 typedef struct thread
 {
-  bool            exited;        // True if the thread has returned.
-  bool            destroy;       // True if the thread is set to be deallocated.
-  FACT_t          return_status; // Value returned by thread.
-  pthread_t       tid;           // Thread id.
-  unsigned long   ip;            // Thread's instruction pointer.
-  pthread_mutex_t safety;
+  int           queue_size;    // The size of the current queue.
+  bool          exited;        // True if the thread has returned.
+  bool          destroy;       // True if the thread is set to be deallocated.
+  FACT_t        return_status; // Value returned by thread.
+  pthread_t     tid;           // Thread id.
+  unsigned long ip;            // Thread's instruction pointer.
   
-  struct queue                   // The variables being passed to the thread.
-  {         
-    struct queue *next;          // Points to the next value in the queue.
-    var_t *value;                // Physical value.
-  } *root;                       // Points to the first unread value in the queue.
+  struct queue                 // The variables being passed to other threads.
+  {
+    struct queue *next;        // Points to the next value in the queue.
+    var_t *value;              // Physical value.
+    int position;              // Position in queue.
+    int destination;           // Destination thread.
+    bool popped;
+  } *root;                     // Points to the first unread value in the queue.
 } FACT_thread_t;
 
 //////////////////////
 // Global variables.
 //////////////////////
 
-FACT_thread_t *threads; // Contains all the thread data.
+FACT_thread_t threads[MAX_THREADS]; // Contains all the thread data.
 
 /////////////////////////
 // Function prototypes.
