@@ -18,7 +18,7 @@ count_until_NULL (char **words)
 bool
 compare_var_arrays (var_t *op1, var_t *op2, bool first)
 {
-  /* compare_var_arrays: returns true on == and false on !=. */ 
+  // compare_var_arrays: returns true on == and false on !=. 
 
   if (op1 == NULL && op2 == NULL)
     return true;

@@ -85,16 +85,17 @@ liven_func (func_t *scope, word_list expression)
  FACT_t
  prepare_function (func_t *scope, func_t *new_scope, word_list expression)
  {
-   int            count    ;
-   var_t        * hold     ;
-   var_t        * temp     ;
-   FACT_t         evald    ;
-   FACT_t         arg      ;
-   FACT_t         passed   ;
-   word_list      arg_list ;
-   unsigned int   ip       ;
-   unsigned int   ipe      ;
-   unsigned int   ipf      ;
+   int          count;
+   FACT_t       arg;
+   FACT_t       evald;
+   FACT_t       passed;
+   word_list    arg_list;
+   unsigned int ip;
+   unsigned int ipe;
+   unsigned int ipf;
+
+   var_t *hold;
+   var_t *temp;
 
    expression.syntax += get_ip ();
    expression.lines  += get_ip ();
@@ -123,14 +124,14 @@ liven_func (func_t *scope, word_list expression)
    ip += get_ip ();
 
    arg_list              = make_word_list (evald.f_point->args, false);
-   new_scope->file_name  = evald.f_point->file_name  ;
-   new_scope->args       = evald.f_point->args       ;
-   new_scope->body       = evald.f_point->body       ;
-   new_scope->line       = evald.f_point->line       ;
-   new_scope->up         = evald.f_point->up         ;
-   new_scope->name       = evald.f_point->name       ;
-   new_scope->extrn_func = evald.f_point->extrn_func ;
-   new_scope->variadic   = evald.f_point->variadic   ;
+   new_scope->file_name  = evald.f_point->file_name;
+   new_scope->args       = evald.f_point->args;
+   new_scope->body       = evald.f_point->body;
+   new_scope->line       = evald.f_point->line;
+   new_scope->up         = evald.f_point->up;
+   new_scope->name       = evald.f_point->name;
+   new_scope->extrn_func = evald.f_point->extrn_func;
+   new_scope->variadic   = evald.f_point->variadic;
 
    if (arg_list.syntax[0] != NULL && tokcmp (expression.syntax[0], ","))
      return errorman_throw_reg (scope, combine_strs ("expected more arguments to function ", new_scope->name));
@@ -164,7 +165,7 @@ liven_func (func_t *scope, word_list expression)
 	   ipe = 0;
 	   while (tokcmp (expression.syntax[0], ")"))
 	     {
-	       struct _MIXED * go_through;
+	       struct _MIXED *go_through;
 
 	       if (new_scope->variadic == NULL)
 		 {
@@ -272,12 +273,12 @@ liven_func (func_t *scope, word_list expression)
        else
 	 return errorman_throw_reg (new_scope, "syntax error in argument declaration");
 
-       /* There are more arguments, so we skip the commas. */
-       arg_list.syntax   ++;
-       arg_list.lines    ++;
-       expression.syntax ++;
-       expression.lines  ++;
-       ip                ++;
+       // There are more arguments, so we skip the comma.
+       arg_list.syntax++;
+       arg_list.lines++;
+       expression.syntax++;
+       expression.lines++;
+       ip++;
      }
 
   set_ip (ip + 1);
@@ -292,10 +293,11 @@ new_scope (func_t *scope, word_list expression)
    * understanding it. Oh wait, I forgot about the cast. It is a lot
    * of fun.
    */
-  func_t * new_scope;
-  FACT_t   prepared;
-  FACT_t   return_value;
+  FACT_t        prepared;
+  FACT_t        return_value;
   unsigned long ip;
+
+  func_t *new_scope;
 
   new_scope = alloc_func ();
   prepared  = prepare_function (scope, new_scope, expression);
@@ -311,14 +313,12 @@ new_scope (func_t *scope, word_list expression)
     {
       new_scope->line += strcount ('\n', prepared.f_point->body[0]);
 
-      /* Hold the instruction pointer for later and reset it.  */
+      // Hold the instruction pointer for later and reset it. 
       ip = get_ip ();
       reset_ip ();
-
-      /* Run the function. */
+      // Run the procedure.
       prepared = procedure (new_scope, make_word_list (prepared.f_point->body + 1, false));
-
-      /* Restore the instruction pointer. */
+      // Restore the instruction pointer.
       set_ip (ip);
     }
 
@@ -341,10 +341,12 @@ run_func (func_t *scope, word_list expression_list)
    * make it as elegent as possible (although I'm not really
    * good at that).
    */
-  func_t * new_scope;
-  FACT_t   return_value;
-  FACT_t   prepared;
+
+  FACT_t        return_value;
+  FACT_t        prepared;
   unsigned long ip;
+
+  func_t *new_scope;
 
   new_scope = alloc_func ();
   prepared  = prepare_function (scope, new_scope, expression_list);

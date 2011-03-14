@@ -2,7 +2,6 @@
 #include "FACT.h"
 
 static unsigned long next = 1; // Points to the next available thread.
-// static pthread_mutex_t thread_lock = PTHREAD_MUTEX_INITIALIZER;
 
 unsigned long
 FACT_get_tid ( void )
@@ -110,8 +109,6 @@ sprout (func_t * scope, word_list expression)
 
   if (i == next)  
     next++; // We increment next here to prevent accessing data that isn't ready yet.
-
-  //  pthread_mutex_unlock (&threads_lock);
 
   return FACT_get_ui (i);
 }

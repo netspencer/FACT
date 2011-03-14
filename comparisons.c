@@ -1,30 +1,5 @@
 #include "FACT.h"
 
-/*---------------------------------------------*
- * operators.c: Provides functions for         *
- * comparring data and logical operators.      *
- *                                             *
- * This code is (C) 2010 Matthew Plant.        *
- *---------------------------------------------*/
-
-static int
-check_dimensions (var_t *op1, var_t *op2)
-{
-  /* Return 0 on failure and 1 on success. */
-  if ((op1 == NULL && op2 != NULL)
-      || (op1 != NULL && op2 == NULL))
-    return 0;
-  else if (op1 == NULL && op2 == NULL)
-    return 1;
-  else if (mpc_cmp (op1->data, op2->data) == 0)
-    {
-      return (check_dimensions (op1->array_up, op2->array_up)
-	      * check_dimensions (op1->next, op2->next));
-    }
-  else
-    return 0;
-}
-
 FACT_t
 equal (FACT_t arg1, FACT_t arg2)
 {
@@ -38,8 +13,7 @@ equal (FACT_t arg1, FACT_t arg2)
   
   if (arg1.type == VAR_TYPE)
     {
-      if (mpc_cmp (arg1.v_point->data, arg2.v_point->data) == 0
-	  && check_dimensions (arg1.v_point->array_up, arg2.v_point->array_up))
+      if (compare_var_arrays (arg1.v_point, arg2.v_point, true))
         mpc_set_si (&(return_value.v_point->data), 1);
     }
   else
@@ -52,11 +26,6 @@ equal (FACT_t arg1, FACT_t arg2)
 
   return return_value;
 }
-
-/* * * * * * * * * * * * * * * * * * * * * * *
- * not_equal: checks if two arguments are    *
- * not equal to each other.                  *
- * * * * * * * * * * * * * * * * * * * * * * */
 
 FACT_t
 not_equal (FACT_t arg1, FACT_t arg2)
@@ -71,24 +40,18 @@ not_equal (FACT_t arg1, FACT_t arg2)
     
   if (arg1.type == VAR_TYPE)
     {
-      if (mpc_cmp (arg1.v_point->data, arg2.v_point->data) != 0)
+      if (!compare_var_arrays (arg1.v_point, arg2.v_point, true))
         mpc_set_si (&(return_value.v_point->data), 1);
     }
   else
     {
-      if (arg1.f_point != arg2.f_point)
+      if (arg1.f_point->vars != arg2.f_point->vars
+          || arg1.f_point->funcs != arg2.f_point->funcs)
         mpc_set_si (&(return_value.v_point->data), 1);
     }
 
   return return_value;
 }
-
-/* * * * * * * * * * * * * * * * * * * * * * *
- * more: checks if the first argument is     *
- * greater in value than the other arguemnt. *
- * If either argument is not a var_tiable, it  *
- * throws an error.                          *
- * * * * * * * * * * * * * * * * * * * * * * */
 
 FACT_t
 more (FACT_t arg1, FACT_t arg2)
@@ -107,13 +70,6 @@ more (FACT_t arg1, FACT_t arg2)
   return return_value;
 }
 
-/* * * * * * * * * * * * * * * * * * * * * * *
- * more_equal: checks if the first argument  *
- * is greater or equal in value to the other *
- * arguemnt. If either argument is not a     *
- * var_tiable, it throws an error.             *
- * * * * * * * * * * * * * * * * * * * * * * */
-
 FACT_t
 more_equal (FACT_t arg1, FACT_t arg2)
 {
@@ -131,13 +87,6 @@ more_equal (FACT_t arg1, FACT_t arg2)
   return return_value;
 }
 
-/* * * * * * * * * * * * * * * * * * * * * * *
- * less: checks if the first argument is     *
- * smaller in value than the other arguemnt. *
- * If either argument is not a variable, it  *
- * throws an error.                          *
- * * * * * * * * * * * * * * * * * * * * * * */
-
 FACT_t
 less (FACT_t arg1, FACT_t arg2)
 {
@@ -154,13 +103,6 @@ less (FACT_t arg1, FACT_t arg2)
 
   return return_value;
 }
-
-/* * * * * * * * * * * * * * * * * * * * * * *
- * less_equal: checks if the first argument  *
- * is smaller or equal in value to the other *
- * arguemnt. If either argument is not a     *
- * variable, it throws an error.             *
- * * * * * * * * * * * * * * * * * * * * * * */
 
 FACT_t
 less_equal (FACT_t arg1, FACT_t arg2)
@@ -182,56 +124,56 @@ less_equal (FACT_t arg1, FACT_t arg2)
 static int
 statement_length (char **words)
 {
-  int    index          ;
-  int    w_code         ;
-  int    arguments_left ;
-  char * token          ;
+  int i;
+  int w_code;
+  int arguments_left;
+  char *token;
 
   arguments_left = 1;
   
-  for (index = 0; arguments_left > 0 && words[index] != NULL; index++, arguments_left--)
+  for (i = 0; arguments_left > 0 && words[i] != NULL; i++, arguments_left--)
     {
-      token  = get_bcode_label (words[index]);
-      w_code = (token != NULL) ? get_block_code (token) : get_block_code (words[index]);
+      token  = get_bcode_label (words[i]);
+      w_code = (token != NULL) ? get_block_code (token) : get_block_code (words[i]);
       
       switch (w_code)
 	{
 	case CL_PAREN:
 	case CL_BRACKET:
 	case CL_CURLY:
-	  return index; 
+	  return i; 
 
 	case OP_BRACKET:
 	case NOP_BRACKET:
-	  index += get_exp_length  (words + index + 1, ']');
-	  token  = get_bcode_label (words[index + 1]);
-	  w_code = (token != NULL) ? get_block_code (token) : get_block_code (words[index + 1]);
+	  i += get_exp_length  (words + i + 1, ']');
+	  token = get_bcode_label (words[i + 1]);
+	  w_code = (token != NULL) ? get_block_code (token) : get_block_code (words[i + 1]);
 
 	  if (w_code == OP_BRACKET)
 	    arguments_left++;
 	  break;
 
 	case OP_CURLY:
-	  index += get_exp_length (words + index + 1, '}');
+	  i += get_exp_length (words + i + 1, '}');
 	  break;
 
 	case OP_PAREN:
-	  index += get_exp_length (words + index + 1, ')');
+	  i += get_exp_length (words + i + 1, ')');
 	  break;
 
-	case OR        :
-	case EQ        :
-	case AND       :
-	case MOD       :
-	case NEQ       :
-	case SET       :
-	case MORE      :
-	case PLUS      :
-	case MINUS     :
-	case DIVIDE    :
-	case LESS_EQ   :
-	case MORE_EQ   :
-	case MULTIPLY  :
+	case OR:
+	case EQ:
+	case AND:
+	case MOD:
+	case NEQ:
+	case SET:
+	case MORE:
+	case PLUS:
+	case MINUS:
+	case DIVIDE:
+	case LESS_EQ:
+	case MORE_EQ:
+	case MULTIPLY:
 	case ADD_ASSIGN:
 	case DIV_ASSIGN:
 	case MOD_ASSIGN:
@@ -250,22 +192,22 @@ statement_length (char **words)
 	case DEFUNC:
 	  for (;;)
 	    {
-	      token  = get_bcode_label (words[index]);
-	      w_code = (token != NULL) ? get_block_code (token) : get_block_code (words[index]);
+	      token = get_bcode_label (words[i]);
+	      w_code = (token != NULL) ? get_block_code (token) : get_block_code (words[i]);
 	      if (w_code == UNKNOWN || w_code == END)
 		break;
 	      else if (w_code == OP_CURLY)
-		index += get_exp_length (words + index + 1, '}');
+		i += get_exp_length (words + i + 1, '}');
 	      else if (w_code == OP_BRACKET || w_code == NOP_BRACKET)
-		index += get_exp_length (words + index + 1, ']');
+		i += get_exp_length (words + i + 1, ']');
 	      else if (w_code == OP_PAREN)
-		index += get_exp_length (words + index + 1, ')');
+		i += get_exp_length (words + i + 1, ')');
 	    }
 	  break;
 
 	case UNKNOWN:
-	  token  = get_bcode_label (words[index + 1]);
-	  w_code = (token != NULL) ? get_block_code (token) : get_block_code (words[index + 1]);
+	  token = get_bcode_label (words[i + 1]);
+	  w_code = (token != NULL) ? get_block_code (token) : get_block_code (words[i + 1]);
 
 	  if (w_code == OP_BRACKET)
 	    arguments_left++;
@@ -276,17 +218,17 @@ statement_length (char **words)
 	}
     }
 
-  return index;
+  return i;
 }
 
 FACT_t
 and (func_t *scope, word_list expression)
 {
-  int           len          ;
-  FACT_t        arg1         ;
-  FACT_t        arg2         ;
-  FACT_t        return_value ;
-  unsigned long ip           ;
+  int           len;
+  FACT_t        arg1;
+  FACT_t        arg2;
+  FACT_t        return_value;
+  unsigned long ip;
 
   ip = get_ip ();
   reset_ip ();
@@ -334,11 +276,11 @@ and (func_t *scope, word_list expression)
 FACT_t
 or (func_t *scope, word_list expression)
 {
-  int           len          ;
-  FACT_t        arg1         ;
-  FACT_t        arg2         ;
-  FACT_t        return_value ;
-  unsigned long ip           ;
+  int           len;
+  FACT_t        arg1;
+  FACT_t        arg2;
+  FACT_t        return_value;
+  unsigned long ip;
 
   ip = get_ip ();
   reset_ip ();
