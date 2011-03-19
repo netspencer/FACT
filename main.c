@@ -114,12 +114,15 @@ main (int argc, char **argv)
 
   // Start the main thread
   // threads = better_malloc (sizeof (FACT_thread_t));
-  threads[0].tid = pthread_self ();
-  threads[0].exited  = false;
-  threads[0].destroy = false;
-  threads[0].root = NULL;
-  threads[0].queue_size = 0;
-  //  pthread_mutex_init (&threads[0].safety, NULL);
+  root_thread = better_malloc (sizeof (FACT_thread_t));
+  root_thread->tid = pthread_self ();
+  root_thread->exited  = false;
+  root_thread->destroy = false;
+  root_thread->next = NULL;
+  root_thread->prev = NULL;
+  root_thread->root = NULL;
+  root_thread->nid = 0;
+  pthread_mutex_init (&root_thread->queue_lock, NULL);
 
   // Process the arguments and start the interpreter.
   process_args (argc, argv);

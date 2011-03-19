@@ -4,36 +4,32 @@ word_list
 make_word_list (char **words, bool len_check)
 {
   /* To be removed because it is really bad. */
-  int       index;
-  int       jndex;
+  int i, j;
   word_list expression;
 
   if (len_check)
     {
-      index = get_exp_length_first (words, ';');
-       if (index < 1)
+      i = get_exp_length_first (words, ';');
+       if (i < 1)
 	{
 	  expression.syntax = NULL;
 	  return expression;
 	}
     }
   else
-    {
-      for (index = 0; words[index] != NULL; index++)
-	;
-    }
+    for (i = 0; words[i] != NULL; i++);
 
-  expression.syntax = better_malloc (sizeof (char *) * (index + 1));
-  expression.lines  = better_malloc (sizeof (int   ) * (index + 1));
+  expression.syntax = better_malloc (sizeof (char *) * (i + 1));
+  expression.lines  = better_malloc (sizeof (int   ) * (i + 1));
 
-  for (expression.syntax[index--] = NULL; index >= 0; index--)
+  for (expression.syntax[i--] = NULL; i >= 0; i--)
     {
-      for (jndex = 0; words[index][jndex] == '\n'; jndex++);
-      if (words[index] + jndex == '\0')
-	expression.syntax[index] = NULL;
+      for (j = 0; words[i][j] == '\n'; j++);
+      if (words[i] + j == '\0')
+	expression.syntax[i] = NULL;
       else
-	expression.syntax[index] = words[index] + jndex;
-      expression.lines[index] = jndex;
+	expression.syntax[i] = words[i] + j;
+      expression.lines[i] = j;
     }
   
   return expression;
@@ -48,9 +44,9 @@ get_ip_ref (void)
 {
   /**
    * get_ip_ref - return a pointer to the current thread's instruction
-   * pointer. Completely reentrant.
+   * pointer.
    */
-  return &(threads[FACT_get_tid_safe ()].ip);
+  return &(FACT_get_curr_thread ()->ip);
 }
 
 inline unsigned long
@@ -94,19 +90,18 @@ get_else (char ** expression)
    *
    * @ifs: how many if/on_error statements needed to be matched.  
    */
+  unsigned long i;
+  unsigned long ifs; 
 
-  unsigned long ifs   ; 
-  unsigned long index ;
-
-  for (index = ifs = 0; expression[index] != NULL; index++)
+  for (i = ifs = 0; expression[i] != NULL; i++)
     {
-      if (expression[index][0] == BYTECODE
-	  && expression[index][1] == STATEMENT)
+      if (expression[i][0] == BYTECODE
+	  && expression[i][1] == STATEMENT)
 	{
 	  /* Don't even touch ifs or elses if the token isn't
 	   * bytecode and it isn't a statement.
 	   */
-	  switch (expression[index][2])
+	  switch (expression[i][2])
 	    {
 	    case IFS: // IFS stands for IF Statement.
 	    case ONE: // ONE stands for ON Error.
@@ -115,7 +110,7 @@ get_else (char ** expression)
 	      
 	    case ELS: // And ELS stands for Else clause.
 	      if (--ifs == 0)
-		return index; 
+		return i; 
 	      break;
 	      
 	    default:
@@ -124,32 +119,32 @@ get_else (char ** expression)
 	}
       else
 	{
-	  switch (expression[index][0])
+	  switch (expression[i][0])
 	    {
 	    case ';':
-	      if (expression[index + 1] == NULL
-		  || expression[index + 1][0] != BYTECODE
-		  || expression[index + 1][1] != STATEMENT
-		  || expression[index + 1][2] != ELS)
-		return index + 1;
+	      if (expression[i + 1] == NULL
+		  || expression[i + 1][0] != BYTECODE
+		  || expression[i + 1][1] != STATEMENT
+		  || expression[i + 1][2] != ELS)
+		return i + 1;
 	      break;
 	      
 	    case '{':
-	      index += get_exp_length (expression + index + 1,'}');
+	      i += get_exp_length (expression + i + 1,'}');
 
-	      if (expression[index + 1] == NULL
-		  || expression[index + 1][0] != BYTECODE
-		  || expression[index + 1][1] != STATEMENT
-		  || expression[index + 1][2] != ELS)
-		return index + 1;
+	      if (expression[i + 1] == NULL
+		  || expression[i + 1][0] != BYTECODE
+		  || expression[i + 1][1] != STATEMENT
+		  || expression[i + 1][2] != ELS)
+		return i + 1;
 	      break;
 
 	    case '(':
-	      index += get_exp_length (expression + index + 1, ')');
+	      i += get_exp_length (expression + i + 1, ')');
 	      break;
 
 	    case '[':
-	      index += get_exp_length (expression + index + 1, ']');
+	      i += get_exp_length (expression + i + 1, ']');
 	      break;
 	      
 	    default:
@@ -158,7 +153,7 @@ get_else (char ** expression)
 	}
     }
 
-  return index;
+  return i;
 }
 
 FACT_t
@@ -376,10 +371,10 @@ procedure (func_t *scope, word_list expression)
   next_inst ();
 
   return_value.return_signal = false;
-  return_value.break_signal  = false;
+  return_value.break_signal = false;
 
-  return_value.v_point       = alloc_var ();
-  return_value.type          = VAR_TYPE;
+  return_value.v_point = alloc_var ();
+  return_value.type = VAR_TYPE;
       
   return return_value;
 }
@@ -399,10 +394,10 @@ lambda_proc (func_t *scope, word_list expression)
    * other field is initialized to NULL already (except for
    * array_size, which would be initialized to one).
    */
-  new_scope->line      = scope->line      ;
-  new_scope->name      = scope->name      ;
-  new_scope->file_name = scope->file_name ;
-  new_scope->up        = scope            ;
+  new_scope->line      = scope->line;
+  new_scope->name      = scope->name;
+  new_scope->file_name = scope->file_name;
+  new_scope->up        = scope;
 
   // Here is where the procedure is actually run (see procedure).  
   return_value = procedure (new_scope, expression);
@@ -450,11 +445,9 @@ eval (func_t * scope, word_list expression)
 
   current_token = expression.syntax[ip];
   next_inst ();
-
-  /* Assert some stuff. */
   assert (current_token != NULL);
 
-  /* Get the number of newlines. */
+  // Get the number of newlines.
   scope->line += (expression.lines != NULL) ? expression.lines[0] : 0;
   
   /* Check to see if the current token is valid bytecode or, 

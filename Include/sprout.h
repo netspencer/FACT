@@ -3,8 +3,6 @@
 
 #include "FACT.h"
 
-#define MAX_THREADS 100
-
 ////////////////////
 // Typedefs/enums.
 ////////////////////
@@ -17,34 +15,34 @@
  */
 typedef struct thread
 {
-  int           queue_size;    // The size of the current queue.
-  bool          exited;        // True if the thread has returned.
-  bool          destroy;       // True if the thread is set to be deallocated.
-  FACT_t        return_status; // Value returned by thread.
-  pthread_t     tid;           // Thread id.
-  unsigned long ip;            // Thread's instruction pointer.
-  
-  struct queue                 // The variables being passed to other threads.
+  bool            exited;        // True if the thread has returned.
+  bool            destroy;       // True if the thread is set to be deallocated.
+  FACT_t          return_status; // Value returned by thread.
+  pthread_t       tid;           // Thread id.
+  unsigned long   ip;            // Thread's instruction pointer.
+  unsigned long   nid;           // Numeric value that represents the thread. 
+  pthread_mutex_t queue_lock;    // Prevents queue race conditions.
+
+  struct thread *next;           // Points to the next thread in the linked list.
+  struct thread *prev;           // Points to the previous thread in the list.
+  struct queue                   // The variables being passed to other threads.
   {
-    struct queue *next;        // Points to the next value in the queue.
-    var_t *value;              // Physical value.
-    int position;              // Position in queue.
-    int destination;           // Destination thread.
-    bool popped;
-  } *root;                     // Points to the first unread value in the queue.
+    struct queue *next;          // Points to the next value in the queue.
+    var_t *value;                // Physical value.
+  } *root;                       // Points to the first unread value in the queue.
 } FACT_thread_t;
 
 //////////////////////
 // Global variables.
 //////////////////////
 
-FACT_thread_t threads[MAX_THREADS]; // Contains all the thread data.
+FACT_thread_t *root_thread; // Contains all the thread data.
 
 /////////////////////////
 // Function prototypes.
 /////////////////////////
 
-FACT_INTERN_FUNC (unsigned long) FACT_get_tid (void);
+FACT_INTERN_FUNC (FACT_thread_t *) FACT_get_curr_thread (void);
 FACT_INTERN_FUNC (FACT_t) sprout (func_t *, word_list);
 FACT_INTERN_FUNC (void) thread_cleanup (void);
 
@@ -57,27 +55,5 @@ FACT_EXTERN_BIF (get_thread_status);
 FACT_EXTERN_BIF (queue_size);
 FACT_EXTERN_BIF (pop);
 FACT_EXTERN_BIF (send);
-
-//////////////////////
-// Inline functions.
-//////////////////////
-
-static inline unsigned long
-FACT_get_tid_safe ( void )
-{
-  /**
-   * FACT_get_tid_safe - wraps around the regular FACT_get_tid
-   * function, continueing to get input until we recieve a value 
-   * other than -1.
-   * WARNING: May result in infinite loops if used improperly!
-   */
-  unsigned long tid;
-  
-  do
-    tid = FACT_get_tid ();
-  while (tid == -1);
-
-  return tid;
-}
 
 #endif
