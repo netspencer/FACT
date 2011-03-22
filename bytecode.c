@@ -104,7 +104,7 @@ get_bcode_label (byte *byte_code)
 
   // Check for validity of the code
   if (byte_code == NULL || byte_code[0] != BYTECODE
-      || (byte_code[1] <= IGNORE || byte_code[1] >= NUMBER))
+      || (byte_code[1] <= IGNORE || byte_code[1] >= CONSTANT))
     return NULL;
 
   /* Do a bsearch for the token. We can't do a straight lookup
@@ -311,7 +311,7 @@ compile_constants (char **expression)
 
 	  // Set the instruction's category. 
 	  expression[i][newlines] = BYTECODE;
-	  expression[i][newlines + 1] = NUMBER;
+	  expression[i][newlines + 1] = CONSTANT;
 
 	  /* This is a little bit complicated. I hope I already explained
 	   * it. If not, I'll do it later.

@@ -41,8 +41,7 @@ process_args (int argc, char **argv)
 	break;
 
       switch (arg)
-	{
-	  
+	{	  
 	case 0:
 	  if (long_options[option_index].flag != 0)
 	    break;
@@ -96,6 +95,13 @@ process_args (int argc, char **argv)
     shell (scope);
 }
 
+void
+gmp_free_wrapper (void *op1, size_t op2)
+{
+  // We do not use op2.
+  FACT_free (op1);
+}
+
 int
 main (int argc, char **argv)
 {
@@ -110,10 +116,9 @@ main (int argc, char **argv)
   // Set up GMP library
   mp_set_memory_functions (&FACT_malloc,
 			   &FACT_realloc,
-			   &FACT_free);
+			   &gmp_free_wrapper);
 
   // Start the main thread
-  // threads = better_malloc (sizeof (FACT_thread_t));
   root_thread = better_malloc (sizeof (FACT_thread_t));
   root_thread->tid = pthread_self ();
   root_thread->exited  = false;
@@ -121,14 +126,11 @@ main (int argc, char **argv)
   root_thread->next = NULL;
   root_thread->prev = NULL;
   root_thread->root = NULL;
-  root_thread->nid = 0;
+  root_thread->nid  = 0;
   pthread_mutex_init (&root_thread->queue_lock, NULL);
 
   // Process the arguments and start the interpreter.
   process_args (argc, argv);
-
-  // Destroy the main mutex.
-  //  pthread_mutex_destroy (&threads[0].safety);
 
   // Exit.
   exit (0);

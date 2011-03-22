@@ -4,7 +4,8 @@ word_list
 make_word_list (char **words, bool len_check)
 {
   /* To be removed because it is really bad. */
-  int i, j;
+  int i, j, k;
+  int token_len;
   word_list expression;
 
   if (len_check)
@@ -19,16 +20,53 @@ make_word_list (char **words, bool len_check)
   else
     for (i = 0; words[i] != NULL; i++);
 
-  expression.syntax = better_malloc (sizeof (char *) * (i + 1));
-  expression.lines  = better_malloc (sizeof (int   ) * (i + 1));
+  expression.syntax = FACT_malloc (sizeof (char *) * (i + 1));
+  expression.lines  = FACT_malloc (sizeof (int   ) * (i + 1));
 
   for (expression.syntax[i--] = NULL; i >= 0; i--)
     {
-      for (j = 0; words[i][j] == '\n'; j++);
+      for (j = 0; words[i][j] == '\n'; j++); // Do nothing.
+
       if (words[i] + j == '\0')
-	expression.syntax[i] = NULL;
+        expression.syntax[i] = NULL;
       else
-	expression.syntax[i] = words[i] + j;
+        {
+          // Do not allocate useless information.
+          if (words[i][j] == 1)
+            {
+              switch (words[i][j + 1])
+                {
+                case STOP:
+                case IGNORE:
+                  token_len = 2;
+                  break;
+              
+                case STATEMENT:
+                case PRIMITIVE:
+                case MATH_CALL:
+                  token_len = 3;
+                  break;
+                  
+                case CONSTANT:
+                  token_len = 2 + BYTES_IN_POINTER;
+                  break;
+
+                default:
+                  // Unknown primitive.
+                  abort ();
+                }
+            }
+          else                  
+            token_len = strlen (words[i]) - j + 1;
+          
+          expression.syntax[i] = FACT_malloc (sizeof (char) * (token_len));
+          
+          for (k = 0; k < token_len; k++)
+            expression.syntax[i][k] = words[i][k + j];
+
+          if (words[i][j] != 1)
+            expression.syntax[i][k] = '\0';
+        }
       expression.lines[i] = j;
     }
   
@@ -461,7 +499,7 @@ eval (func_t * scope, word_list expression)
 	return_value = eval_math (scope, expression, (int) current_token[2]);
       if (current_token[1] == PRIMITIVE)
 	return_value = run_prim (scope, expression, (int) current_token[2]);
-      else if (current_token[1] == NUMBER)
+      else if (current_token[1] == CONSTANT)
 	{
 	  /* This part is a little bit complicated to understand.
 	   * The instructions for a number are spread out over

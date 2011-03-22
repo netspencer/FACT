@@ -14,11 +14,12 @@
  * STATEMENT (0x2),
  * MATH_CALL (0x3),
  * PRIMITIVE (0x4),
- * NUMBER    (0x5),
+ * CONSTANT  (0x5),
  * The contents of the byte that follows is dependent on the category. MATH_CALL
  * and PRIMITIVE is followed by a byte representing the number of the instruction.
- * NUMBERs, however, are followed by four to eight bytes (depending on the system)
- * that is cast into a var_t pointer, which points to a pre-allocated number. 
+ * CONSTANTs, however, are followed by four to eight bytes (depending on the
+ * system) that is cast into a var_t pointer, which points to a pre-allocated
+ * value.
  */
 
 #define BYTECODE 0x1
@@ -30,7 +31,7 @@ typedef enum bytecode_type
     STATEMENT = 0x2, // This includes keywords such as if, else, and return.
     MATH_CALL = 0x3, // +, -, *, etc. 
     PRIMITIVE = 0x4, // Some special things.
-    NUMBER    = 0x5, // Numbers are pre-compiled.
+    CONSTANT  = 0x5, // Constants are pre-compiled.
   } bytecode_type;
 
 /* This is a bunch of three letter representations of the FACT

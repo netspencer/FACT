@@ -21,7 +21,7 @@ add_newlines (char *word, int newlines)
   
   if (word[0] == BYTECODE)
     {
-      if (word[1] == NUMBER)
+      if (word[1] == CONSTANT)
 	word_len = (sizeof (var_t *) / sizeof (char)) + 2;
       else
 	word_len = 3;

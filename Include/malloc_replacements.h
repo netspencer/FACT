@@ -3,12 +3,9 @@
 
 #include "FACT.h"
 
-FACT_INTERN_FUNC (void *) FACT_malloc  (size_t                );
+FACT_INTERN_FUNC (void *) FACT_malloc  (size_t);
 FACT_INTERN_FUNC (void *) FACT_realloc (void *, size_t, size_t);
-FACT_INTERN_FUNC (void  ) FACT_free    (void *, size_t        );
-
-#define MAX_BYTES 1000000
-// #define GATES_OF_VALGRIND 
+FACT_INTERN_FUNC (void  ) FACT_free    (void *);
 
 #define better_malloc              FACT_malloc
 #define better_realloc(op1, op2)   FACT_realloc (op1, 0, op2)

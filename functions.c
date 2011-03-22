@@ -225,11 +225,11 @@ liven_func (func_t *scope, word_list expression)
 
        if (arg.type == VAR_TYPE)
 	 {
-	   hold                    = passed.v_point->next;
-	   passed.v_point->next    = NULL;
-	   temp                    = clone_var (passed.v_point, arg.v_point->name);
-	   passed.v_point->next    = hold;
-	   arg.v_point->array_up   = temp->array_up;
+	   hold                  = passed.v_point->next;
+	   passed.v_point->next  = NULL;
+	   temp                  = clone_var (passed.v_point, arg.v_point->name);
+	   passed.v_point->next  = hold;
+	   arg.v_point->array_up = temp->array_up;
 
 	   mpz_set (arg.v_point->array_size, temp->array_size);
 	   mpc_set (&(arg.v_point->data), temp->data);
