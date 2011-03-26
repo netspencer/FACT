@@ -15,13 +15,14 @@ static struct
     // Primitive statements:
     //////////////////////////
     
-    { STATEMENT, 0x0, "break"    },
-    { STATEMENT, 0x1, "else"     },
-    { STATEMENT, 0x2, "for"      },
-    { STATEMENT, 0x3, "if"       },
-    { STATEMENT, 0x4, "on_error" },
-    { STATEMENT, 0x5, "return"   },
-    { STATEMENT, 0x6, "while"    },
+    { STATEMENT, 0x0, "break"  },
+    { STATEMENT, 0x1, "else"   },
+    { STATEMENT, 0x2, "error"  },
+    { STATEMENT, 0x3, "for"    },
+    { STATEMENT, 0x4, "give"   },
+    { STATEMENT, 0x5, "if"     },
+    { STATEMENT, 0x6, "return" },
+    { STATEMENT, 0x7, "while"  },
 
     ////////////////
     // Math calls:
@@ -84,9 +85,9 @@ static struct
      * category's end variable for a category's start, but
      * I think this makes things a bit nicer.
      */
-    { 0x00, 0x06 }, // Statements
-    { 0x07, 0x1a }, // Math calls
-    { 0x1b, 0x2a }, // Primitives
+    { 0x00, 0x07 }, // Statements
+    { 0x08, 0x1b }, // Math calls
+    { 0x1c, 0x2b }, // Primitives
   };
 
 inline char *
@@ -155,7 +156,7 @@ compile_to_bytecode (char **expression)
       if (expression[i][newlines] == '"')
 	{
           // Skip all strings.
-	  i++;
+	  i += 2;
 	  continue;
 	}
       
@@ -185,16 +186,7 @@ compile_to_bytecode (char **expression)
           if (end >= start)
 	    {
 	      //  Set the instruction. 
-
-	      /* If newlines is not zero, that means that at one
-	       * point we allocated memory for the token instead
-	       * of using read-only memory. In this case, we use
-	       * realloc as to be more conservative with memory
-	       * usage.
-	       */
-              expression[i] = (newlines)
-                ? better_realloc (expression[i], sizeof (byte) * (3 + newlines))
-                : better_malloc (sizeof (byte) * 3);
+              expression[i] = better_malloc (sizeof (byte) * 3);
 
 	      /* This is where we actually set the instruction.
 	       * Since we used realloc, the newlines are retained
@@ -245,11 +237,9 @@ compile_constants (char **expression)
 	continue;
       if (expression[i][newlines] == '"')
 	{
-          expression[i] = (newlines)
-            ? better_realloc (expression[i], sizeof (byte) * (newlines + 2))
-            : better_malloc (sizeof (byte) * 2);
-          expression[i][newlines] = BYTECODE;
-          expression[i][newlines + 1] = IGNORE;
+          expression[i] = better_malloc (sizeof (byte) * 2);
+          expression[i][0] = BYTECODE;
+          expression[i][0 + 1] = IGNORE;
           
           if (is_string = !is_string)
             i++;
@@ -303,26 +293,23 @@ compile_constants (char **expression)
 	   * compile_to_bytecode. For an explanation for the realloc,
 	   * read the comment there.
 	   */
-          expression[i] = (newlines)
-            ? better_realloc (expression[i], sizeof (byte) * (2 + BYTES_IN_POINTER + newlines))
-            : better_malloc (sizeof (byte) * (2 + BYTES_IN_POINTER));
+          expression[i] = FACT_malloc (sizeof (byte) * (2 + BYTES_IN_POINTER));
           
 	  hold_pointer = (unsigned long) values[j];
 
 	  // Set the instruction's category. 
-	  expression[i][newlines] = BYTECODE;
-	  expression[i][newlines + 1] = CONSTANT;
+	  expression[i][0] = BYTECODE;
+	  expression[i][1] = CONSTANT;
 
 	  /* This is a little bit complicated. I hope I already explained
 	   * it. If not, I'll do it later.
 	   */
-	  newlines++;
-	  for (j = 1; j <= BYTES_IN_POINTER; j++)
+	  for (j = 0; j < BYTES_IN_POINTER; j++)
 	    {
 #if (BYTE_ORDER == LITTLE_ENDIAN)
-	      expression[i][j + newlines] = (char) (hold_pointer >> (BYTES_IN_POINTER - j) * 8);
-#else // We assume that there is only little and big endian here.
-	      expression[i][j + newlines] = (char) (hold_pointer << (BYTES_IN_POINTER - j) * 8);
+	      expression[i][j + 2] = (char) (hold_pointer >> (BYTES_IN_POINTER - (j + 1)) * 8);
+#else
+	      expression[i][j + 2] = (char) (hold_pointer << (BYTES_IN_POINTER - (j + 1)) * 8);
 #endif
 	    }
 	}

@@ -41,11 +41,12 @@ enum instruction_set
   {
     BRK = 0x0, // Break.
     ELS = 0x1, // Else.
-    FRL = 0x2, // For loop.
-    IFS = 0x3, // If statement.
-    ONE = 0x4, // On_error.
-    RTN = 0x5, // Return.
-    WHL = 0x6, // While loop.
+    ENN = 0x2, // Error.
+    FRL = 0x3, // For loop.
+    GIV = 0x4, // Give
+    IFS = 0x5, // If statement.
+    RTN = 0x6, // Return.
+    WHL = 0x7, // While loop.
   };
 
 #define byte char

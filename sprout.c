@@ -54,6 +54,7 @@ thread_wrapper (void *arg)
   pthread_exit (NULL);
 }
 
+
 FACT_t
 sprout (func_t * scope, word_list expression)
 {
@@ -92,7 +93,7 @@ sprout (func_t * scope, word_list expression)
   else
     {
       // Allocate memory for a new thread.
-      temp = better_malloc (sizeof (FACT_thread_t));
+      temp = FACT_malloc (sizeof (FACT_thread_t));
       pthread_mutex_init (&temp->queue_lock, NULL);
       temp->ip = 0;
       temp->nid = curr->nid + 1;
@@ -132,14 +133,14 @@ FACT_DEFINE_BIF (get_thread_status, "def tid")
 
   tid = mpc_get_ui ((get_var (scope, "tid"))->data); // Convert the var_t to a ulong.
   if (tid < 0) // If the tid is invalid, throw an error.
-    errorman_throw_catchable (scope, "invalid thread id");
+    FACT_throw (scope, "invalid thread id");
 
   curr = root_thread;
   for (i = 0; i < tid; i++)
     {
       curr = curr->next;
       if (curr == NULL)
-        errorman_throw_catchable (scope, "invalid thread id");
+        FACT_throw (scope, "invalid thread id");
     }
   
   return FACT_get_ui (i);
@@ -180,11 +181,11 @@ FACT_DEFINE_BIF (pop, NOARGS)
   curr = FACT_get_curr_thread ();
   return_value.type = VAR_TYPE;
 
-  if (curr->root == NULL)
-    errorman_throw_catchable (scope, "current thread's queue is empty");
-
   // Wait for our turn.
   while (pthread_mutex_trylock (&curr->queue_lock) == EBUSY);
+
+  if (curr->root == NULL)
+    FACT_throw (scope, "current thread's queue is empty");
 
   // Set the return value.
   return_value.v_point = curr->root->value;
@@ -220,7 +221,7 @@ FACT_DEFINE_BIF (send, "def tid, def msg")
 
   // If the tid is obviously invalid, throw an error.
   if (tid < 0)
-    errorman_throw_catchable (scope, "invalid thread id");
+    FACT_throw (scope, "invalid thread id");
 
   for (dest = root_thread; dest != NULL; dest = dest->next)
     {
@@ -229,12 +230,12 @@ FACT_DEFINE_BIF (send, "def tid, def msg")
     }
 
   if (dest == NULL)
-    errorman_throw_catchable (scope, "invalid thread id");
+    FACT_throw (scope, "invalid thread id");
   else if (dest->exited)
-    errorman_throw_catchable (scope, "thread has exited");
+    FACT_throw (scope, "thread has exited");
 
   // Wait for control.
-  while (pthread_mutex_trylock (&dest->queue_lock));
+  while (pthread_mutex_trylock (&dest->queue_lock) == EBUSY);
 
   if (dest->root == NULL)
     {

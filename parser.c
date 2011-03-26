@@ -18,13 +18,13 @@ add_newlines (char *word, int newlines)
   int word_len;
 
   char *new_str;
-  
+
   if (word[0] == BYTECODE)
     {
       if (word[1] == CONSTANT)
-	word_len = (sizeof (var_t *) / sizeof (char)) + 2;
+        word_len = (sizeof (var_t *) / sizeof (char)) + 2;
       else
-	word_len = 3;
+        word_len = 3;
     }
   else
     word_len = strlen (word);
@@ -39,77 +39,6 @@ add_newlines (char *word, int newlines)
   new_str[i] = '\0';
 
   return new_str;
-}
-
-char *
-lookup_word (int code, int newlines)
-{
-  /**
-   * lookup_word - given a word code and a number of newlines,
-   * look up the code in our trusty table and combine it with
-   * the number of newlines.
-   * IMPORTANT NOTE: code is NOT a word_code type, and does not
-   * have values for END, UNKNOWN, etc. If you wish to use this
-   * function by passing a word_code variable, you must first
-   * subtract it by COMB_ARRAY.
-   */
-  
-  static char *lookup_table [] =
-    {
-      "~"       ,
-      "+"       ,
-      "-"       ,
-      "*"       ,
-      "/"       ,
-      "%"       ,
-      "--"      ,
-      "+="      ,
-      "-="      ,
-      "*="      ,
-      "/="      ,
-      "%="      ,
-      "@"       ,
-      "="       ,
-      "def"     ,
-      "defunc"  ,
-      "$"       ,
-      "&"       ,
-      ","       ,
-      ":"       ,
-      "{"       ,
-      "}"       ,
-      "["       ,
-      "!["      ,
-      "]"       ,
-      "("       ,
-      ")"       ,
-      "\""      ,
-      "&&"      ,
-      "||"      ,
-      "`"       , 
-      "|"       ,
-      "^"       , 
-      "=="      ,
-      "!="      , 
-      "<"       ,
-      ">"       ,
-      "<="      ,
-      ">="      ,
-      "->"      ,
-      "sizeof"  ,
-      "if"      ,
-      "on_error",
-      "while"   ,
-      "for"     ,
-      "then"    ,
-      "else"    , 
-      ";"       ,
-      "return"  ,
-      "break"   ,
-      "sprout"  ,
-    };
-
-  return add_newlines (lookup_table[code], newlines);
 }
 
 static bool
@@ -131,17 +60,17 @@ is_in_quotes (int character)
    * and prev_slash is true, we do not set is_quote to false, as
    * it denotes \".
    */
-  
+
   switch (character)
     {
     case '"':
       if (!prev_slash)
-	is_quote = !is_quote;
+        is_quote = !is_quote;
       return !is_quote;
-      
+
     case '\0':
       return false;
-      
+
     case '\\':
       prev_slash = !prev_slash;
       break;
@@ -150,12 +79,12 @@ is_in_quotes (int character)
       prev_slash = false;
       break;
     }
-  
+
   return is_quote;
 }
 
 static bool
-isopt (int op1, int op2)
+is_opt (int op1, int op2)
 {
   /**
    * isopt - returns true when passed characters of the
@@ -175,17 +104,16 @@ isopt (int op1, int op2)
    * Or returns false otherwise.
    */
   if (((op1 == '='
-	|| op1 == '+'
-	|| op1 == '-'
-	|| op1 == '*'
-	|| op1 == '/'
-	|| op1 == '%'
-	|| op1 == '<'
-	|| op1 == '>'
-	|| op1 == '!') && op2 == '=')  
+        || op1 == '+'
+        || op1 == '-'
+        || op1 == '*'
+        || op1 == '/'
+        || op1 == '%'
+        || op1 == '<'
+        || op1 == '>'
+        || op1 == '!') && op2 == '=')
       || (op1 == '&' && op2 == '&')
-      || (op1 == '|' && op2 == '|')
-      || (op1 == '-' && op2 == '>'))
+      || (op1 == '|' && op2 == '|') || (op1 == '-' && op2 == '>'))
     return true;
   return false;
 }
@@ -193,10 +121,10 @@ isopt (int op1, int op2)
 char **
 get_words (char *start)
 {
-  int  i, j;
+  int i, j;
   bool is_string;
 
-  char  *end;
+  char *end;
   char **result;
 
   /**
@@ -229,1053 +157,612 @@ get_words (char *start)
    *              token. That way, the ending " does not create a new
    *              string token.
    */
-  
-  for (i = 0, end = start, is_string = false, result = NULL; *end != '\0'; i++)
+
+  for (i = 0, end = start, is_string = false, result = NULL;
+       *end != '\0'; i++)
     {
       result = better_realloc (result, (i + 1) * sizeof (char *));
 
-      while (isspace ((int) *end) && !is_in_quotes ((int) *end) && *end != '\n' && *end != '\0')
-	start = ++end;
+      while (isspace ((int) *end) && !is_in_quotes ((int) *end)
+             && *end != '\n' && *end != '\0')
+        start = ++end;
 
       if (*end == '\n')
-	{
-	  while (*end == '\n')
-	    end++;
-	}
+        {
+          while (*end == '\n')
+            end++;
+        }
       else if (is_string)
-	{
-	  is_string = false;
-	  end++;
-	}
+        {
+          is_string = false;
+          end++;
+        }
       else if (is_in_quotes ((int) *end))
-	{
-	  do
-	    end++;
-	  while (is_in_quotes ((int) *end));
-	  end--;
-	  is_string = true;
-	}
-      else if (isopt ((int) *end, (int) *(end + 1)))
-	end += 2;
+        {
+          do
+            end++;
+          while (is_in_quotes ((int) *end));
+          end--;
+          is_string = true;
+        }
+      else if (is_opt ((int) *end, (int) *(end + 1)))
+        end += 2;
       else if (ispunct ((int) *end) && *end != '.')
-	end++;
+        end++;
       else
-	{
-	  while (isalnum (*end) || *end == '_' || *end == '.')
-	    end++;
-	}
-      
+        {
+          while (isalnum (*end) || *end == '_'
+                 || *end == '.')
+            end++;
+        }
+
       if ((end - start) > 0)
-	{
-	  result[i] = (char *) better_malloc ((end - start + 1) * sizeof(char));
+        {
+          result[i] = better_malloc ((end - start + 1) * sizeof (char));
 
           for (j = 0; start != end; start++, j++)
             result[i][j] = *start;
 
           result[i][j] = '\0';
-	  start        = end;
-	}
+          start = end;
+        }
     }
-      
+
   result[i - 1] = NULL;
   return (i > 0) ? result : NULL;
+}
+
+/////////////////////
+// Stack functions:
+/////////////////////
+
+static void *
+pop_s (void **stack, int *stack_size)
+{
+  void *ret;
+
+  if (*stack_size == 0)
+    return NULL;
+  else
+    {
+      (*stack_size)--;
+      ret = stack[*stack_size];
+      stack[*stack_size] = NULL;
+    }
+  return ret;
+}
+
+static inline void
+push_s (void **stack, int *stack_size, void *val)
+{
+  stack[*stack_size] = val;
+  (*stack_size)++;
 }
 
 ///////////////////////
 // Parsing functions: 
 ///////////////////////
 
-word_code
-get_block_code (char *block)
+int
+op_get_prec (char *op)
 {
-  /* get_block_code - takes in a string, and returns the word_code
-   * type of that string. For example, the string "+" would return PLUS.
-   */
-  
-  if (block == NULL || *block == '\0')
-    return END;
-  else if (*block == '\n')
-    return NEWLINE;
-  else if (!strcmp (block, "~"))
-    return COMB_ARR;
-  else if (!strcmp (block, "+"))
-    return PLUS;
-  else if (!strcmp (block, "-"))
-    return MINUS;
-  else if (!strcmp (block, "*"))
-    return MULTIPLY;
-  else if (!strcmp (block, "/"))
-    return DIVIDE;
-  else if (!strcmp (block, "%"))
-    return MOD;
-  else if (!strcmp (block, "+="))
-    return ADD_ASSIGN;
-  else if (!strcmp (block, "-="))
-    return SUB_ASSIGN;
-  else if (!strcmp (block, "*="))
-    return MULT_ASSIGN;
-  else if (!strcmp (block, "/="))
-    return DIV_ASSIGN;
-  else if (!strcmp (block, "%="))
-    return MOD_ASSIGN;
-  else if (!strcmp (block, "@"))
-    return AT;
-  else if (!strcmp (block, "="))
-    return SET;
-  else if (!strcmp (block, "def"))
-    return DEF;
-  else if (!strcmp (block, "defunc"))
-    return DEFUNC;
-  else if (!strcmp (block, "$"))
-    return FUNC_RET;
-  else if (!strcmp (block, "&"))
-    return FUNC_OBJ;
-  else if (!strcmp (block, ":"))
-    return IN_SCOPE;
-  else if (!strcmp (block, ","))
-    return COMMA;
-  else if (!strcmp (block, "{"))
-    return OP_CURLY;
-  else if (!strcmp (block, "}"))
-    return CL_CURLY;
-  else if (!strcmp (block, "["))
-    return OP_BRACKET;
-  else if (!strcmp (block, "!["))
-    return NOP_BRACKET;
-  else if (!strcmp (block, "]"))
-    return CL_BRACKET;
-  else if (!strcmp (block, "("))
-    return OP_PAREN;
-  else if (!strcmp (block, ")"))
-    return CL_PAREN;
-  else if (!strcmp (block, "\""))
-    return QUOTE;
-  else if (!strcmp (block, /*"and"*/ "&&"))
-    return AND;
-  else if (!strcmp (block, /*"or"*/ "||"))
-    return OR;
-  else if (!strcmp (block, "`"))
-    return BIT_AND;
-  else if (!strcmp (block, "|"))
-    return BIT_IOR;
-  else if (!strcmp (block, "^"))
-    return BIT_XOR;
-  else if (!strcmp (block, /*"eq"*/ "=="))
-    return EQ;
-  else if (!strcmp (block, /*"nq"*/ "!="))
-    return NEQ;
-  else if (!strcmp (block, "<"))
-    return LESS;
-  else if (!strcmp (block, ">"))
-    return MORE;
-  else if (!strcmp (block, "<="))
-    return LESS_EQ;
-  else if (!strcmp (block, ">="))
-    return MORE_EQ;
-  else if (!strcmp (block, "->"))
-    return VARIADIC;
-  else if (!strcmp (block, "if"))
-    return IF;
-  else if (!strcmp (block, "on_error"))
-    return ON_ERROR;
-  else if (!strcmp (block, "while"))
-    return WHILE;
-  else if (!strcmp (block, "for"))
-    return FOR;
-  else if (!strcmp (block, "then"))
-    return THEN;
-  else if (!strcmp (block, "else"))
-    return ELSE;
-  else if (!strcmp (block, ";"))
-    return SEMI;
-  else if (!strcmp (block, "return"))
-    return RETURN_STAT;
-  else if (!strcmp (block, "break"))
-    return BREAK_SIG;
-  else if (!strcmp (block, "sprout"))
-    return SPROUT;
-  else
-    return UNKNOWN;
-}
-  
-static inline linked_word *
-alloc_word (linked_word *set_prev)
-{
-  /* alloc_word - allocated the necessary space for a single
-   * linked_word structure and initialize the default values.
-   * I'm pretty sure that better_malloc returns everything
-   * pre-initialized to zero, but whatever.
-   */
-  
-  linked_word *temp;
-
-  temp            = better_malloc (sizeof (linked_word));
-  temp->newlines  = 0;
-  temp->code      = UNKNOWN;
-  temp->physical  = NULL;
-  temp->hidden    = NULL;
-  temp->hidden_up = NULL;
-  temp->next      = NULL;
-  temp->previous  = set_prev;
-
-  return temp;
-}
-
-linked_word *
-create_list (char **words)
-{
-  word_code w_code;
-  linked_word *base;
-
-  for (base = alloc_word (NULL); (w_code = get_block_code (words[0])) != END; words++)
+  int i, j;
+  // We assume 20 is the max number of tokens per level.
+  static char *prec_table[][20] =
     {
-      if (w_code == NEWLINE)
-	{
-	  base->newlines = strlen (words[0]);
-	  continue;
-	}
-      if (w_code == UNKNOWN)
-	base->physical = words[0];
+      // Operators: 0 -> 14
+      { "def", "defunc", NULL },
+      { "$", "&", NULL },
+      { ":", NULL },
+      { "@", NULL },
+      { "--", NULL },
+      { "~", "*", "/", "%", NULL },
+      { "+", "-", NULL },
+      { "<", "<=", ">", ">=", NULL },
+      { "==", "!=", NULL },
+      { "`", NULL },
+      { "^", NULL },
+      { "|", NULL },
+      { "&&", NULL },
+      { "||", NULL },
+      { "=", "+=", "-=", "*=", "/=", "%=", NULL },
+      // Special keywords (highest precedence): 15 -> 18
+      { "if", "error", "while", "for", "then", "else", NULL },
+      { "return", "give", "break", "sprout", ";", ",", ")!", NULL },
+      { "![", "[", "(", "{", NULL },
+      { "]", ")", "}", NULL },
+    };
 
-      base->code = w_code;
-      base->next = alloc_word (base);
-      base       = base->next;
-    }
-  base->code = END;
-
-  // I don't think this is needed, may remove it. 
-  while (base->previous != NULL)
-    base = base->previous;
-
-  return base;
-}
-
-linked_word *
-set_list (linked_word *start, word_code stopper) 
-{
-  word_code w_code;
-  linked_word *temp_link;
-  
-  while ((w_code = start->code) != stopper && w_code != END)
+  for (i = 0; i < (sizeof (prec_table) / sizeof (prec_table[0])); i++)
     {
-      if (stopper == QUOTE)
-	{
-	  start = start->next;
-	  continue;
-	}
-
-      switch (w_code)
+      for (j = 0; prec_table[i][j] != NULL; j++)
         {
-        case OP_CURLY:
-	  start->hidden         = start->next;
-	  start->next->previous = NULL;
-      	  temp_link             = set_list (start->next, CL_CURLY);
+          if (!strcmp (prec_table[i][j], op))
+            return i;
+        }
+    }
+  return -1;
+}
 
-	  if (temp_link->code == END)
-	    return temp_link;
-	  
-	  start->next               = temp_link->next;
-	  temp_link->next->previous = start;
-	  temp_link->next           = NULL;
-	  start->hidden->hidden_up  = start;
+static inline bool
+op_is_lr (int prec)
+{
+  return (prec == 14)
+    ? false
+    : true;
+}
+
+////////////////////
+// Error checking:
+////////////////////
+
+bool
+check (char **input, const char *f_name, int start_line)
+{
+  int i, j;
+  int prec;
+  int state;
+  int s_size;
+  int p_count;
+
+  char *custom_fmt;
+  char *next_token;
+  char *prev_token;
+  bool *com_stack;
+  bool *def_stack;
+  bool *semi_stack;
+
+#define STACK_REALLOC() com_stack = FACT_realloc (com_stack, sizeof (bool) * (s_size + 1)); \
+  def_stack = FACT_realloc (def_stack, sizeof (bool) * (s_size + 1));   \
+  semi_stack = FACT_realloc (semi_stack, sizeof (bool) * (s_size + 1))
+
+  // Possible values of state
+#define START 0
+#define OP    1
+#define VAR   2
+
+  com_stack = FACT_malloc (sizeof (bool));
+  def_stack = FACT_malloc (sizeof (bool));
+  semi_stack = FACT_malloc (sizeof (bool));
+
+  prev_token = NULL;
+  state = START;
+
+  s_size = 1;
+  semi_stack[s_size - 1] = true;
+  com_stack[s_size - 1] = def_stack[s_size - 1] = false;
+
+  for (i = 0; input[i] != NULL; i++)
+    {
+      if (input[i][0] == '\n')
+        continue;
+      
+      next_token = input[i + 1];
+      if (def_stack[s_size - 1])
+        {
+          if (op_get_prec (input[i]) == -1)
+            {
+              s_size--;
+              STACK_REALLOC ();
+              com_stack[s_size] = def_stack[s_size] = semi_stack[s_size] = false;
+              state = VAR;
+              continue;
+            }
+          if (strcmp (input[i], "["))
+            goto error;
+        }
+          
+      if (!strcmp (input[i], "("))
+        {
+          if (prev_token != NULL && (!strcmp (prev_token, "$")
+                                     || !strcmp (prev_token, "&")))
+            {
+              state = OP;
+              STACK_REALLOC ();
+              com_stack[s_size] = true;
+              def_stack[s_size] = semi_stack[s_size] = false;
+              s_size++;
+            }
+          else
+            {
+              if (state == VAR && (prev_token != NULL && strcmp (prev_token, "}")))
+                goto error;
+              state = OP;
+              STACK_REALLOC ();
+              com_stack[s_size] = def_stack[s_size] = semi_stack[s_size] = false;
+              s_size++;
+            }
+        }
+      else if (input[i][0] == ')')
+        {
+          s_size--;
+          STACK_REALLOC ();
+          com_stack[s_size] = def_stack[s_size] = semi_stack[s_size] = false;
+          if ((input[i][1] != ')' && state == OP)
+              || (state != VAR && (prev_token == NULL || strcmp (prev_token, "("))))
+            goto error;
+          if (input[i][1] != '\0')
+            {
+              state = START;
+              if (input[i][1] == ')')
+                input[i] = ")";
+            }
+        }
+      else if (!strcmp (input[i], "["))
+        {
+          if (state != VAR)
+            {
+              STACK_REALLOC ();
+              com_stack[s_size] = true;
+              def_stack[s_size] = semi_stack[s_size] = false;
+              s_size++;
+              input[i] = "![";
+            }
+          else
+            {
+              STACK_REALLOC ();
+              com_stack[s_size] = def_stack[s_size] = semi_stack[s_size] = false;
+              s_size++;
+            }
+          state = OP;
+        }
+      else if (!strcmp (input[i], "]"))
+        {
+          if (state != VAR)
+            goto error;
+          s_size--;
+          STACK_REALLOC ();
+          com_stack[s_size] = def_stack[s_size] = semi_stack[s_size] = false;
+        }
+      else if (!strcmp (input[i], "{"))
+        {
+          if (state == VAR && (prev_token != NULL && strcmp (prev_token, "}")))
+            goto error;
+          state = START;
+          STACK_REALLOC ();
+          semi_stack[s_size] = true;
+          com_stack[s_size] = def_stack[s_size] = false;
+          s_size++;
+        }
+      else if (!strcmp (input[i], "}"))
+        {
+          if (strcmp (prev_token, ";") && strcmp (prev_token, "}"))
+            {
+              custom_fmt = "expected ';' before %s";
+              goto custom_error;
+            }
+          s_size--;
+          STACK_REALLOC ();
+          com_stack[s_size] = def_stack[s_size] = semi_stack[s_size] = false;
+          state = VAR;
+        }
+      else if (!strcmp (input[i], "$") || !strcmp (input[i], "&"))
+        {
+          if (state == VAR && (prev_token != NULL && strcmp (prev_token, "}")))
+            goto error;
+          if (strcmp (next_token, "("))
+            {
+              custom_fmt = "expected '(' after %s";
+              goto custom_error;
+            }
+        }
+      else if (!strcmp (input[i], ","))
+        {
+          if (!com_stack[s_size - 1] || state != VAR)
+            goto error;
+          state = OP;
+        }
+      else if (!strcmp (input[i], ";"))
+        {
+          if (!semi_stack[s_size - 1] || state != VAR)
+            goto error;
+          state = START;
+        }
+      else if (!strcmp (input[i], "@"))
+        {
+          if (state != VAR || next_token == NULL || strcmp (next_token, "("))
+            goto error;
+          for (j = i + 2, p_count = 1; p_count > 0; j++)
+            {
+              if (!strcmp (input[j], "("))
+                p_count++;
+              else if (!strcmp (input[j], ")"))
+                p_count--;
+            }
+          if (input[j] == NULL || strcmp (input[j], "{"))
+            {
+              custom_fmt = "expected '{' after %s";
+              goto custom_error;
+            }
+          input[j - 1] = "))";
+          i++;
+          state = OP;
+          STACK_REALLOC ();
+          com_stack[s_size] = true;
+          def_stack[s_size] = semi_stack[s_size] = false;
+          s_size++;
+        }
+      else if (!strcmp (input[i], "if") || !strcmp (input[i], "while")
+               || !strcmp (input[i], "error"))
+        {
+          // Todo: check for correct/incorrect break placements in while.
+          if (state != START && (prev_token != NULL && strcmp (prev_token, "}")))
+            goto error;
+          if (next_token == NULL || strcmp (next_token, "("))
+            {
+              custom_fmt = "expected '(' after %s";
+              goto custom_error;
+            }
+          for (j = i + 2, p_count = 1; p_count > 0; j++)
+            {
+              if (!strcmp (input[j], "("))
+                p_count++;
+              else if (!strcmp (input[j], ")"))
+                p_count--;
+            }
+          input[j - 1] = ")!";
+          state = OP;
+        }
+      else if (!strcmp (input[i], "for"))
+        {
+          if (state != START && (prev_token != NULL && strcmp (prev_token, "}")))
+            goto error;
+          STACK_REALLOC ();
+          com_stack[s_size] = true;
+          def_stack[s_size] = semi_stack[s_size] = false;
+          s_size++;
+          state = OP;
+        }
+      else if (!strcmp (input[i], "then"))
+        {
+          if (state != VAR)
+            goto error;
+          s_size--;
+          STACK_REALLOC ();
+          com_stack[s_size] = def_stack[s_size] = semi_stack[s_size] = false;
+          state = START;
+        }
+      else if (!strcmp (input[i], "def") || !strcmp (input[i], "defunc"))
+        {
+          if (state == VAR && (prev_token != NULL && strcmp (prev_token, "}")))
+            goto error;
+          state = VAR;
+          STACK_REALLOC ();
+          def_stack[s_size] = true;
+          com_stack[s_size] = semi_stack[s_size] = false;
+          s_size++;
+        }
+      else if (!strcmp (input[i], "sprout"))
+        {
+          if (state == VAR && (prev_token != NULL && strcmp (prev_token, "}")))
+            goto error;
+          state = START;
+        }
+      else if (!strcmp (input[i], "return") || !strcmp (input[i], "give"))
+        {
+          if (state != START && (prev_token != NULL && strcmp (prev_token, "}")))
+            goto error;
+          if (next_token == NULL || !strcmp (next_token, ";"))
+            {
+              custom_fmt = "%s cannot be alone in an expression.";
+              goto custom_error;
+            }
+          state = OP;
+        }
+      else if (!strcmp (input[i], "else"))
+        {
+          if (state != START && (prev_token != NULL && strcmp (prev_token, "}")))
+            goto error;
+          state = START;
+        }
+      else if ((prec = op_get_prec (input[i])) <= 14 && prec >= 1 && prec != 3)
+        {
+          // If we've hit an operator
+          if (state != VAR)
+            {
+              if (prev_token != NULL && strcmp (prev_token, "--"))
+                input[i] = "--";
+              else
+                goto error;
+            }
+          state = OP;
+        }
+      else if (!strcmp (input[i], "\""))
+        {
+          // Skip quotes.
+          if (state == VAR && (prev_token != NULL && strcmp (prev_token, "}")))
+            goto error;
+          state = VAR;
+          i += 2;
+        }
+      else
+        {
+          // We've hit a variable.
+          if (state == VAR && (prev_token != NULL && strcmp (prev_token, "}")))
+            goto error;
+          state = VAR;
+        }          
+      prev_token = input[i];
+    }
+
+  FACT_free (com_stack);
+  FACT_free (def_stack);
+  FACT_free (semi_stack);
+  return false;
+
+ error:
+  custom_fmt = "unexpected %s";
+ custom_error:
+  fprintf (stderr, "E> Parsing error in (%s) on line %d: ",  f_name, start_line);
+  fprintf (stderr, custom_fmt, input[i]);
+  fprintf (stderr, "\n");
+  FACT_free (com_stack);
+  FACT_free (def_stack);
+  FACT_free (semi_stack);
+  return true;
+}
+
+char **
+parse (char **input)
+{
+  /**
+   * parse - convert the input string array from infix to polish
+   * notation. We assume that input has already been checked for
+   * errors. Algorithm used is shunting yard.
+   */
+  int i, j;
+  int p_count;
+  int stack_size;
+  char *goal;
+  char *hold;
+  char **op_stack;
+  char **output;
+
+  stack_size = 0;
+
+  // TEMP: remove newlines
+  for (i = 0; input[i] != NULL; i++)
+    {
+      if (input[i][0] == '\n')
+        {
+          for (j = i; input[j] != NULL; j++)
+            input[j] = input[j + 1];
+        }
+    }
+  
+  // Get the length and allocate space for output.
+  for (i = 0; input[i] != NULL; i++);
+  output = FACT_malloc (sizeof (char *) * (i + 1));
+  op_stack = FACT_malloc (sizeof (char *) * (i + 1));
+
+  // TEMP: ignore results
+  check (input, "test", 0);
+
+  for (i--, j = 0; i >= 0; i--)
+    {
+      if (!strcmp (input[i], "\""))
+        {
+          output[j++] = "\"";
+          output[j++] = input[--i];
+          output[j++] = "\"";
+          i--;
+          continue;
+        }
+      switch (op_get_prec (input[i]))
+        {
+        case -1:
+          // If the current token is a number or variable.
+          output[j++] = input[i];
           break;
 
-        case OP_BRACKET:
-	  start->hidden         = start->next;
-	  start->next->previous = NULL;
-	  temp_link             = set_list (start->next, CL_BRACKET);
-
-	  if (temp_link->code == END)
-	    return temp_link;
-	  
-	  start->next               = temp_link->next;
-	  temp_link->next->previous = start;
-	  temp_link->next           = NULL;
-	  start->hidden->hidden_up  = start;
+        case 15:
+        case 16:
+          /* Keep popping till the stack is empty, or until there's a ')',
+           * '}', or ']'.
+           */
+          while (stack_size > 0)
+            {
+              hold = op_stack[stack_size - 1];
+              if (!strcmp (hold, ")")
+                  || !strcmp (hold, "}")
+                  || !strcmp (hold, "]"))
+                break;
+              output[j++] = (char *) pop_s ((void **) op_stack, &stack_size);
+            }
+          if (!strcmp (input[i], ")!"))
+            {
+              input[i] = output[j++] = ")";
+              push_s ((void **) op_stack, &stack_size, ")");
+            }
+          else
+            output[j++] = input[i];
           break;
 
-        case OP_PAREN:
-	  start->hidden         = start->next;
-	  start->next->previous = NULL;
-	  temp_link             = set_list (start->next, CL_PAREN);
+        case 17:
+          if (!strcmp ("![", input[i]) || !strcmp ("[", input[i]))
+            goal = "]";
+          else if (!strcmp ("(", input[i]))
+            goal = ")";
+          else // "{"
+            goal = "}";
 
-	  if (temp_link->code == END)
-	    return temp_link;
-	  
-	  start->next               = temp_link->next;
-	  temp_link->next->previous = start;
-	  temp_link->next           = NULL;
-
-	  start->hidden->hidden_up = start;
+          while (strcmp ((hold = (char *) pop_s ((void **) op_stack, &stack_size)), goal)) 
+            output[j++] = hold;
+          output[j++] = input[i];
           break;
 
-        case DEF:
-        case DEFUNC:
-	  start->hidden         = start->next;
-	  start->next->previous = NULL;
-	  temp_link             = set_list (start->next, UNKNOWN);
-
-	  if (temp_link->code == END)
-	    return start;
-	  
-	  start->next               = temp_link->next;
-	  temp_link->next->previous = start;
-	  temp_link->next           = NULL;
-	  start->hidden->hidden_up  = start;
-          break;
-
-        case QUOTE:
-	  start->hidden         = start->next;
-	  start->next->previous = NULL;
-	  temp_link             = set_list (start->next, QUOTE);
-
-	  if (temp_link->code == END)
-	    return temp_link;
-	  
-	  start->next               = temp_link->next;
-	  temp_link->next->previous = start;
-	  temp_link->next           = NULL;
-	  start->hidden->hidden_up  = start;
+        case 18:
+          if (!strcmp (input[i], "}"))
+            {
+              while (stack_size > 0)
+                {
+                  hold = op_stack[stack_size - 1];
+                  if (!strcmp (hold, ")")
+                      || !strcmp (hold, "}")
+                      || !strcmp (hold, "]"))
+                    break;
+                  output[j++] = (char *) pop_s ((void **) op_stack, &stack_size);
+                }
+            }
+          push_s ((void **) op_stack, &stack_size, input[i]);
+          output[j++] = input[i];
           break;
 
         default:
+          // Every other value.
+          while (stack_size > 0)
+            {
+              // Coded without any prior though (banged out).
+              int op1_prec;
+              int op2_prec;
+
+              hold = op_stack[stack_size - 1];
+              op1_prec = op_get_prec (input[i]);
+              op2_prec = op_get_prec (hold);
+              
+              if (op_is_lr (op1_prec))
+                {
+                  if (op1_prec >= op2_prec)
+                    output[j++] = (char *) pop_s ((void **) op_stack, &stack_size);
+                  else
+                    break;
+                }
+              else if (op1_prec > op2_prec)
+                output[j++] = (char *) pop_s ((void **) op_stack, &stack_size);
+              else
+                break;
+            }
+          push_s ((void **) op_stack, &stack_size, input[i]);
           break;
         }
-      
-      start = start->next;
     }
+
+  // Pop the rest of the stack.
+  while (stack_size > 0)
+    output[j++] = (char *) pop_s ((void **) op_stack, &stack_size);
+  output[j] = NULL;
   
-  return start;
-}
+  // Reverse the output array.
+  for (i = 0, j--; j > i; i++, j--)
+    {
+      hold = output[j];
+      output[j] = output[i];
+      output[i] = hold;
+    }
 
-void
-swap (linked_word *swapping)
-{
-  int  hold_prev_lines;
-  bool hold_end;
+  // For debug purposes
+  printf ("Parsing results: \n");
+  for (i = 0; output[i] != NULL; i++)
+    printf (" %s", output[i]); 
+  printf ("\nDone.\n");
   
-  linked_word *temp_next;
-  linked_word *temp_prev;
+  // Free up the stack and return.
+  FACT_free (op_stack);
 
-  if (swapping->previous == NULL)
-    return;
-
-  if (swapping->previous->hidden_up != NULL)
-    {
-      swapping->hidden_up           = swapping->previous->hidden_up;
-      swapping->hidden_up->hidden   = swapping;
-      swapping->previous->hidden_up = NULL;
-    }
-
-  hold_prev_lines              = swapping->previous->newlines;
-  swapping->previous->newlines = swapping->newlines;
-  swapping->newlines           = hold_prev_lines;
+  // This will be optomized in the near future.
+  compile_to_bytecode (output);
   
-  temp_next                    = swapping->next;
-  temp_prev                    = swapping->previous->previous;
-  swapping->previous->next     = temp_next;
-  swapping->previous->previous = swapping;
-  swapping->next               = swapping->previous;
-  swapping->previous           = temp_prev;
-
-  if (temp_next != NULL)
-    temp_next->previous = swapping->next;
-
-  if (temp_prev != NULL)
-    temp_prev->next = swapping;
-}
-
-// These are just some macros to make my life not a living hell.
-#define isnotMDM(op) (op != MULTIPLY && op != DIVIDE && op != MOD)
-#define isnotAS(op)  (op != COMB_ARR && op != PLUS && op != MINUS)
-#define isnotSE(op)  (op != SET)
-#define isnotOPC(op) (op != OP_CURLY)
-#define isnotASN(op) (op < ADD_ASSIGN || op > MOD_ASSIGN)
-#define isnotCMP(op) (op < AND || op > MORE_EQ)
-#define isFACTop(op) ((op >= PLUS && op <= MOD_ASSIGN) || op == SET || (op >= AND && op <= MORE_EQ) || op == IN_SCOPE)
-
-static void
-set_neg_array (linked_word *scan)
-{
-  while (scan != NULL && scan->next != NULL)
-    {
-      if ((scan->previous == NULL
-	   || (scan->previous->code >= COMB_ARR
-	       && scan->previous->code <= MOD_ASSIGN)
-	   || scan->previous->code == SET
-	   || scan->previous->code == COMMA
-	   || scan->previous->code == IN_SCOPE
-	   || (scan->previous->code >= AND
-	       && scan->previous->code <= MORE_EQ)
-	   || scan->previous->code == THEN
-	   || scan->previous->code == RETURN_STAT))
-	{
-	  if (scan->code == MINUS)
-	    scan->code = NEG;
-	  else if (scan->code == OP_BRACKET
-		   && (scan->hidden_up == NULL
-		       || (scan->hidden_up->code == DEF || scan->hidden_up->code == DEFUNC)))
-	    scan->code = NOP_BRACKET;
-	}
-      scan = scan->next;
-    }
-}
-	
-	  
-static void
-precedence_level1 (linked_word *scan)
-{
-  linked_word *find_end;
-  linked_word *move_along;
-
-  while (scan != NULL && scan->next != NULL)
-    {
-      switch (scan->code)
-	{
-	case OP_CURLY:
-	case NOP_BRACKET:
-	case OP_BRACKET:
-	case OP_PAREN:
-	  rev_shunting_yard (scan->hidden);
-	  break;
-
-	case IF:
-	case WHILE:
-	  if (scan->next->code == OP_PAREN)
-	    {
-	      rev_shunting_yard (scan->next->hidden);
-	      scan->next->next->previous = NULL;
-	      rev_shunting_yard (scan->next->next);
-	      
-	      for (find_end = scan->next->next;
-		   find_end->previous != NULL;
-		   find_end = find_end->previous);
-	      
-	      scan->next->next   = find_end;
-	      find_end->previous = scan->next;
-	    }
-	  else
-	    {
-	      scan->next->previous = NULL;
-	      rev_shunting_yard (scan->next->next);
-	      
-	      for (find_end = scan->next;
-		   find_end->previous != NULL;
-		   find_end = find_end->previous);
-	      
-	      scan->next         = find_end;
-	      find_end->previous = scan;
-	    }
-	  return;
-
-	 
-	case FUNC_RET:
-	case FUNC_OBJ:
-	  scan->hidden                 = scan->next;
-	  scan->next                   = scan->next->next;
-	  scan->hidden->hidden_up      = scan;
-	  scan->hidden->previous       = NULL;
-	  scan->hidden->next->previous = scan;
-	  scan->hidden->next           = NULL;
-	  rev_shunting_yard ((scan->hidden->hidden != NULL) ? scan->hidden->hidden : NULL);
-	  break;
-
-	case FOR:
-	case THEN:
-	case ELSE:
-	case COMMA:
-	case RETURN_STAT:
-	case CL_CURLY:
-	case SEMI:
-	  scan->next->previous = NULL;
-	  rev_shunting_yard (scan->next);
-
-	  for (find_end = scan->next;
-	       find_end->previous != NULL;
-	       find_end = find_end->previous);
-
-	  scan->next         = find_end;
-	  find_end->previous = scan;
-	  return;
-	  
-	default:
-	  break;
-	}
-      scan = scan->next;
-    }
-}
-
-void
-precedence_level2 (linked_word *scan)
-{
-  linked_word *hold;
-
-  while (scan != NULL && scan->next != NULL)
-    {
-      switch (scan->code)
-	{
-	case IF:
-	case WHILE:
-	case FOR:
-	case THEN:
-	case ELSE:
-	case COMMA:
-	case RETURN_STAT:
-	case CL_CURLY:
-	case SEMI:
-	  return;
-
-	case IN_SCOPE:	 
-	  hold = scan->next;
-	  while (scan->previous != NULL
-		 && scan->previous->code != IN_SCOPE
-		 && scan->previous->code != BIT_AND
-		 && scan->previous->code != BIT_IOR
-		 && scan->previous->code != BIT_XOR
-		 && isnotMDM (scan->previous->code)
-		 && isnotAS  (scan->previous->code)
-		 && isnotSE  (scan->previous->code)
-		 && isnotOPC (scan->previous->code)
-		 && isnotASN (scan->previous->code)
-		 && isnotCMP (scan->previous->code))
-	    swap (scan);
-	  
-	  scan = hold;
-	  break;
-
-	default:
-	  break;
-	}
-
-      scan = scan->next;
-    }
-}
-
-void
-precedence_level3 (linked_word *scan)
-{
-  while (scan != NULL && scan->next != NULL)
-    {
-      switch (scan->code)
-	{
-	case IF:
-	case WHILE:
-	case FOR:
-	case THEN:
-	case ELSE:
-	case IN_SCOPE:
-	case COMMA:
-	case RETURN_STAT:
-	case CL_CURLY:
-	case SEMI:
-	  return;
-	  
-	case MULTIPLY:
-	case DIVIDE:
-	case MOD:
-	  swap (scan);
-	  break;
-
-	default:
-	  break;
-	}
-
-      scan = scan->next;
-    }
-}
-
-void
-precedence_level4 (linked_word *scan)
-{
-  linked_word *hold;
-
-  while (scan != NULL && scan->next != NULL)
-    {
-      switch (scan->code)
-	{
-	case IF:
-	case WHILE:
-	case FOR:
-	case THEN:
-	case ELSE:
-	case IN_SCOPE:
-	case COMMA:
-	case RETURN_STAT:
-	case CL_CURLY:
-	case SEMI:
-	  return;
-
-	case COMB_ARR:
-	case PLUS:
-	  hold = scan->next;
-	  while (scan->previous != NULL
-		 && scan->previous->code != BIT_AND
-		 && scan->previous->code != BIT_IOR
-		 && scan->previous->code != BIT_XOR
-		 && isnotAS (scan->previous->code)
-		 && isnotSE (scan->previous->code)
-		 && isnotOPC (scan->previous->code)
-		 && isnotASN (scan->previous->code)
-		 && isnotCMP (scan->previous->code))
-	    swap (scan);
-
-	  if (hold->code == MINUS)
-	    hold = hold->next;
-	  
-	  scan = hold;
-	  break;
-	  
-	case MINUS:
-	  hold = scan->next;
-	  while (scan->previous != NULL
-		 && scan->previous->code != BIT_AND
-		 && scan->previous->code != BIT_IOR
-		 && scan->previous->code != BIT_XOR
-		 && scan->previous->code != MINUS
-		 && isnotSE (scan->previous->code)
-		 && isnotOPC (scan->previous->code)
-		 && isnotASN (scan->previous->code)
-		 && isnotCMP (scan->previous->code))
-	    swap (scan);
-
-	  if (hold->code == MINUS)
-	    hold = hold->next;
-	  
-	  scan = hold;
-	  break;
-
-	default:
-	  break;
-	}
-
-      scan = scan->next;
-    }
-}
-
-void
-precedence_level5 (linked_word *scan)
-{
-  linked_word *hold;
-
-  while (scan != NULL && scan->next != NULL)
-    {
-      switch (scan->code)
-	{
-	case IF:
-	case WHILE:
-	case FOR:
-	case THEN:
-	case ELSE:
-	case IN_SCOPE:
-	case COMMA:
-	case RETURN_STAT:
-	case CL_CURLY:
-	case SEMI:
-	  return;
-	  
-	case LESS:
-	case MORE:
-	case LESS_EQ:
-	case MORE_EQ:
-	  hold = scan->next;
-	  while (scan->previous != NULL
-		 && scan->previous->code != BIT_AND
-		 && scan->previous->code != BIT_IOR
-		 && scan->previous->code != BIT_XOR
-		 && isnotSE (scan->previous->code)
-		 && isnotOPC (scan->previous->code)
-		 && isnotASN (scan->previous->code)
-		 && isnotCMP (scan->previous->code))
-	    swap (scan);
-
-	  scan = hold;
-	  break;
-
-	default:
-	  break;
-	}
-
-      scan = scan->next;
-    }
-}
-
-void
-precedence_level6 (linked_word *scan)
-{
-  linked_word *hold;
-
-  while (scan != NULL && scan->next != NULL)
-    {
-      switch (scan->code)
-	{
-	case IF:
-	case WHILE:
-	case FOR:
-	case THEN:
-	case ELSE:
-	case IN_SCOPE:
-	case COMMA:
-	case RETURN_STAT:
-	case CL_CURLY:
-	case SEMI:
-	  return;
-	  
-	case EQ:
-	case NEQ:
-	  hold = scan->next;
-	  while (scan->previous != NULL
-		 && scan->previous->code != BIT_AND
-		 && scan->previous->code != BIT_IOR
-		 && scan->previous->code != BIT_XOR
-		 && isnotSE (scan->previous->code)
-		 && isnotOPC (scan->previous->code)
-		 && isnotASN (scan->previous->code)
-		 && (scan->previous->code < AND
-		     || scan->previous->code > NEQ))
-	    swap (scan);
-	  
-	  scan = hold;
-	  break;
-
-	default:
-	  break;
-	}
-
-      scan = scan->next;
-    }
-}
-
-void
-precedence_level7 (linked_word *scan)
-{
-  linked_word *hold;
-
-  while (scan != NULL && scan->next != NULL)
-    {
-      switch (scan->code)
-	{
-	case IF:
-	case WHILE:
-	case FOR:
-	case THEN:
-	case ELSE:
-	case IN_SCOPE:
-	case COMMA:
-	case RETURN_STAT:
-	case CL_CURLY:
-	case SEMI:
-	  return;
-	  
-	case BIT_AND:
-	  hold = scan->next;
-	  while (scan->previous != NULL
-		 && scan->previous->code != BIT_AND
-		 && scan->previous->code != BIT_IOR
-		 && scan->previous->code != BIT_XOR
-		 && isnotSE (scan->previous->code)
-		 && isnotOPC (scan->previous->code)
-		 && isnotASN (scan->previous->code)
-		 && (scan->previous->code < AND
-		     || scan->previous->code > NEQ))
-	    swap (scan);
-	  
-	  scan = hold;
-	  break;
-
-	default:
-	  break;
-	}
-
-      scan = scan->next;
-    }
-}
-
-void
-precedence_level8 (linked_word *scan)
-{
-  linked_word *hold;
-
-  while (scan != NULL && scan->next != NULL)
-    {
-      switch (scan->code)
-	{
-	case IF:
-	case WHILE:
-	case FOR:
-	case THEN:
-	case ELSE:
-	case IN_SCOPE:
-	case COMMA:
-	case RETURN_STAT:
-	case CL_CURLY:
-	case SEMI:
-	  return;
-	  
-	case BIT_XOR:
-	  hold = scan->next;
-	  while (scan->previous != NULL
-		 && scan->previous->code != BIT_XOR
-		 && scan->previous->code != BIT_IOR
-		 && isnotSE (scan->previous->code)
-		 && isnotOPC (scan->previous->code)
-		 && isnotASN (scan->previous->code)
-		 && (scan->previous->code < AND
-		     || scan->previous->code > NEQ))
-	    swap (scan);
-	  
-	  scan = hold;
-	  break;
-
-	default:
-	  break;
-	}
-
-      scan = scan->next;
-    }
-}
-
-void
-precedence_level9 (linked_word *scan)
-{
-  linked_word *hold;
-
-  while (scan != NULL && scan->next != NULL)
-    {
-      switch (scan->code)
-	{
-	case IF:
-	case WHILE:
-	case FOR:
-	case THEN:
-	case ELSE:
-	case IN_SCOPE:
-	case COMMA:
-	case RETURN_STAT:
-	case CL_CURLY:
-	case SEMI:
-	  return;
-	  
-	case BIT_IOR:
-	  hold = scan->next;
-	  while (scan->previous != NULL
-		 && scan->previous->code != BIT_IOR
-		 && isnotSE (scan->previous->code)
-		 && isnotOPC (scan->previous->code)
-		 && isnotASN (scan->previous->code)
-		 && (scan->previous->code < AND
-		     || scan->previous->code > NEQ))
-	    swap (scan);
-	  
-	  scan = hold;
-	  break;
-
-	default:
-	  break;
-	}
-
-      scan = scan->next;
-    }
-}
-
-void
-precedence_level10 (linked_word *scan)
-{
-  linked_word *hold;
-
-  while (scan != NULL && scan->next != NULL)
-    {
-      switch (scan->code)
-	{
-	case IF:
-	case WHILE:
-	case FOR:
-	case THEN:
-	case ELSE:
-	case IN_SCOPE:
-	case COMMA:
-	case RETURN_STAT:
-	case CL_CURLY:
-	case SEMI:
-	  return;
-	  
-	case AND:
-	  hold = scan->next;
-	  while (scan->previous != NULL
-		 && isnotSE (scan->previous->code) 
-		 && isnotOPC (scan->previous->code)
-		 && isnotASN (scan->previous->code)
-		 && scan->previous->code != AND
-		 && scan->previous->code != OR)
-	    swap (scan);
-	  
-	  scan = hold;
-	  break;
-
-	default:
-	  break;
-	}
-
-      scan = scan->next;
-    }
-}
-
-void
-precedence_level11 (linked_word *scan)
-{
-  linked_word *hold;
-
-  while (scan != NULL && scan->next != NULL)
-    {
-      switch (scan->code)
-	{
-	case IF:
-	case WHILE:
-	case FOR:
-	case THEN:
-	case ELSE:
-	case IN_SCOPE:
-	case COMMA:
-	case RETURN_STAT:
-	case CL_CURLY:
-	case SEMI:
-	  return;
-	  
-	case OR:
-	  hold = scan->next;
-	  while (scan->previous != NULL
-		 && isnotSE (scan->previous->code)
-		 && isnotOPC (scan->previous->code)
-		 && isnotASN (scan->previous->code)
-		 && scan->previous->code != OR)
-	    swap (scan);
-	  
-	  scan = hold;
-	  break;
-
-	default:
-	  break;
-	}
-
-      scan = scan->next;
-    }
-}
-
-void
-precedence_level12 (linked_word *scan)
-{
-  linked_word *hold;
-
-  while (scan != NULL && scan->next != NULL)
-    {
-      switch (scan->code)
-	{
-	case IF:
-	case WHILE:
-	case FOR:
-	case THEN:
-	case ELSE:
-	case IN_SCOPE:
-	case COMMA:
-	case RETURN_STAT:
-	case CL_CURLY:
-	case SEMI:
-	  return;
-	  
-	case SET:
-	case ADD_ASSIGN:
-	case SUB_ASSIGN:
-	case MULT_ASSIGN:
-	case DIV_ASSIGN:
-	case MOD_ASSIGN:
-	  hold = scan->next;
-	  while (scan->previous != NULL
-		 && isnotSE (scan->previous->code)
-		 && isnotOPC (scan->previous->code)
-		 && isnotASN (scan->previous->code))
-	    swap (scan);
-	  
-	  scan = hold;
-	  break;
-
-	default:
-	  break;
-	}
-
-      scan = scan->next;
-    }
-}
-
-void
-rev_shunting_yard (linked_word *scan)
-{
-  set_neg_array (scan);
-  precedence_level1  (scan);
-  precedence_level2  (scan);
-  precedence_level3  (scan);
-  precedence_level4  (scan);
-  precedence_level5  (scan);
-  precedence_level6  (scan);
-  precedence_level7  (scan);
-  precedence_level8  (scan);
-  precedence_level9  (scan);
-  precedence_level10 (scan);
-  precedence_level11 (scan);
-  precedence_level12 (scan);
-}
-  
-void
-set_end (linked_word *start,
-	 linked_word *end)
-{
-  while (start->next != NULL)
-    start = start->next;
-  
-  start->next = end;
-  
-  if (end != NULL)
-    end->previous = start;
-}
-
-void
-set_link (linked_word *scan)
-{
-  linked_word *temp_next;
-  
-  while (scan != NULL)
-    {
-      if (scan->hidden != NULL)
-	{
-	  temp_next              = scan->next;
-	  scan->next             = scan->hidden;
-	  scan->hidden->previous = scan;
-	  set_end (scan->next, temp_next);
-	}
-       
-      scan = scan->next;
-    }
-}  
-
-char **
-convert_link (linked_word *list)
-{
-  unsigned int i;
-  char **result;
-
-        
-  result = better_malloc (sizeof (char *));
-
-  for (i = 0; list != NULL; list = list->next, i++)
-    {
-      if (list->code == UNKNOWN)
-	result[i] = add_newlines (list->physical, list->newlines);
-      else if (list->code > UNKNOWN)
-	result[i] = lookup_word (list->code - COMB_ARR, list->newlines);
-
-      result = better_realloc (result, sizeof (char **) * (i + 2)); // + 2 for the NULL terminator.
-    }
-
-  result[i] = NULL;
-  return result;
+  return output;
 }
 
 static inline int
@@ -1283,11 +770,15 @@ get_end_block (int block)
 {
   switch (block)
     {
-    case '(': return ')';
+    case '(':
+      return ')';
     case '[':
-    case '!': return ']';
-    case '{': return '}';
-    default: return 0; // NOTREACHED
+    case '!':
+      return ']';
+    case '{':
+      return '}';
+    default:
+      return 0;	// NOTREACHED
     }
 }
 
@@ -1296,22 +787,22 @@ get_exp_length (char **words, int end_block)
 {
   int i;
   int lines;
- 
+
   for (i = 0; words[i] != NULL; i++)
     {
       for (lines = 0; words[i][lines] == '\n'; lines++);
 
-      if (words[i][lines] == '\0'
-	  || words[i][lines] == end_block)
-	break;
-      
+      if (words[i][lines] == '\0' || words[i][lines] == end_block)
+        break;
+
       if (words[i][lines] == '('
-	  || words[i][lines] == '['
-	  || (words[i][lines] == '!'
-	      && words[i][lines + 1] == '[')
-	  || words[i][lines] == '{')
-	i += get_exp_length (words + i + 1,
-                             get_end_block (words[i][lines]));
+          || words[i][lines] == '['
+          || (words[i][lines] == '!'
+              && words[i][lines + 1] == '[')
+          || words[i][lines] == '{')
+        i += get_exp_length (words + i + 1,
+                             get_end_block (words[i]
+                                            [lines]));
     }
 
   return (words[i] == NULL) ? i : i + 1;
@@ -1327,19 +818,18 @@ get_exp_length_first (char **words, int end_block)
     {
       for (lines = 0; words[i][lines] == '\n'; lines++);
 
-      if (words[i][lines] == '\0'
-	  || words[i][lines] == end_block)
-	break;
-      
+      if (words[i][lines] == '\0' || words[i][lines] == end_block)
+        break;
+
       if (words[i][lines] == '('
-	  || words[i][lines] == '['
-	  || (words[i][lines] == '!'
-	      && words[i][lines + 1] == '['))
-	  
-	i += get_exp_length (words + i + 1,
-                             get_end_block (words[i][lines]));
+          || words[i][lines] == '['
+          || (words[i][lines] == '!'
+              && words[i][lines + 1] == '['))
+        i += get_exp_length (words + i + 1,
+                             get_end_block (words[i]
+                                            [lines]));
       else if (words[i][lines] == '{')
-	return i + get_exp_length (words + i + 1, '}') + 1;
+        return i + get_exp_length (words + i + 1, '}') + 1;
     }
 
   return (words[i] == NULL) ? i : i + 1;

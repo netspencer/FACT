@@ -15,7 +15,7 @@ print_logo ( void )
 char *
 get_input (FILE *fp, unsigned int *line_number, const char *start_prompt, const char *cont_prompt)
 {
-  int    index;
+  int    i;
   int    p_count;
   int    b_count;
   int    c_count;
@@ -33,27 +33,27 @@ get_input (FILE *fp, unsigned int *line_number, const char *start_prompt, const 
   c_count   = 0;
   in_quotes = false;
   
-  for (index = 1; (curr_char = fgetc (fp)) != EOF; index++)
+  for (i = 1; (curr_char = fgetc (fp)) != EOF; i++)
     {
       if (curr_char == '#' && !in_quotes)
 	{
 	  while ((curr_char = fgetc (fp)) != EOF && curr_char != '\n')
 	    ;
 	  ungetc (curr_char, fp);
-	  index--;
+	  i--;
 	  continue;
 	}
       if (curr_char == '\n')
 	{
 	  ++*line_number;
-	  if (index > 1 && fp == stdin
+	  if (i > 1 && fp == stdin
 	      && ((in_quotes || p_count || b_count || c_count)
-		  || (input[index - 2] != ';' || input[index - 2] != '}')))
+		  || (input[i - 2] != ';' || input[i - 2] != '}')))
 	    printf ("%s ", cont_prompt);
 	}
 
-      input            = better_realloc (input, (index + 1) * sizeof (char));
-      input[index - 1] = curr_char;
+      input = better_realloc (input, (i + 1) * sizeof (char));
+      input[i - 1] = curr_char;
 
       if (!in_quotes)
 	{
@@ -74,8 +74,8 @@ get_input (FILE *fp, unsigned int *line_number, const char *start_prompt, const 
 	{
 	  if (in_quotes)
 	    {
-	      if (input[index - 2] != '\\'
-		  || (index > 3 && input[index - 3] == '\\'))
+	      if (input[i - 2] != '\\'
+		  || (i > 3 && input[i - 3] == '\\'))
 		in_quotes = false;
 	    }
 	  else
@@ -83,7 +83,7 @@ get_input (FILE *fp, unsigned int *line_number, const char *start_prompt, const 
 	}
       if (curr_char == ';' || curr_char == '}')
 	{
-	  input[index] = '\0';
+	  input[i] = '\0';
 
 	  if (p_count == 0 && b_count == 0 && c_count == 0 && !in_quotes)
 	    break; 
@@ -92,104 +92,17 @@ get_input (FILE *fp, unsigned int *line_number, const char *start_prompt, const 
   
   if (input != NULL)
     {
-      input            = better_realloc (input, sizeof (char) * (index + 2));
-      input[index]     = curr_char;
-      input[index + 1] = '\0';
-      for (index--; index >= 0; index--)
+      input        = better_realloc (input, sizeof (char) * (i + 2));
+      input[i]     = curr_char;
+      input[i + 1] = '\0';
+      for (i--; i >= 0; i--)
 	{
-	  if (!isspace ((int) input[index]) && input[index] != '\0')
+	  if (!isspace ((int) input[i]) && input[i] != '\0')
 	    return input;
 	}  
     }
   return NULL;
 }
-
-/*
-void
-shell (func_t *main_scope)
-{
-  int             print_parsed;
-  char         *  input;
-  char         ** scroll_through;
-  char         ** parsed_input;
-  FACT_t          returned;
-  linked_word  *  formatted;
-  unsigned int    end_line;
-  unsigned int    hold_line;
-
-  printf ("The FACT programming language interactive shell\n(c) 2010 Matthew Plant, under the GPL version 3.\n");
-  print_logo ();
-  
-  end_line              = 1;
-  main_scope->file_name = "stdin";
-
-  for (;;)
-    {
-      main_scope->line = end_line;
-      input            = get_input (stdin, &end_line);
-      
-      if (input == NULL)
-        {
-          printf ("\nExiting...\n");
-	  return;
-        }
-
-      if (check_for_incompletions ("stdin", input))
-	continue;
-      
-      parsed_input = get_words (input);
-      
-      if (parsed_input == NULL)
-	{
-	  printf ("\nExiting...\n");
-	  return;
-	}
-      
-      formatted = create_list (parsed_input);
-      for (formatted = set_list (formatted, END); formatted->previous != NULL; formatted = formatted->previous);
-      
-      hold_line = end_line;
-      if (check_for_errors (formatted, 0, &hold_line, false))
-	{
-	  print_parsing_error ("stdin", hold_line);
-	  continue;
-	}
-
-      for (rev_shunting_yard (formatted); formatted->previous != NULL; formatted = formatted->previous);
-      
-      set_link (formatted);      
-      parsed_input = convert_link (formatted);
-
-      puts ("\ninput:");
-      scroll_through = parsed_input;
-      while (scroll_through[0] != NULL)
-	{
-	  puts (scroll_through[0]);
-	  scroll_through++;
-	}
-      fflush (stdout);
-
-      compile_to_bytecode (parsed_input);
-      reset_ip ();
-      
-      returned = eval_expression (main_scope, make_word_list (parsed_input, true));
-      if (returned.type == ERROR_TYPE)
-        {
-	  errorman_dump (returned.error, returned.error.scope->line, "stdin", returned.error.scope->file_name);
-          continue;
-        }
-      if (returned.type == VAR_TYPE)
-	printf ("Returned value: %s\n", mpc_get_str (returned.v_point->data));
-      else
-	printf ("Returned object [%s]\n", returned.f_point->name);
-      if (returned.return_signal == true)
-        {
-          printf ("Exiting...\n");
-	  return;
-        }
-    }
-}
-*/
 
 void
 shell (func_t * scope)
@@ -204,16 +117,14 @@ shell (func_t * scope)
    *
    * @scope  - the scope to use when evaluating expressions.
    */
-  FACT_t       returned;     // The value returned by the interpreter.
-  unsigned int end_line;     // ...
-  unsigned int hold_line;    // ...
+  FACT_t       returned;  // The value returned by the interpreter.
+  unsigned int end_line;  // ...
+  unsigned int hold_line; // ...
   
-  char         *input;
-  char         *hold_input;  // Used in the main loop to check for else clauses.
-  char        **tokenized;   // input, tokenized.
-  char        **hold_tokens; // Also used to check for else clauses.
-  byte        **bytecode;    // Final string to be passed to the interpreter.
-  linked_word  *parsed;
+  char *input;
+  char *hold_input;   // Used in the main loop to check for else clauses.
+  char **tokenized;   // input, tokenized.
+  char **hold_tokens; // Also used to check for else clauses.
 
   /* Before we start, print out the copyright info, logo and
    * a guide to some helpful functions.
@@ -225,9 +136,9 @@ shell (func_t * scope)
   /* Set the initial line number to 1 and the file name to
    * "stdin". Also, set hold_input to NULL.
    */
-  end_line         = 1       ;
-  hold_input       = NULL    ;
-  scope->file_name = "stdin" ;
+  end_line         = 1;
+  hold_input       = NULL;
+  scope->file_name = "stdin";
 
   for (;;) // Heh, that looks like a spider.
     {
@@ -252,13 +163,8 @@ shell (func_t * scope)
       if (input == NULL)
 	break;
 
-      // Check for incompletions, and if there are any skip to the next expression.
-      if (check_for_incompletions ("stdin", input))
-	continue;
-
       // Tokenize the input.
       tokenized = get_words (input);
-
       if (tokenized == NULL)
 	break;
       
@@ -269,20 +175,18 @@ shell (func_t * scope)
        */ 
       if ((tokenized[0][0] == '\n'
 	   && (!tokcmp (tokenized[1], "if")
-	       || !tokcmp (tokenized[1], "on_error")))
+	       || !tokcmp (tokenized[1], "error")))
 	  || (!tokcmp (tokenized[0], "if")
-	      || !tokcmp (tokenized[0], "on_error")))
+	      || !tokcmp (tokenized[0], "error")))
 	{
-	  for ( ; ; )
+	  for (;;)
 	    {
 	      /* Go through all the steps we went through from the start of the loop
                * down to here.
 	       */
-	      hold_input = get_input (stdin, &end_line, "E>", "C>");
+	      hold_input = get_input (stdin, &end_line, "?>", "C>");
 
-	      // Check for all errors in a really condensed form.
-	      if (hold_input == NULL || check_for_incompletions ("stdin", hold_input)
-		  || (hold_tokens = get_words (hold_input)) == NULL)
+	      if (hold_input == NULL|| (hold_tokens = get_words (hold_input)) == NULL)
 		break;
 	      // Check to see if the statement starts with else.
 	      if ((hold_tokens[0][0] == '\n'
@@ -296,60 +200,19 @@ shell (func_t * scope)
 	      else
 		break;
 	    }
-	  puts ("");
+          printf ("\n");
 	  tokenized = get_words (input);
 	}
 
-      /* Convert the tokens to a list, and then set the list. Setting the list does
-       * some stuff that makes converting to polish notation a lot easier. For more
-       * information, read the function docs.
-       */
-      parsed = create_list (tokenized);
-      parsed = set_list (parsed, END);
+      // Parse the string.
+      tokenized = parse (tokenized);
+      // TODO: skip if NULL, as it indicates errors.
 
-      /* Because the value set_list is not guaranteed
-       * to point to the beginning of the list, we
-       * have to move the pointer backwards until it
-       * is.
-       */
-      while (parsed->previous != NULL)
-	parsed = parsed->previous;
-
-      /* Check for any parsing errors. */
-      hold_line = end_line;
-      if (check_for_errors (parsed, 0, &hold_line, false))
-	{
-	  /* If there were any errors, print them. */
-	  print_parsing_error ("stdin", hold_line);
-	  continue;
-	}
-
-      /* Call rev_shunting_yard, the function that actually
-       * converts our list from infix notation into polish
-       * notation format. It's not actually a shunting
-       * yard algorithm, but I call it that.
-       */
-      rev_shunting_yard (parsed);
-
-      /* Like set_list, rev_shunting yard does not
-       * guarantee that 'previous' is not NULL, so we have
-       * to move parsed back.
-       */
-      while (parsed->previous != NULL)
-	parsed = parsed->previous;
-
-      /* Convert the list back to a char ** format. */
-      set_link (parsed);
-      bytecode = convert_link (parsed);
-
-      /* Compile the string array to bytecode and then
-       * reset the instruction pointer to zero.
-       */
-      compile_to_bytecode (bytecode);
+      // Reset the instruction pointer.
       reset_ip ();
 
-      /* Evaluate the expression. */
-      returned = eval_expression (scope, make_word_list (bytecode, false));
+      // Evaluate the expression.
+      returned = eval_expression (scope, make_word_list (tokenized, false));
 
       /* If there were errors, print them out. Otherwise,
        * print the value of the variable or the name of

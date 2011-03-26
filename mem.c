@@ -382,9 +382,9 @@ get_array_size (func_t *scope, word_list expression)
   /* get_array_size - get whatever is returned in between
    * [ and ]. Simple, easy, not all that big of a deal.
    */
-  int           index        ;  
-  FACT_t        return_value ;
-  unsigned long ip           ;
+  int           len;
+  FACT_t        return_value;
+  unsigned long ip;
 
   /* We hold on to the ip but reset it. This is to make eval
    * think that expression is at zero.
@@ -392,17 +392,19 @@ get_array_size (func_t *scope, word_list expression)
   ip = get_ip ();
   reset_ip ();
 
-  index = get_exp_length (expression.syntax, ']');
+  len = get_exp_length (expression.syntax, ']');
 
-  if (index == 0)
+  /*
+  if (!len == 0)
     return errorman_throw_reg (scope, "cannot evaluate empty brackets");
 
   expression.syntax[index - 1] = NULL;
-  return_value                 = eval (scope, expression);
-  expression.syntax[index - 1] = "]";
+  */
+  return_value = eval (scope, expression);
+  //expression.syntax[index - 1] = "]";
 
   /* Set the ip back to whatever it was. */
-  set_ip (ip + index);
+  set_ip (ip + len);
 
   return return_value;
 }
@@ -729,12 +731,12 @@ get_array_func (func_t *root, func_t *scope, word_list expression)
 FACT_t
 combine_arrays (FACT_t op1, FACT_t op2)
 {
-  var_t  * result;
-  var_t  * temp1;
-  var_t  * temp2;
-  var_t  * hold;
-  mpz_t    index;
-  FACT_t   return_value;
+  var_t  *result;
+  var_t  *temp1;
+  var_t  *temp2;
+  var_t  *hold;
+  mpz_t   index;
+  FACT_t  return_value;
 
   if (op1.type == ERROR_TYPE)
     return op1;
@@ -745,15 +747,15 @@ combine_arrays (FACT_t op1, FACT_t op2)
       || op2.type == FUNCTION_TYPE)
     return errorman_throw_reg (NULL, "both arguments to ~ must be variables");
 
-  hold               = op1.v_point->next;
-  op1.v_point->next  = NULL;
-  temp1              = clone_var (op1.v_point, "temp1");
-  op1.v_point->next  = hold;
-  hold               = op2.v_point->next;
-  op2.v_point->next  = NULL;
-  temp2              = clone_var (op2.v_point, "temp2");
-  op2.v_point->next  = hold;
-  result             = alloc_var ();
+  hold              = op1.v_point->next;
+  op1.v_point->next = NULL;
+  temp1             = clone_var (op1.v_point, "temp1");
+  op1.v_point->next = hold;
+  hold              = op2.v_point->next;
+  op2.v_point->next = NULL;
+  temp2             = clone_var (op2.v_point, "temp2");
+  op2.v_point->next = hold;
+  result            = alloc_var ();
 
   mpz_add (result->array_size, temp1->array_size, temp2->array_size);
 

@@ -22,8 +22,9 @@ make_word_list (char **words, bool len_check)
 
   expression.syntax = FACT_malloc (sizeof (char *) * (i + 1));
   expression.lines  = FACT_malloc (sizeof (int   ) * (i + 1));
-
-  for (expression.syntax[i--] = NULL; i >= 0; i--)
+  expression.syntax[i] = NULL;
+  
+  for (i--; i >= 0; i--)
     {
       for (j = 0; words[i][j] == '\n'; j++); // Do nothing.
 
@@ -141,8 +142,8 @@ get_else (char ** expression)
 	   */
 	  switch (expression[i][2])
 	    {
-	    case IFS: // IFS stands for IF Statement.
-	    case ONE: // ONE stands for ON Error.
+	    case IFS: 
+	    case ENN: 
 	      ifs++; 
 	      break;
 	      
@@ -213,6 +214,8 @@ eval_expression (func_t *scope, word_list expression)
   bool   is_instruction;
   FACT_t return_value;
 
+  var_t *temp;
+
   /* Init routines -- Set the default return value to var,
    * and set the signals to their default off.
    */
@@ -266,7 +269,7 @@ eval_expression (func_t *scope, word_list expression)
       switch (instruction)
         {
         case IFS:
-        case ONE:
+        case ENN:
           if (instruction == IFS)
             return_value = if_statement (scope, expression, &getif);
           else
@@ -311,10 +314,22 @@ eval_expression (func_t *scope, word_list expression)
           return_value = for_loop (scope, expression);
           break;
 
+        case GIV:
+          set_ip (1);
+          return_value  = eval (scope, expression);
+          return_signal = true;
+          break;
+          
         case RTN:
           set_ip (1);
           return_value  = eval (scope, expression);
           return_signal = true;
+          if (return_value.type == VAR_TYPE)
+            {
+              temp = alloc_var ();
+              mpc_set (&temp->data, return_value.v_point->data);
+              return_value.v_point = temp;
+            }
           break;
 
         case BRK:
@@ -382,7 +397,7 @@ procedure (func_t *scope, word_list expression)
       if (expression.syntax[0][0] == BYTECODE
 	  && expression.syntax[0][1] == STATEMENT
 	  && (expression.syntax[0][2] == IFS
-	      || expression.syntax[0][2] == ONE))
+	      || expression.syntax[0][2] == ENN))
 	{
 	  /* Using get_else will move the expression the exact
 	   * correct amount forward, skipping all else expressions

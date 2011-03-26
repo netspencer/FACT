@@ -29,7 +29,8 @@ if_statement (func_t *scope, word_list expression_list, bool *success)
 
   expression_list.syntax++;
   expression_list.lines++;
-  
+
+  // To be removed:
   if (tokcmp (expression_list.syntax[0], "("))
     return errorman_throw_reg (scope, "expected '(' after if statement");
 
@@ -97,12 +98,14 @@ on_error (func_t *scope, word_list expression_list, bool *success)
   *success = true;
 
   mpz_init_set_ui (temp_scope.array_size, 1);
+  expression_list.syntax++;
+  expression_list.lines++;
   
   if (tokcmp (expression_list.syntax[0], "(")
       && (expression_list.syntax[0][0] != 0x1
 	  || expression_list.syntax[0][1] != 0x3
 	  || expression_list.syntax[0][2] != 0x5))
-    return errorman_throw_reg (scope, "expected '(' after on_error statement");
+    return errorman_throw_reg (scope, "expected '(' after error statement");
 
   conditional = eval (&temp_scope, expression_list);
 

@@ -95,6 +95,12 @@ process_args (int argc, char **argv)
     shell (scope);
 }
 
+void *
+gmp_realloc_wrapper (void *op1, size_t uop, size_t op2)
+{
+  FACT_realloc (op1, op2);
+}
+
 void
 gmp_free_wrapper (void *op1, size_t op2)
 {
@@ -115,11 +121,11 @@ main (int argc, char **argv)
 
   // Set up GMP library
   mp_set_memory_functions (&FACT_malloc,
-			   &FACT_realloc,
+			   &gmp_realloc_wrapper,
 			   &gmp_free_wrapper);
 
   // Start the main thread
-  root_thread = better_malloc (sizeof (FACT_thread_t));
+  root_thread = FACT_malloc (sizeof (FACT_thread_t));
   root_thread->tid = pthread_self ();
   root_thread->exited  = false;
   root_thread->destroy = false;

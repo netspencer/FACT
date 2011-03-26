@@ -134,82 +134,62 @@ statement_length (char **words)
   for (i = 0; arguments_left > 0 && words[i] != NULL; i++, arguments_left--)
     {
       token  = get_bcode_label (words[i]);
-      w_code = (token != NULL) ? get_block_code (token) : get_block_code (words[i]);
+      w_code = op_get_prec ((token != NULL) ? token : words[i]);
       
       switch (w_code)
 	{
-	case CL_PAREN:
-	case CL_BRACKET:
-	case CL_CURLY:
+	case 18:
 	  return i; 
 
-	case OP_BRACKET:
-	case NOP_BRACKET:
-	  i += get_exp_length  (words + i + 1, ']');
-	  token = get_bcode_label (words[i + 1]);
-	  w_code = (token != NULL) ? get_block_code (token) : get_block_code (words[i + 1]);
+        case 17:
+          if (!strcmp (words[i], "[") || !strcmp (words[i], "!["))
+            {
+              i += get_exp_length  (words + i + 1, ']');
+              token = get_bcode_label (words[i + 1]);
+              if (words[i + 1][0] != BYTECODE && !strcmp (words[i + 1], "["))
+                arguments_left++;
+            }
+          else if (!strcmp (words[i], "{"))
+            i += get_exp_length (words + i + 1, '}');
+          else if (!strcmp (words[i], "("))
+            i += get_exp_length (words + i + 1, ')');
+          break;
 
-	  if (w_code == OP_BRACKET)
-	    arguments_left++;
-	  break;
-
-	case OP_CURLY:
-	  i += get_exp_length (words + i + 1, '}');
-	  break;
-
-	case OP_PAREN:
-	  i += get_exp_length (words + i + 1, ')');
-	  break;
-
-	case OR:
-	case EQ:
-	case AND:
-	case MOD:
-	case NEQ:
-	case SET:
-	case MORE:
-	case PLUS:
-	case MINUS:
-	case DIVIDE:
-	case LESS_EQ:
-	case MORE_EQ:
-	case MULTIPLY:
-	case ADD_ASSIGN:
-	case DIV_ASSIGN:
-	case MOD_ASSIGN:
-	case SUB_ASSIGN:
+        case 14:
+        case 13:
+        case 12:
+        case 11:
+        case 10:
+        case 9:
+        case 8:
+        case 7:
+        case 6:
+        case 5:
+        case 4:
+        case 3:
 	  arguments_left += 2;
 	  break;
-
-	case FUNC_RET:
-	case FUNC_OBJ:
-	case IN_SCOPE:
-	case SIZE:
-	  arguments_left++;
+          
+        case 2:
+        case 1:
+          arguments_left++;
 	  break;
 
-	case DEF:
-	case DEFUNC:
+        case 0:
 	  for (;;)
-	    {
-	      token = get_bcode_label (words[i]);
-	      w_code = (token != NULL) ? get_block_code (token) : get_block_code (words[i]);
-	      if (w_code == UNKNOWN || w_code == END)
-		break;
-	      else if (w_code == OP_CURLY)
-		i += get_exp_length (words + i + 1, '}');
-	      else if (w_code == OP_BRACKET || w_code == NOP_BRACKET)
-		i += get_exp_length (words + i + 1, ']');
-	      else if (w_code == OP_PAREN)
-		i += get_exp_length (words + i + 1, ')');
+            {
+              if (words[++i] != NULL && words[i][0] != BYTECODE
+                  && op_get_prec (words[i]) == -1)
+                {
+                  i--;
+                  break;
+                }
 	    }
 	  break;
 
-	case UNKNOWN:
-	  token = get_bcode_label (words[i + 1]);
-	  w_code = (token != NULL) ? get_block_code (token) : get_block_code (words[i + 1]);
-
-	  if (w_code == OP_BRACKET)
+	case -1:
+	  if (words[i + 1] != NULL && words[i + 1][0] != BYTECODE
+              && !strcmp (words[i + 1], "["))
 	    arguments_left++;
 	  break;
 

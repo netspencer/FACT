@@ -27,6 +27,8 @@ run_file (func_t *scope, const char *filename, bool silent)
   scope->name      = (char *) filename;
   scope->file_name = (char *) filename;
 
+  extern char **parse (char **);
+
   if (fp == NULL)
     {
       scope->name = hold_fn;
@@ -39,22 +41,6 @@ run_file (func_t *scope, const char *filename, bool silent)
     {
       scope->line = end_line;
       input       = get_input (fp, &end_line, NULL, NULL);
-
-#ifdef DEBUG_INPUT
-      puts ("\ninput:");
-      scroll_through = input;
-      do
-	{
-	  printf (":\t");
-	  while (scroll_through != NULL && *scroll_through != '\n' && *scroll_through != '\0')
-	    putchar (*scroll_through++);
-	  if (scroll_through != NULL && *scroll_through == '\n')
-	    scroll_through++;
-	  putchar ('\n');
-	}
-      while (scroll_through != NULL &&  *scroll_through != '\0');
-      fflush (stdout);
-#endif
 
       if (input == NULL)
 	{
@@ -70,9 +56,6 @@ run_file (func_t *scope, const char *filename, bool silent)
 	  return returned;
 	}
 
-      if (check_for_incompletions (filename, input))
-	continue;
-
       parsed_input = get_words (input);
 
       if (parsed_input == NULL)
@@ -87,7 +70,9 @@ run_file (func_t *scope, const char *filename, bool silent)
 	  scope->line   = hold_line;
 	  return returned;
 	}
+      parsed_input = parse (parsed_input);
 
+      /*
       formatted = create_list (parsed_input);
       formatted = set_list (formatted, END);
       for (formatted = set_list (formatted, END); formatted->previous != NULL; formatted = formatted->previous);
@@ -104,8 +89,9 @@ run_file (func_t *scope, const char *filename, bool silent)
       set_link (formatted);
       parsed_input = convert_link (formatted);
       compile_to_bytecode (parsed_input);
-      reset_ip ();
+      */
 
+      reset_ip ();
       returned = eval_expression (scope, make_word_list (parsed_input, true));
 
       if (returned.type == ERROR_TYPE)

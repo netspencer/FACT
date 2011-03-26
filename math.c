@@ -398,7 +398,7 @@ negative (func_t *scope, word_list expression)
 FACT_t
 paren (func_t *scope, word_list expression)
 {
-  int    index;
+  int    len;
   FACT_t return_value;
   unsigned long ip;
 
@@ -407,17 +407,19 @@ paren (func_t *scope, word_list expression)
 
   ip = get_ip ();
   reset_ip ();
-  
-  index = get_exp_length (expression.syntax, ')');
 
+  len = get_exp_length (expression.syntax, ')');
+
+  /*
   if (index == 0)
     return errorman_throw_reg (scope, "parenthesis has no body");
    
   expression.syntax[index - 1] = NULL;
+  */
   return_value                 = eval (scope, expression);
-  expression.syntax[index - 1] = ")";
+  // expression.syntax[index - 1] = ")";
 
-  set_ip (ip + index);
+  set_ip (ip + len);
 
   return return_value;
 }

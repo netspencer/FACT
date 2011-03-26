@@ -2,9 +2,9 @@
 
 typedef struct _LIB
 {
-  void        * library   ;
-  char        * file_path ;
-  struct _LIB * next      ;
+  void        *library;
+  char        *file_path;
+  struct _LIB *next;
 } lib_t;
 
 static lib_t * root;
@@ -17,16 +17,17 @@ static lib_t * root;
 
 FACT_DEFINE_BIF (import, "def path")
 {
-  int      index    ;
-  char   * fpath    ;
-  lib_t  * scroller ;
-  var_t  * path     ;
-  struct   elements
+  int i;
+  char   *fpath;
+  lib_t  *scroller;
+  var_t  *path;
+
+  struct elements
   {
-    char *   name;
-    char *   arguments;
-    void *(* function)(func_t *);
-  }      *   MOD_MAP;
+    char *name;
+    char *arguments;
+    void *(*function)(func_t *);
+  } *MOD_MAP;
 
   path  = get_var (scope, "path"); 
   scope = scope->up;
@@ -64,19 +65,19 @@ FACT_DEFINE_BIF (import, "def path")
   if (MOD_MAP == NULL)
     return errorman_throw_reg (scope, "could not find MOD_MAP symbol in module");
 
-  for (index = 0; MOD_MAP[index].name != NULL; index++)
+  for (i = 0; MOD_MAP[i].name != NULL; i++)
     {
-      func_t * ref;
+      func_t *ref;
 
-      if ((ref = add_func (scope, MOD_MAP[index].name)) == NULL)
+      if ((ref = add_func (scope, MOD_MAP[i].name)) == NULL)
 	continue; /* if it couldn't be added, just skip it. */
 
-      if (MOD_MAP[index].arguments == NULL)
+      if (MOD_MAP[i].arguments == NULL)
 	continue;
-      ref->args = get_words (combine_strs (MOD_MAP[index].arguments, " "));
+      ref->args = get_words (combine_strs (MOD_MAP[i].arguments, " "));
 
       ref->locked = true;
-      ref->extrn_func = MOD_MAP[index].function;
+      ref->extrn_func = MOD_MAP[i].function;
     }
   
   return FACT_get_ui (0);

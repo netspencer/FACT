@@ -15,7 +15,7 @@ FACT_DEFINE_BIF (sizeof, "->")
   FACT_t return_value;
 
   if (scope->variadic == NULL || scope->variadic->next != NULL)
-    errorman_throw_catchable (scope, "sizeof expects one argument");
+    FACT_throw (scope, "sizeof expects one argument");
 
   return_value.type    = VAR_TYPE;
   return_value.v_point = alloc_var ();
@@ -41,7 +41,7 @@ FACT_DEFINE_BIF (ref, "->")
   FACT_t return_value;
 
   if (scope->variadic == NULL || scope->variadic->next != NULL)
-    errorman_throw_catchable (scope, "ref expects one argument");
+    FACT_throw (scope, "ref expects one argument");
 
   return_value.type    = VAR_TYPE;
   return_value.v_point = alloc_var ();
@@ -74,15 +74,15 @@ FACT_DEFINE_BIF (deref, "def op")
    * @op: Value that contains the address of the 
    *      variable/function to dereference. 
    */
-  var_t         * op;
-  FACT_t          return_value;
-  unsigned long   address; 
+  var_t         *op;
+  FACT_t return_value;
+  unsigned long address; 
 
   op = get_var (scope, "op");
   
   // Check to make sure that op is not floating point.
   if (op->data.precision > 1)
-    errorman_throw_catchable (scope, "addresses cannot be floating point");
+    FACT_throw (scope, "addresses cannot be floating point");
 
   address = mpz_get_ui (op->data.object);
   return_value.type = (mpz_sgn (op->data.object) < 0)
@@ -113,7 +113,7 @@ FACT_DEFINE_BIF (print, "def str")
    *
    * @str: The string to print.
    */
-  var_t * str;
+  var_t *str;
 
   str = get_var (scope, "str");
   printf ("%s", array_to_string (str)); // Seperation used to remove warnings.
@@ -129,8 +129,8 @@ FACT_DEFINE_BIF (str, "def val")
    *
    * @val: value to convert.
    */
-  char   * str;
-  FACT_t   return_str;
+  char *str;
+  FACT_t return_str;
 
   str = mpc_get_str (get_var (scope, "val")->data);
 
