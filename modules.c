@@ -18,9 +18,9 @@ static lib_t * root;
 FACT_DEFINE_BIF (import, "def path")
 {
   int i;
-  char   *fpath;
-  lib_t  *scroller;
-  var_t  *path;
+  char  *fpath;
+  lib_t *scroller;
+  var_t *path;
 
   struct elements
   {
@@ -35,7 +35,7 @@ FACT_DEFINE_BIF (import, "def path")
 
   if (root == NULL)
     {
-      root     = better_malloc (sizeof (lib_t));
+      root     = FACT_malloc (sizeof (lib_t));
       scroller = root;
     }
   else
@@ -43,7 +43,7 @@ FACT_DEFINE_BIF (import, "def path")
       for (scroller = root; scroller->next != NULL; scroller = scroller->next)
 	{
 	  if (!strcmp (scroller->file_path, fpath))
-	    return errorman_throw_reg (scope, "cannot re-load library");
+	    FACT_ret_error (scope, "cannot re-load library");
 	}
       scroller->next = better_malloc (sizeof (lib_t));
       scroller       = scroller->next;
@@ -55,15 +55,14 @@ FACT_DEFINE_BIF (import, "def path")
 
   if (scroller->library == NULL)
     {
-      printf ("IMPORT ERROR: %s\n", dlerror ());
-      return errorman_throw_reg (scope, combine_strs ("could not import module ",
-						      array_to_string (path)));
+      fprintf (stderr, "IMPORT ERROR: %s\n", dlerror ());
+      FACT_ret_error (scope, combine_strs ("could not import module ", array_to_string (path)));                              
     }
 
   MOD_MAP = dlsym (scroller->library, "MOD_MAP");
 
   if (MOD_MAP == NULL)
-    return errorman_throw_reg (scope, "could not find MOD_MAP symbol in module");
+    FACT_ret_error (scope, "could not find MOD_MAP symbol in module");
 
   for (i = 0; MOD_MAP[i].name != NULL; i++)
     {

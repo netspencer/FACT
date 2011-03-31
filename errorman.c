@@ -1,40 +1,27 @@
 #include "FACT.h"
 
 FACT_t
-errorman_throw_reg (func_t * scope, char * description)
+FACT_throw_error (func_t *scope, const char *desc, syn_tree_t exp)
 {
-  FACT_t return_value;
+  int i;
+  FACT_t ret_val;
 
-  return_value.return_signal     = false;
-  return_value.break_signal      = false;
-  return_value.type              = ERROR_TYPE;
-  return_value.error.scope       = scope;
-  return_value.error.description = description;
-  return_value.error.thrown      = false;
+  ret_val.type = ERROR_TYPE;
+  ret_val.error.line = scope->line;
+  ret_val.error.description = (char *) desc;
+  ret_val.error.scope = scope;
 
-  return return_value;
-}
-
-FACT_t
-errorman_throw_catchable (func_t * scope, char * description)
-{
-  FACT_t return_value;
-
-  return_value.return_signal     = false;
-  return_value.break_signal      = false;
-  return_value.type              = ERROR_TYPE;
-  return_value.error.scope       = scope;
-  return_value.error.description = description;
-  return_value.error.thrown      = true;
-
-  return return_value;
+  if (exp.lines != NULL)
+    {
+      for (i = 0; i < (*exp.syntax - exp.base); i++)
+        ret_val.error.line += exp.lines[i];
+    }
+  
+  return ret_val;
 }
 
 void
-errorman_dump (_ERROR error)
+errorman_dump (error_t error)
 {
-  if (error.thrown)
-    printf ("(error)> Caught error from function [%s]: %s.\n", error.scope->name, error.description);
-  else
-    printf ("(error)> Error in %s on line %d - %s.\n", error.scope->file_name, error.scope->line, error.description);
+  fprintf (stderr, "E> Caught error in %s at line %d: %s.\n", error.scope->name, error.line, error.description);
 }

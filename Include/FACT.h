@@ -35,7 +35,7 @@
 #define FACT_DEFINE_BIF(name, args) FACT_t name##_func (func_t * scope); \
   BIF name##_BIF = {							\
     .arguments = args " ",						\
-    .function = (void * (*) (struct _FUNC *)) &(name ## _func)		\
+    .function = (void * (*) (struct FACT_func *)) &(name ## _func)      \
   };									\
   FACT_t name##_func (func_t * scope)
 
@@ -79,7 +79,6 @@
 #include "malloc_replacements.h"
 #include "errorman.h"
 #include "management.h"
-#include "error_check.h"
 #include "BIFs.h"
 #include "modules.h"
 #include "bytecode.h"
@@ -91,7 +90,6 @@
 #include "functions.h"
 #include "FACT_math.h"
 #include "comparisons.h"
-#include "FACT_string.h"
 #include "statements.h"
 #include "execfile.h"
 #include "primitives.h"

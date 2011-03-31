@@ -15,8 +15,8 @@
 static inline void
 FACT_INSTALL_BIF (func_t *scope, char *name, BIF dec)
 {
-  func_t * temp;
-  char ** get_words (char *);
+  func_t *temp;
+  char **get_words (char *);
   
   temp = add_func (scope, name);
   temp->args = get_words (dec.arguments);

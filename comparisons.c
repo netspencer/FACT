@@ -7,9 +7,6 @@ equal (FACT_t arg1, FACT_t arg2)
 
   return_value.type    = VAR_TYPE;
   return_value.v_point = alloc_var ();
-    
-  if (arg1.type != arg2.type)
-    return errorman_throw_reg (NULL, "argument types to == do not match");
   
   if (arg1.type == VAR_TYPE)
     {
@@ -18,7 +15,7 @@ equal (FACT_t arg1, FACT_t arg2)
     }
   else
     {
-      /* Eh, best I can do. */
+      // Not good enough.
       if (arg1.f_point->vars == arg2.f_point->vars
 	  && arg1.f_point->funcs == arg2.f_point->funcs)
         mpc_set_si (&(return_value.v_point->data), 1);
@@ -34,9 +31,6 @@ not_equal (FACT_t arg1, FACT_t arg2)
 
   return_value.type    = VAR_TYPE;
   return_value.v_point = alloc_var ();
-
-  if (arg1.type != arg2.type)
-    return errorman_throw_reg (NULL, "argument types to != do not match");
     
   if (arg1.type == VAR_TYPE)
     {
@@ -61,9 +55,6 @@ more (FACT_t arg1, FACT_t arg2)
   return_value.type    = VAR_TYPE;
   return_value.v_point = alloc_var ();
 
-  if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
-    return errorman_throw_reg (NULL, "arguments to > must be vars");
-
   if (mpc_cmp (arg1.v_point->data, arg2.v_point->data) > 0)
     mpc_set_si (&(return_value.v_point->data), 1);
 
@@ -77,10 +68,7 @@ more_equal (FACT_t arg1, FACT_t arg2)
 
   return_value.type    = VAR_TYPE;
   return_value.v_point = alloc_var ();
-  
-  if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
-    return errorman_throw_reg (NULL, "arguments to >= must be vars");
-  
+
   if (mpc_cmp (arg1.v_point->data, arg2.v_point->data) >= 0)
     mpc_set_si (&(return_value.v_point->data), 1);
 
@@ -95,9 +83,6 @@ less (FACT_t arg1, FACT_t arg2)
   return_value.type    = VAR_TYPE;
   return_value.v_point = alloc_var ();
 
-  if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
-    return errorman_throw_reg (NULL, "arguments to < must be variables");
-
   if (mpc_cmp (arg1.v_point->data, arg2.v_point->data) < 0)
     mpc_set_si (&(return_value.v_point->data), 1);
 
@@ -111,9 +96,6 @@ less_equal (FACT_t arg1, FACT_t arg2)
 
   return_value.type    = VAR_TYPE;
   return_value.v_point = alloc_var ();
-
-  if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
-    return errorman_throw_reg (NULL, "arguments to <= must be variables");
 
   if (mpc_cmp (arg1.v_point->data, arg2.v_point->data) <= 0)
     mpc_set_si (&(return_value.v_point->data), 1);
@@ -202,7 +184,7 @@ statement_length (char **words)
 }
 
 FACT_t
-and (func_t *scope, word_list expression)
+and (func_t *scope, syn_tree_t expression)
 {
   int           len;
   FACT_t        arg1;
@@ -212,21 +194,16 @@ and (func_t *scope, word_list expression)
 
   ip = get_ip ();
   reset_ip ();
-  
   expression.syntax += ip;
-  expression.lines  += ip;
-  
+
   if ((arg1 = eval (scope, expression)).type == ERROR_TYPE)
     return arg1;
   else if (arg1.type == FUNCTION_TYPE)
-    return errorman_throw_reg (scope, "arguments to && must be variables");
+    FACT_throw (scope, "both arguments to && must be variables", expression);
 
   return_value.type    = VAR_TYPE;
   return_value.v_point = alloc_var ();
-
   expression.syntax += get_ip ();
-  expression.lines  += get_ip ();
-
   len = statement_length (expression.syntax);
 
   if (!mpc_cmp_si (arg1.v_point->data, 0))
@@ -239,22 +216,21 @@ and (func_t *scope, word_list expression)
   reset_ip ();
 
   if ((arg2 = eval (scope, expression)).type == ERROR_TYPE)
-    return arg1;
+    return arg2;
   else if (arg2.type == FUNCTION_TYPE)
-    return errorman_throw_reg (scope, "arguments to && must be variables");
+    FACT_throw (scope, "both arguments to && must be variables", expression);
 
   if (mpc_cmp_si (arg2.v_point->data, 0) == 0)
     return return_value;
 
   mpc_set_si (&(return_value.v_point->data), 1);
-
   move_ip (ip);
 
   return return_value;
 }
 
 FACT_t
-or (func_t *scope, word_list expression)
+or (func_t *scope, syn_tree_t expression)
 {
   int           len;
   FACT_t        arg1;
@@ -264,23 +240,17 @@ or (func_t *scope, word_list expression)
 
   ip = get_ip ();
   reset_ip ();
-
   expression.syntax += ip;
-  expression.lines  += ip;
   
   if ((arg1 = eval (scope, expression)).type == ERROR_TYPE)
     return arg1;
   else if (arg1.type == FUNCTION_TYPE)
-    return errorman_throw_reg (scope, "arguments to || must be variables");
+    FACT_throw (scope, "both arguments to || must be variables", expression);
 
   return_value.type    = VAR_TYPE;
   return_value.v_point = alloc_var ();
-
   mpc_set_ui (&(return_value.v_point->data), 1);
-
   expression.syntax += get_ip ();
-  expression.lines  += get_ip ();
-
   len = statement_length (expression.syntax);
 
   if (mpc_cmp_si (arg1.v_point->data, 0))
@@ -295,14 +265,12 @@ or (func_t *scope, word_list expression)
   if ((arg2 = eval (scope, expression)).type == ERROR_TYPE)
     return arg2;
   else if (arg2.type == FUNCTION_TYPE)
-    return errorman_throw_reg (scope, "arguments to || must be variables");
+    FACT_throw (scope, "both arguments to || must be variables", expression);
 
   if (mpc_cmp_si (arg2.v_point->data, 0))
     return return_value;
 
   mpc_set_ui (&(return_value.v_point->data), 0);
-
   move_ip (ip);
-
   return return_value;
 }

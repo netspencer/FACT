@@ -4,43 +4,6 @@
 // Lexer functions:
 /////////////////////
 
-char *
-add_newlines (char *word, int newlines)
-{
-  /**
-   * add_newlines - this function, given a string and a value,
-   * returns a string allocated in memory of the passed string
-   * combined with the value in newlines at the begining.
-   * For example: word = "hello, world!", newlines = "2" would
-   * return "\n\nhello, world!"
-   */
-  int i;
-  int word_len;
-
-  char *new_str;
-
-  if (word[0] == BYTECODE)
-    {
-      if (word[1] == CONSTANT)
-        word_len = (sizeof (var_t *) / sizeof (char)) + 2;
-      else
-        word_len = 3;
-    }
-  else
-    word_len = strlen (word);
-
-  new_str = better_malloc (sizeof (char) * (word_len + newlines + 1));
-
-  for (i = 0; i < newlines; i++)
-    new_str[i] = '\n';
-
-  while (i < word_len + newlines)
-    new_str[i++] = word[i - newlines];
-  new_str[i] = '\0';
-
-  return new_str;
-}
-
 static bool
 is_in_quotes (int character)
 {
@@ -305,12 +268,11 @@ check (char **input, const char *f_name, int start_line)
   int s_size;
   int p_count;
 
+  int  *lines;
   char *custom_fmt;
   char *next_token;
   char *prev_token;
-  bool *com_stack;
-  bool *def_stack;
-  bool *semi_stack;
+  bool *com_stack, *def_stack, *semi_stack;
 
 #define STACK_REALLOC() com_stack = FACT_realloc (com_stack, sizeof (bool) * (s_size + 1)); \
   def_stack = FACT_realloc (def_stack, sizeof (bool) * (s_size + 1));   \
@@ -332,12 +294,25 @@ check (char **input, const char *f_name, int start_line)
   semi_stack[s_size - 1] = true;
   com_stack[s_size - 1] = def_stack[s_size - 1] = false;
 
+  lines = get_newlines (input);
+  
+  // Remove newlines
   for (i = 0; input[i] != NULL; i++)
     {
-      if (input[i][0] == '\n')
-        continue;
-      
+      if (input[i][0] == '"')
+        i += 2;
+      else if (input[i][0] == '\n')
+        {
+          for (j = i; input[j] != NULL; j++)
+            input[j] = input[j + 1];
+          i--;
+        }
+    }
+
+  for (i = 0; input[i] != NULL; i++)
+    {
       next_token = input[i + 1];
+
       if (def_stack[s_size - 1])
         {
           if (op_get_prec (input[i]) == -1)
@@ -593,9 +568,16 @@ check (char **input, const char *f_name, int start_line)
  error:
   custom_fmt = "unexpected %s";
  custom_error:
+  // Get the line number of the error.
+  for (j = i; j >= 0; j--)
+    start_line += lines[j];
+
+  // Print the error.
   fprintf (stderr, "E> Parsing error in (%s) on line %d: ",  f_name, start_line);
   fprintf (stderr, custom_fmt, input[i]);
   fprintf (stderr, "\n");
+
+  // Free the stacks.
   FACT_free (com_stack);
   FACT_free (def_stack);
   FACT_free (semi_stack);
@@ -603,7 +585,7 @@ check (char **input, const char *f_name, int start_line)
 }
 
 char **
-parse (char **input)
+parse (char **input, const char *f_name, int start_line)
 {
   /**
    * parse - convert the input string array from infix to polish
@@ -620,7 +602,10 @@ parse (char **input)
 
   stack_size = 0;
 
-  // TEMP: remove newlines
+  if (check (input, f_name, start_line))
+    return NULL;
+
+  // Remove newlines
   for (i = 0; input[i] != NULL; i++)
     {
       if (input[i][0] == '\n')
@@ -630,13 +615,8 @@ parse (char **input)
         }
     }
   
-  // Get the length and allocate space for output.
-  for (i = 0; input[i] != NULL; i++);
   output = FACT_malloc (sizeof (char *) * (i + 1));
   op_stack = FACT_malloc (sizeof (char *) * (i + 1));
-
-  // TEMP: ignore results
-  check (input, "test", 0);
 
   for (i--, j = 0; i >= 0; i--)
     {
@@ -750,12 +730,6 @@ parse (char **input)
       output[i] = hold;
     }
 
-  // For debug purposes
-  printf ("Parsing results: \n");
-  for (i = 0; output[i] != NULL; i++)
-    printf (" %s", output[i]); 
-  printf ("\nDone.\n");
-  
   // Free up the stack and return.
   FACT_free (op_stack);
 
@@ -782,6 +756,32 @@ get_end_block (int block)
     }
 }
 
+/////////////////////
+// Misc. functions: 
+/////////////////////
+
+int *
+get_newlines (char **exp)
+{
+  int i, j;
+  int *ret_val;
+
+  ret_val = NULL;
+
+  for (i = 0; exp[i] != NULL; i++)
+    {
+      ret_val = FACT_realloc (ret_val, sizeof (int) * (i + 1));
+      ret_val[i] = 0;
+      for (j = 0; exp[i][j] == '\n'; j++)
+        ret_val[i]++;
+    }
+
+  ret_val = FACT_realloc (ret_val, sizeof (int) * (i + 1));
+  ret_val[i] = 0;
+  
+  return ret_val;
+}
+      
 int
 get_exp_length (char **words, int end_block)
 {

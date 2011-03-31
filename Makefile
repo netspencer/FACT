@@ -1,11 +1,11 @@
 CC          = gcc
 BIT         = 64 # Set to either 64 or 32
-CFLAGS      = -g3 -gdwarf-2 -m$(BIT) -rdynamic 
+CFLAGS      = -g3 -gdwarf-2 -m$(BIT) -rdynamic
 PROG        = FACT-BETA
 INCLUDE_DIR = ./Include
 API_INC_DIR = ./API_Include
 
-SRCS = main.c malloc_replacements.c functions.c string.c    \
+SRCS = main.c malloc_replacements.c functions.c 	    \
 	management.c math.c mem.c shell.c BIFs.c            \
 	comparisons.c parser.c primitives.c eval.c          \
 	errorman.c statements.c utilities.c execfile.c      \

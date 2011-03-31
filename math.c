@@ -1,278 +1,179 @@
 #include "FACT.h"
 
-/*---------------------------------------------*
- | math.c: Provides functions for various math |
- | procedures and other things.                |
- |                                             |
- | This code is (C) 2010 Matthew Plant.        |
- *---------------------------------------------*/
-
-/* * * * * * * * * * * * * * * * * * * * * * * *
- * isnum: simple function that returns true if *
- * a given string is a valid number, and false *
- * otherwise.                                  *
- * * * * * * * * * * * * * * * * * * * * * * * */
-
 bool
-isnum (char * word)
+isnum (char *word)
 {
-  bool         hex ;
-  bool         flp ;
-  unsigned int pos ;
+  bool         hex;
+  bool         flp;
+  unsigned int i;
 
   if (word[0] == '0' && tolower (word[1]) == 'x')
     hex = true;
   else
     hex = false;
   
-  for (pos = (hex) ? 2 : 0, flp = false; word[pos] != '\0'; pos++)
+  for (i = (hex) ? 2 : 0, flp = false; word[i] != '\0'; i++)
     {
-      if (word[pos] == '.')
+      if (word[i] == '.')
 	{
-	  if (flp || word[pos + 1] == '\0')
+	  if (flp || word[i + 1] == '\0')
 	    return false;
 	  flp = true;
 	}
-      else if (!isdigit ((int) word[pos]))
-	if (!hex || tolower (word[pos]) < 'a' || tolower (word[pos]) > 'f')
-	  return false;
+      else if (!isdigit ((int) word[i]))
+        {
+          if (!hex || tolower (word[i]) < 'a' || tolower (word[i]) > 'f')
+            return false;
+        }
     }
 
   return true;
 }
 
-/* * * * * * * * * * * * * * * * * * * * * * * *
- * get_prec: This function takes a correctly   *
- * formatted string, counts the number of      *
- * digits after the decimal point, and         *
- * replaces the decimal point with a '.'       *
- * * * * * * * * * * * * * * * * * * * * * * * */
-
 unsigned int
 get_prec (char *word)
 {
-  bool         is_decimal ;
-  unsigned int pos        ;
-  unsigned int precision  ;
+  bool         is_decimal;
+  unsigned int i;
+  unsigned int prec;
 
-  for (pos = precision = 0, is_decimal = false; word[pos] != '\0'; pos++)
+  for (i = prec = 0, is_decimal = false; word[i] != '\0'; i++)
     {
       if (is_decimal)
-	precision++;
+	prec++;
 
-      if (word[pos] == '.')
+      if (word[i] == '.')
 	{
 	  is_decimal = true;
-	  word[pos] = ' ';
+	  word[i] = ' ';
 	}
     }
 
-  return precision;
+  return prec;
 }
-
-/* * * * * * * * * * * * * * * * * * * * * * * *
- * num_to_var: really simple function that     *
- * takes in a string and converts it to a      *
- * var_tiable type wrapped in an ambigious type. *
- * * * * * * * * * * * * * * * * * * * * * * * */
 
 FACT_t
 num_to_var (char *word)
 {
-  FACT_t return_value;
+  FACT_t ret_val;
   
-  return_value.type    = VAR_TYPE;
-  return_value.v_point = alloc_var ();
+  ret_val.type    = VAR_TYPE;
+  ret_val.v_point = alloc_var ();
 
   if (word[0] == '0' && tolower (word[1]) == 'x')
-    mpc_set_str (&(return_value.v_point->data), word + 2, get_prec (word), 16);
+    mpc_set_str (&(ret_val.v_point->data), word + 2, get_prec (word), 16);
   else
-    mpc_set_str (&(return_value.v_point->data), word, get_prec (word), 10);
+    mpc_set_str (&(ret_val.v_point->data), word, get_prec (word), 10);
 
-  mpz_set_ui (return_value.v_point->array_size, 1);
-  return_value.v_point->array_up   = NULL;
-  return_value.v_point->next       = NULL;
+  mpz_set_ui (ret_val.v_point->array_size, 1);
+  ret_val.v_point->array_up = NULL;
+  ret_val.v_point->next     = NULL;
   
-  return return_value;
+  return ret_val;
 }
-
-/* * * * * * * * * * * * * * * * * * * * * * * *
- * add: function that adds two given           *
- * var_tiables and returns the result, or an     *
- * error if the second var_tiable is missing.    *
- * * * * * * * * * * * * * * * * * * * * * * * */
 
 FACT_t
 add (FACT_t arg1, FACT_t arg2)
 {
-  FACT_t return_value;
+  FACT_t ret_val;
   
-  return_value.type    = VAR_TYPE;
-  return_value.v_point = alloc_var ();
+  ret_val.type    = VAR_TYPE;
+  ret_val.v_point = alloc_var ();
+  mpc_add (&(ret_val.v_point->data), arg1.v_point->data, arg2.v_point->data);
   
-  if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
-    return errorman_throw_reg (NULL, "both arguments to + need to be vars");
-  
-  mpc_add (&(return_value.v_point->data), arg1.v_point->data, arg2.v_point->data);
-  
-  return return_value;
+  return ret_val;
 }
-
-/* * * * * * * * * * * * * * * * * * * * * * * *
- * sub: function that subtracts two given      *
- * var_tiables and returns the result. This      *
- * function when called will never return an   *
- * error.                                      *
- * * * * * * * * * * * * * * * * * * * * * * * */
 
 FACT_t
 sub (FACT_t arg1, FACT_t arg2)
 {
-  FACT_t return_value;
+  FACT_t ret_val;
 
-  return_value.type    = VAR_TYPE;  
-  return_value.v_point = alloc_var ();
+  ret_val.type    = VAR_TYPE;  
+  ret_val.v_point = alloc_var ();
 
-  if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
-    return errorman_throw_reg (NULL, "both arguments to - need to be vars");
-  
-  mpc_sub (&(return_value.v_point->data), arg1.v_point->data, arg2.v_point->data);
+  mpc_sub (&(ret_val.v_point->data), arg1.v_point->data, arg2.v_point->data);
 
-  return return_value;
+  return ret_val;
 }
-
-/* * * * * * * * * * * * * * * * * * * * * * * *
- * mult: function that multiplies two given    *
- * var_tiables and returns the result. Returns   *
- * errors in the same cases as "add."          *
- * * * * * * * * * * * * * * * * * * * * * * * */
 
 FACT_t
 mult (FACT_t arg1, FACT_t arg2)
 {
-  FACT_t return_value;
+  FACT_t ret_val;
 
-  return_value.type    = VAR_TYPE;
-  return_value.v_point = alloc_var ();
+  ret_val.type    = VAR_TYPE;
+  ret_val.v_point = alloc_var ();
+  mpc_mul (&(ret_val.v_point->data), arg1.v_point->data, arg2.v_point->data);
 
-  if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
-    return errorman_throw_reg (NULL, "both arguments to * need to be vars");
-
-  mpc_mul (&(return_value.v_point->data), arg1.v_point->data, arg2.v_point->data);
-
-  return return_value;
+  return ret_val;
 }
-
-/* * * * * * * * * * * * * * * * * * * * * * * *
- * divide: function that divides two given     *
- * var_tiables and returns the result. Returns   *
- * errors in the same cases as "add" and       *
- * "mult," as well as when arg2 is equal to 0. *
- * * * * * * * * * * * * * * * * * * * * * * * */
 
 FACT_t
 divide (FACT_t arg1, FACT_t arg2)
 {
-  FACT_t return_value;
+  FACT_t ret_val;
 
-  return_value.type    = VAR_TYPE;
-  return_value.v_point = alloc_var ();
+  // Divide by zero not checked for.
+  ret_val.type    = VAR_TYPE;
+  ret_val.v_point = alloc_var ();
+  mpc_div (&(ret_val.v_point->data), arg1.v_point->data, arg2.v_point->data);
 
-  if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
-    return errorman_throw_reg (NULL, "both arguments to / need to be vars");
-  
-  if (mpc_cmp_si (arg2.v_point->data, 0) == 0)
-    return errorman_throw_reg (NULL, "divide by zero error");
-
-  mpc_div (&(return_value.v_point->data), arg1.v_point->data, arg2.v_point->data);
-
-  return return_value;
+  return ret_val;
 }
-
-/* * * * * * * * * * * * * * * * * * * * * * * *
- * mod: function that is exactly like the      *
- * "divide" function except performs modulus.  *
- * * * * * * * * * * * * * * * * * * * * * * * */
 
 FACT_t
 mod (FACT_t arg1, FACT_t arg2)
 {
-  FACT_t return_value;
+  FACT_t ret_val;
 
-  return_value.type    = VAR_TYPE;
-  return_value.v_point = alloc_var ();
+  // Mod by zero not checked.
+  ret_val.type    = VAR_TYPE;
+  ret_val.v_point = alloc_var ();
+  mpc_mod (&(ret_val.v_point->data), arg1.v_point->data, arg2.v_point->data);
 
-  if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
-    return errorman_throw_reg (NULL, "both arguments to % need to be vars");
-
-  if (mpc_cmp_si (arg2.v_point->data, 0) == 0)
-    return errorman_throw_reg (NULL, "mod by zero error");
-  
-  mpc_mod (&(return_value.v_point->data), arg1.v_point->data, arg2.v_point->data);
-
-  return return_value;
+  return ret_val;
 }
 
 FACT_t
 bit_and (FACT_t arg1, FACT_t arg2)
 {
-  FACT_t return_value;
+  FACT_t ret_val;
 
-  return_value.type    = VAR_TYPE;
-  return_value.v_point = alloc_var ();
+  ret_val.type    = VAR_TYPE;
+  ret_val.v_point = alloc_var ();
+  mpc_and (&(ret_val.v_point->data), arg1.v_point->data, arg2.v_point->data);
 
-  if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
-    return errorman_throw_reg (NULL, "both arguments to & need to be vars");
-  
-  mpc_and (&(return_value.v_point->data), arg1.v_point->data, arg2.v_point->data);
-
-  return return_value;
+  return ret_val;
 }
 
 FACT_t
 bit_ior (FACT_t arg1, FACT_t arg2)
 {
-  FACT_t return_value;
+  FACT_t ret_val;
 
-  return_value.type    = VAR_TYPE;
-  return_value.v_point = alloc_var ();
+  ret_val.type    = VAR_TYPE;
+  ret_val.v_point = alloc_var ();
+  mpc_ior (&(ret_val.v_point->data), arg1.v_point->data, arg2.v_point->data);
 
-  if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
-    return errorman_throw_reg (NULL, "both arguments to & need to be vars");
-  
-  mpc_ior (&(return_value.v_point->data), arg1.v_point->data, arg2.v_point->data);
-
-  return return_value;
+  return ret_val;
 }
 
 FACT_t
 bit_xor (FACT_t arg1, FACT_t arg2)
 {
-  FACT_t return_value;
+  FACT_t ret_val;
 
-  return_value.type    = VAR_TYPE;
-  return_value.v_point = alloc_var ();
+  ret_val.type    = VAR_TYPE;
+  ret_val.v_point = alloc_var ();
+  mpc_xor (&(ret_val.v_point->data), arg1.v_point->data, arg2.v_point->data);
 
-  if (arg1.type != VAR_TYPE || arg2.type != VAR_TYPE)
-    return errorman_throw_reg (NULL, "both arguments to & need to be vars");
-  
-  mpc_xor (&(return_value.v_point->data), arg1.v_point->data, arg2.v_point->data);
-
-  return return_value;
+  return ret_val;
 }
 
 FACT_t
 add_assignment (FACT_t arg1, FACT_t arg2)
 {
-  if (arg1.type == ERROR_TYPE)
-    return arg1;
-  else if (arg2.type == ERROR_TYPE)
-    return arg2;
-
-  if (arg1.type == FUNCTION_TYPE
-      || arg2.type == FUNCTION_TYPE)
-    return errorman_throw_reg (NULL, "both arguments to += must be variables");
-
   if (arg1.v_point->locked)
     return add (arg1, arg2);
 
@@ -284,15 +185,6 @@ add_assignment (FACT_t arg1, FACT_t arg2)
 FACT_t
 sub_assignment (FACT_t arg1, FACT_t arg2)
 {
-  if (arg1.type == ERROR_TYPE)
-    return arg1;
-  else if (arg2.type == ERROR_TYPE)
-    return arg2;
-
-  if (arg1.type == FUNCTION_TYPE
-      || arg2.type == FUNCTION_TYPE)
-    return errorman_throw_reg (NULL, "both arguments to -= must be variables");
-
   if (arg1.v_point->locked)
     return sub (arg1, arg2);
   
@@ -304,15 +196,6 @@ sub_assignment (FACT_t arg1, FACT_t arg2)
 FACT_t
 mult_assignment (FACT_t arg1, FACT_t arg2)
 {
-  if (arg1.type == ERROR_TYPE)
-    return arg1;
-  else if (arg2.type == ERROR_TYPE)
-    return arg2;
-
-  if (arg1.type == FUNCTION_TYPE
-      || arg2.type == FUNCTION_TYPE)
-    return errorman_throw_reg (NULL, "both arguments to *= must be variables");
-
   if (arg1.v_point->locked)
     return mult (arg1, arg2);
 
@@ -324,18 +207,7 @@ mult_assignment (FACT_t arg1, FACT_t arg2)
 FACT_t
 div_assignment (FACT_t arg1, FACT_t arg2)
 {
-  if (arg1.type == ERROR_TYPE)
-    return arg1;
-  else if (arg2.type == ERROR_TYPE)
-    return arg2;
-  
-  if (arg1.type == FUNCTION_TYPE
-      || arg2.type == FUNCTION_TYPE)
-    return errorman_throw_reg (NULL, "both arguments to /= must be variables");
-
-  if (mpc_cmp_si (arg2.v_point->data, 0) == 0)
-    return errorman_throw_reg (NULL, "divide by zero error");
-
+  // Divide by zero not checked for.
   if (arg1.v_point->locked)
     return divide (arg1, arg2);
 
@@ -347,18 +219,7 @@ div_assignment (FACT_t arg1, FACT_t arg2)
 FACT_t
 mod_assignment (FACT_t arg1, FACT_t arg2)
 {
-  if (arg1.type == ERROR_TYPE)
-    return arg1;
-  else if (arg2.type == ERROR_TYPE)
-    return arg2;
-  
-  if (arg1.type == FUNCTION_TYPE
-      || arg2.type == FUNCTION_TYPE)
-    return errorman_throw_reg (NULL, "both arguments to %= must be variables");
-
-  if (mpc_cmp_si (arg2.v_point->data, 0) == 0)
-    return errorman_throw_reg (NULL, "mod by zero error");
-
+  // Mod by zero not checked.
   if (arg1.v_point->locked)
     return mod (arg1, arg2);
 
@@ -369,46 +230,38 @@ mod_assignment (FACT_t arg1, FACT_t arg2)
 }
 
 FACT_t
-negative (func_t *scope, word_list expression)
+negative (func_t *scope, syn_tree_t exp)
 {
   FACT_t op;
-  FACT_t return_value;
+  FACT_t ret_val;
   
-  op = eval (scope, expression);
+  op = eval (scope, exp);
 
   if (op.type == ERROR_TYPE)
     return op;
   if (op.type == FUNCTION_TYPE)
-    return errorman_throw_reg (NULL, "cannot make a function negative.");
+    FACT_throw (NULL, "cannot make a function negative", exp);
 
-  return_value.type    = VAR_TYPE;
-  return_value.v_point = alloc_var ();
-  mpc_neg (&(return_value.v_point->data), op.v_point->data);
+  ret_val.type    = VAR_TYPE;
+  ret_val.v_point = alloc_var ();
+  mpc_neg (&(ret_val.v_point->data), op.v_point->data);
 
-  return return_value;
+  return ret_val;
 }
 
-/* * * * * * * * * * * * * * * * * * * * * * * *
- * paren: evaluates a parenthesis. It does     *
- * this by allocating enough memory for as     *
- * many tokens that appear in between two      *
- * parens and sends it to "eval."              *
- * * * * * * * * * * * * * * * * * * * * * * * */
-
 FACT_t
-paren (func_t *scope, word_list expression)
+paren (func_t *scope, syn_tree_t exp)
 {
   int    len;
   FACT_t return_value;
   unsigned long ip;
 
-  expression.syntax += get_ip ();
-  expression.lines  += get_ip ();
+  exp.syntax += get_ip ();
 
   ip = get_ip ();
   reset_ip ();
 
-  len = get_exp_length (expression.syntax, ')');
+  len = get_exp_length (exp.syntax, ')');
 
   /*
   if (index == 0)
@@ -416,7 +269,7 @@ paren (func_t *scope, word_list expression)
    
   expression.syntax[index - 1] = NULL;
   */
-  return_value                 = eval (scope, expression);
+  return_value = eval (scope, exp);
   // expression.syntax[index - 1] = ")";
 
   set_ip (ip + len);

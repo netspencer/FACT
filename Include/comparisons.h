@@ -10,7 +10,7 @@ FACT_INTERN_FUNC (FACT_t) more_equal (FACT_t, FACT_t);
 FACT_INTERN_FUNC (FACT_t) less       (FACT_t, FACT_t);
 FACT_INTERN_FUNC (FACT_t) less_equal (FACT_t, FACT_t);
 
-FACT_INTERN_FUNC (FACT_t) and (func_t *, word_list);
-FACT_INTERN_FUNC (FACT_t) or  (func_t *, word_list);
+FACT_INTERN_FUNC (FACT_t) and (func_t *, syn_tree_t);
+FACT_INTERN_FUNC (FACT_t) or  (func_t *, syn_tree_t);
 
 #endif

@@ -3,7 +3,7 @@
 var_t *
 get_local_var (func_t *scope, char *word)
 {
-  var_t * scroller;
+  var_t *scroller;
 
   for (scroller = scope->vars; scroller != NULL; scroller = scroller->next)
     {
@@ -17,7 +17,7 @@ get_local_var (func_t *scope, char *word)
 func_t *
 get_local_func (func_t *scope, char *word)
 {
-  func_t * scroller;
+  func_t *scroller;
 
   for (scroller = scope->funcs; scroller != NULL; scroller = scroller->next)
     {
@@ -59,14 +59,13 @@ get_func (func_t *scope, char *word)
 var_t *
 alloc_var ()
 {
-  var_t * new;
+  var_t *new;
 
   /* I have been put under the impression that memory allocated
    * by GC Malloc is automatically initialized to 0/NULL/false/etc.
    * However, I play this memory game safe.
    */
-
-  new             = better_malloc (sizeof (var_t));
+  new             = FACT_malloc (sizeof (var_t));
   new->array_up   = NULL  ;
   new->next       = NULL  ;
   new->name       = NULL  ;
@@ -80,28 +79,28 @@ alloc_var ()
 func_t *
 alloc_func ()
 {
-  func_t * new;
+  func_t *new;
 
   /* See my comment for alloc_var (), it applies to this 
    * as well.
    */
-
-  new             = better_malloc (sizeof (func_t));
-  new->line       = 1     ; 
+  new             = FACT_malloc (sizeof (func_t));
+  new->line       = 1     ;
+  new->locked     = false ;
+  new->lines      = NULL  ;
   new->name       = NULL  ;
-  new->extrn_func = NULL  ;
-  new->next       = NULL  ;
   new->file_name  = NULL  ;
+  new->next       = NULL  ;
   new->args       = NULL  ;
   new->body       = NULL  ;
   new->vars       = NULL  ;
+  new->extrn_func = NULL  ;
   new->funcs      = NULL  ;
   new->up         = NULL  ;
   new->caller     = NULL  ;
   new->usr_data   = NULL  ;
   new->array_up   = NULL  ;
   new->variadic   = NULL  ;
-  new->locked     = false ;
   
   mpz_init_set_ui (new->array_size, 1);
 
@@ -111,8 +110,8 @@ alloc_func ()
 void
 free_var (var_t *dead_man)
 {
-  var_t * hold_up;
-  var_t * hold_next;
+  var_t *hold_up;
+  var_t *hold_next;
 
   if (dead_man == NULL)              /* if no such man exists, do nothing */
     return;
@@ -129,10 +128,10 @@ free_var (var_t *dead_man)
 void
 free_func (func_t *dead_house)
 {
-  var_t  * hold_vars;
-  func_t * hold_funcs;
-  func_t * hold_next;
-  func_t * hold_up;
+  var_t  *hold_vars;
+  func_t *hold_funcs;
+  func_t *hold_next;
+  func_t *hold_up;
   
   if (dead_house == NULL) /* if there is no house, leave */
     return;
@@ -157,8 +156,8 @@ free_func (func_t *dead_house)
 var_t *
 add_var (func_t *scope, char *name)
 {
-  var_t * scroller;
-  var_t * hold_next;
+  var_t *scroller;
+  var_t *hold_next;
 
   if (scope->vars == NULL)
     {
@@ -203,8 +202,8 @@ add_var (func_t *scope, char *name)
 func_t *
 add_func (func_t *scope, char *name)
 {
-  func_t * scroller;
-  func_t * hold_next;
+  func_t *scroller;
+  func_t *hold_next;
 
   if (scope->funcs == NULL)
     {
@@ -253,8 +252,8 @@ add_func (func_t *scope, char *name)
 var_t *
 resize_var (var_t *resizable, mpz_t new_size)
 {
-  mpz_t   index;
-  var_t * scroller;
+  mpz_t i;
+  var_t *scroller;
 
   scroller = resizable;
 
@@ -269,21 +268,19 @@ resize_var (var_t *resizable, mpz_t new_size)
       
       scroller = scroller->array_up;
     
-      for (mpz_init_set_ui (index, 1); scroller->next != NULL;
-	   scroller = scroller->next, mpz_add_ui (index, index, 1));
+      for (mpz_init_set_ui (i, 1); scroller->next != NULL;
+	   scroller = scroller->next, mpz_add_ui (i, i, 1));
 
-      // while (count < new_size)
-      while (mpz_cmp (index, new_size) < 0)
+      while (mpz_cmp (i, new_size) < 0)
 	{
 	  scroller->next       = alloc_var ();
 	  scroller->next->name = scroller->name;
 	  scroller             = scroller->next;
-	  mpz_add_ui (index, index, 1);
+	  mpz_add_ui (i, i, 1);
 	}
     }
   else
     {
-      //if (new_size == 1)
       if (!mpz_cmp_ui (new_size, 1))
 	{
 	  free_var (scroller->array_up);
@@ -293,8 +290,8 @@ resize_var (var_t *resizable, mpz_t new_size)
 	{
 	  scroller = scroller->array_up;
 	  
-	  for (mpz_init_set_ui (index, 1); mpz_cmp (index, new_size) < 0;
-	       scroller = scroller->next, mpz_add_ui (index, index, 1));
+	  for (mpz_init_set_ui (i, 1); mpz_cmp (i, new_size) < 0;
+	       scroller = scroller->next, mpz_add_ui (i, i, 1));
 
 	  free_var (scroller->next);
 	  scroller->next = NULL;
@@ -307,12 +304,11 @@ resize_var (var_t *resizable, mpz_t new_size)
 func_t *
 resize_func (func_t *resizable, mpz_t new_size)
 {
-  mpz_t    index;
-  func_t * scroller;
+  mpz_t i;
+  func_t *scroller;
 
   scroller = resizable;
 
-  // if (resizable->array_size < new_size)
   if (mpz_cmp (resizable->array_size, new_size) < 0)
     {
       if (!mpz_cmp_ui (resizable->array_size, 1))
@@ -323,29 +319,16 @@ resize_func (func_t *resizable, mpz_t new_size)
       
       scroller = scroller->array_up;
 
-      for (mpz_init_set_ui (index, 1); scroller->next != NULL;
-	   scroller = scroller->next, mpz_add_ui (index, index, 1));
-      /*
-      for (count = 1; scroller->next != NULL;
-	   scroller = scroller->next, count++);
-      */
+      for (mpz_init_set_ui (i, 1); scroller->next != NULL;
+	   scroller = scroller->next, mpz_add_ui (i, i, 1));
 
-      while (mpz_cmp (index, new_size) < 0)
+      while (mpz_cmp (i, new_size) < 0)
 	{
 	  scroller->next       = alloc_func ();
 	  scroller->next->name = scroller->name;
 	  scroller             = scroller->next;
-	  mpz_add_ui (index, index, 1);
+	  mpz_add_ui (i, i, 1);
 	}
-      /*
-      while (count < new_size)
-	{
-	  scroller->next       = alloc_func ();
-	  scroller->next->name = scroller->name;
-	  scroller             = scroller->next;
-	  count++;
-	}
-      */
     }
   else
     {
@@ -358,12 +341,8 @@ resize_func (func_t *resizable, mpz_t new_size)
 	{
 	  scroller = scroller->array_up;
 
-	  for (mpz_init_set_ui (index, 1); mpz_cmp (index, new_size) < 0;
-	       scroller = scroller->next, mpz_add_ui (index, index, 1));
-	  /*
-	  for (count = 1; count < new_size;
-	       scroller = scroller->next, count++);
-	  */
+	  for (mpz_init_set_ui (i, 1); mpz_cmp (i, new_size) < 0;
+	       scroller = scroller->next, mpz_add_ui (i, i, 1));
 	  
 	  free_func (scroller->next);
 	  scroller->next = NULL;

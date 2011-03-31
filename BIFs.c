@@ -15,7 +15,7 @@ FACT_DEFINE_BIF (sizeof, "->")
   FACT_t return_value;
 
   if (scope->variadic == NULL || scope->variadic->next != NULL)
-    FACT_throw (scope, "sizeof expects one argument");
+    FACT_ret_error (scope, "sizeof expects one argument");
 
   return_value.type    = VAR_TYPE;
   return_value.v_point = alloc_var ();
@@ -41,7 +41,7 @@ FACT_DEFINE_BIF (ref, "->")
   FACT_t return_value;
 
   if (scope->variadic == NULL || scope->variadic->next != NULL)
-    FACT_throw (scope, "ref expects one argument");
+    FACT_ret_error (scope, "ref expects one argument");
 
   return_value.type    = VAR_TYPE;
   return_value.v_point = alloc_var ();
@@ -82,7 +82,7 @@ FACT_DEFINE_BIF (deref, "def op")
   
   // Check to make sure that op is not floating point.
   if (op->data.precision > 1)
-    FACT_throw (scope, "addresses cannot be floating point");
+    FACT_ret_error (scope, "addresses cannot be floating point");
 
   address = mpz_get_ui (op->data.object);
   return_value.type = (mpz_sgn (op->data.object) < 0)

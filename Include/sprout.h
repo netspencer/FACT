@@ -43,7 +43,7 @@ FACT_thread_t *root_thread; // Contains all the thread data.
 /////////////////////////
 
 FACT_INTERN_FUNC (FACT_thread_t *) FACT_get_curr_thread (void);
-FACT_INTERN_FUNC (FACT_t) sprout (func_t *, word_list);
+FACT_INTERN_FUNC (FACT_t) sprout (func_t *, syn_tree_t);
 FACT_INTERN_FUNC (void) thread_cleanup (void);
 
 //////////////////////////////////

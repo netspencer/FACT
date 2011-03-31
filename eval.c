@@ -1,28 +1,19 @@
 #include "FACT.h"
 
-word_list
-make_word_list (char **words, bool len_check)
+syn_tree_t
+make_syn_tree (char **words, int *lines)
 {
-  /* To be removed because it is really bad. */
   int i, j, k;
   int token_len;
-  word_list expression;
+  syn_tree_t expression;
 
-  if (len_check)
-    {
-      i = get_exp_length_first (words, ';');
-       if (i < 1)
-	{
-	  expression.syntax = NULL;
-	  return expression;
-	}
-    }
-  else
-    for (i = 0; words[i] != NULL; i++);
+  for (i = 0; words[i] != NULL; i++);
 
   expression.syntax = FACT_malloc (sizeof (char *) * (i + 1));
-  expression.lines  = FACT_malloc (sizeof (int   ) * (i + 1));
   expression.syntax[i] = NULL;
+  expression.lines = (lines != NULL
+                      ? lines
+                      : FACT_malloc (sizeof (int) * (i + 1)));
   
   for (i--; i >= 0; i--)
     {
@@ -70,7 +61,8 @@ make_word_list (char **words, bool len_check)
         }
       expression.lines[i] = j;
     }
-  
+
+  expression.base = expression.syntax[0];
   return expression;
 }
 
@@ -120,14 +112,14 @@ next_inst (void) // Move the current ip over by one.
 //////////////////////////
 
 static unsigned long
-get_else (char ** expression)
+get_else (char **expression)
 {
   /**
    * get_else - get the length to the else clause corresponding 
    * to the given if statement. If none is available, return
    * the length to NULL.
    *
-   * @ifs: how many if/on_error statements needed to be matched.  
+   * @ifs: how many if/error statements needed to be matched.  
    */
   unsigned long i;
   unsigned long ifs; 
@@ -196,7 +188,7 @@ get_else (char ** expression)
 }
 
 FACT_t
-eval_expression (func_t *scope, word_list expression)
+eval_expression (func_t *scope, syn_tree_t expression)
 {  
   /**
    * eval_expression - checks the begining of the expression 
@@ -221,21 +213,19 @@ eval_expression (func_t *scope, word_list expression)
    */
   return_value.type = VAR_TYPE;  
   return_signal = false;
-  break_signal  = false;
+  break_signal = false;
 
   /* Move the current token to the instruction pointer. */
   expression.syntax += get_ip ();
-  expression.lines  += get_ip ();
 
   /* This will be removed in the future. */
   if (expression.syntax == NULL) 
-    return errorman_throw_reg (scope, "syntax error: expected closing ';' or '}'");
+    FACT_throw (scope, "syntax error: expected closing ';' or '}'", expression);
 
   while (expression.syntax[0][0] == BYTECODE
          && expression.syntax[0][1] == IGNORE) // Skip all of the ignores.
     {
       expression.syntax++;
-      expression.lines++;
       next_inst ();
     }
   
@@ -247,23 +237,12 @@ eval_expression (func_t *scope, word_list expression)
       && expression.syntax[0][1] == 0x2)
     {
       is_instruction = true;
-      instruction    = expression.syntax[0][2];
-
-      /* Increse the current line number and instruction pointer
-       * by one. This is so statements don't re-evaluated their
-       * identifying tokens.
-       */
-      scope->line += expression.lines[0];
+      instruction = expression.syntax[0][2];
       next_inst ();
     }
   else
     is_instruction = false;
 
-  /* The if and on_error statements are combined because
-   * they are so similar. After the call their respective
-   * functions, they do the exact same thing to the
-   * if_open array.
-   */
   if (is_instruction)
     {
       switch (instruction)
@@ -273,7 +252,7 @@ eval_expression (func_t *scope, word_list expression)
           if (instruction == IFS)
             return_value = if_statement (scope, expression, &getif);
           else
-            return_value = on_error (scope, expression, &getif);
+            return_value = error (scope, expression, &getif);
           
           if (!getif)
             {
@@ -284,7 +263,7 @@ eval_expression (func_t *scope, word_list expression)
               i = get_else (expression.syntax);
               
               /* If there's no corresponding else statement, just
-               * return whatever if_statement or on_error gave us.
+               * return whatever if or error gave us.
                */
               if (expression.syntax[i] == NULL
                   || expression.syntax[i][0] != BYTECODE
@@ -304,7 +283,7 @@ eval_expression (func_t *scope, word_list expression)
            * are never called directly. Therefor, we return an
            * "unmatched else" error.
            */
-          return errorman_throw_reg (scope, "unmatched 'else'");
+          FACT_throw (scope, "unmatched 'else'", expression);
 
         case WHL:
           return_value = while_loop (scope, expression);
@@ -335,7 +314,7 @@ eval_expression (func_t *scope, word_list expression)
         case BRK:
           if (expression.syntax[0] != NULL
               && tokcmp (expression.syntax[0], ";"))
-            return errorman_throw_reg (scope, "break must be alone in an expression");
+            FACT_throw (scope, "break must be alone in an expression", expression);
           break_signal = true;
           return_value.v_point = alloc_var ();
           break;
@@ -364,15 +343,13 @@ eval_expression (func_t *scope, word_list expression)
 }
 
 FACT_t
-procedure (func_t *scope, word_list expression)
+procedure (func_t *scope, syn_tree_t expression)
 {
   int           length;
   FACT_t        return_value;
   unsigned long ip;
 
-  expression.syntax += get_ip ();
-  expression.lines  += get_ip ();
-  
+  expression.syntax += get_ip ();  
   ip = 1;
   
   while (expression.syntax[0] != NULL
@@ -422,10 +399,8 @@ procedure (func_t *scope, word_list expression)
     }
 
   next_inst ();
-
   return_value.return_signal = false;
   return_value.break_signal = false;
-
   return_value.v_point = alloc_var ();
   return_value.type = VAR_TYPE;
       
@@ -433,7 +408,7 @@ procedure (func_t *scope, word_list expression)
 }
 
 FACT_t
-lambda_proc (func_t *scope, word_list expression)
+lambda_proc (func_t *scope, syn_tree_t expression)
 {
   FACT_t return_value;
   func_t *new_scope;
@@ -460,7 +435,7 @@ lambda_proc (func_t *scope, word_list expression)
 }
 
 FACT_t
-eval (func_t * scope, word_list expression)
+eval (func_t * scope, syn_tree_t expression)
 {
   /**
    * eval - evaluate one single instruction or return a variable
@@ -500,9 +475,6 @@ eval (func_t * scope, word_list expression)
   next_inst ();
   assert (current_token != NULL);
 
-  // Get the number of newlines.
-  scope->line += (expression.lines != NULL) ? expression.lines[0] : 0;
-  
   /* Check to see if the current token is valid bytecode or, 
    * a valid number, and if so, call the desired instruction
    * or get the desired var_t * pointer.
@@ -562,7 +534,7 @@ eval (func_t * scope, word_list expression)
           return_value.break_signal = return_value.return_signal = false;
 	}
       else
-	return errorman_throw_reg (scope, combine_strs ("cannot evaluate ", current_token));
+	FACT_throw (scope, combine_strs ("cannot evaluate ", current_token), expression);
     }
 
   // we skip all ignores so that other functions don't have to deal with them.

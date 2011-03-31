@@ -15,22 +15,17 @@ print_logo ( void )
 char *
 get_input (FILE *fp, unsigned int *line_number, const char *start_prompt, const char *cont_prompt)
 {
-  int    i;
-  int    p_count;
-  int    b_count;
-  int    c_count;
-  int    curr_char;
-  bool   in_quotes;  
+  int  i;
+  int  p_count, b_count, c_count;
+  int  curr_char;
+  bool in_quotes;  
   char * input;
 
   if (fp == stdin)
     printf ("%s ", start_prompt);
 
-  /* Doing var = var = x; is unclear and annoying. */
-  input     = NULL;
-  p_count   = 0;
-  b_count   = 0;
-  c_count   = 0;
+  input = NULL;
+  p_count = b_count = c_count = 0;
   in_quotes = false;
   
   for (i = 1; (curr_char = fgetc (fp)) != EOF; i++)
@@ -120,7 +115,8 @@ shell (func_t * scope)
   FACT_t       returned;  // The value returned by the interpreter.
   unsigned int end_line;  // ...
   unsigned int hold_line; // ...
-  
+
+  int  *newlines;
   char *input;
   char *hold_input;   // Used in the main loop to check for else clauses.
   char **tokenized;   // input, tokenized.
@@ -133,19 +129,18 @@ shell (func_t * scope)
   printf ("The FACT programming language interactive shell\n"
 	  "© 2010, 2011 Matthew Plant, under the GPL version 3.\n");
 
-  /* Set the initial line number to 1 and the file name to
-   * "stdin". Also, set hold_input to NULL.
-   */
-  end_line         = 1;
-  hold_input       = NULL;
+  hold_input = NULL;
   scope->file_name = "stdin";
-
+  scope->line = 1;
+  end_line = 0;
+  
   for (;;) // Heh, that looks like a spider.
     {
       /* Set the line number to end_line, in case we missed any while evaluating
        * the last expression.
        */
-      scope->line = end_line;
+      scope->line += end_line;
+      end_line = 0;
 
       // Then, get raw input for an entire expression.
       if (hold_input == NULL)
@@ -204,15 +199,18 @@ shell (func_t * scope)
 	  tokenized = get_words (input);
 	}
 
-      // Parse the string.
-      tokenized = parse (tokenized);
-      // TODO: skip if NULL, as it indicates errors.
+      // Get the newlines and parse the string.
+      newlines = get_newlines (tokenized);
+      tokenized = parse (tokenized, "stdin", end_line);
+
+      if (tokenized == NULL)
+        continue;
 
       // Reset the instruction pointer.
       reset_ip ();
 
       // Evaluate the expression.
-      returned = eval_expression (scope, make_word_list (tokenized, false));
+      returned = eval_expression (scope, make_syn_tree (tokenized, newlines));
 
       /* If there were errors, print them out. Otherwise,
        * print the value of the variable or the name of

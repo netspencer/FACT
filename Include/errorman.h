@@ -3,11 +3,22 @@
 
 #include "FACT.h"
 
-#define FACT_throw(s, d) return errorman_throw_catchable (s, d)
+static inline FACT_t
+FACT_ret_error (func_t *scope, const char *desc)
+{
+  FACT_t ret_val;
 
-FACT_INTERN_FUNC (FACT_t) errorman_throw_reg       (func_t *, char *);
-FACT_INTERN_FUNC (FACT_t) errorman_throw_catchable (func_t *, char *);
-			  
-FACT_INTERN_FUNC (void) errorman_dump (_ERROR);
+  ret_val.type = ERROR_TYPE;
+  ret_val.error.line = 0;
+  ret_val.error.scope = scope;
+  ret_val.error.description = (char *) desc;
+
+  return ret_val;
+}
+
+#define FACT_throw return FACT_throw_error
+
+FACT_INTERN_FUNC (FACT_t) FACT_throw_error (func_t *, const char *, syn_tree_t);
+FACT_INTERN_FUNC (void) errorman_dump (error_t);
 
 #endif

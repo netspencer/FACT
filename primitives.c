@@ -4,15 +4,15 @@
 static struct  _prims
 {
   const char *name;
-  FACT_t    (*function)(func_t *, word_list);
+  FACT_t    (*function) (func_t *, syn_tree_t);
 } primitives [] =
   {
     { "!["    , return_array },
-    { "\""    , new_string   }, /* To be removed and replaced with bcode instruction. */
+    { "\""    , NULL         }, // To be removed
     { "$"     , run_func     },
     { "&"     , new_scope    },
     { "&&"    , and          },
-    { "("     , paren        }, /* DEFINITELY to be removed. */
+    { "("     , paren        }, 
     { "--"    , negative     },
     { ":"     , in_scope     },
     { "="     , set          },
@@ -100,7 +100,7 @@ isprim (char *word)
 }
 
 FACT_t
-run_prim (func_t *scope, word_list expression, int prim_num)
+run_prim (func_t *scope, syn_tree_t expression, int prim_num)
 {
   /**
    * run_prim - this function is incredibly simple, and many
@@ -125,7 +125,7 @@ run_prim (func_t *scope, word_list expression, int prim_num)
 }
 
 FACT_t
-eval_math (func_t *scope, word_list expression, int call_num)
+eval_math (func_t *scope, syn_tree_t expression, int call_num)
 {
   /* eval_math - this is pretty much exactly like run_prim,
    * except the function pointer is different. Also, I
@@ -134,7 +134,7 @@ eval_math (func_t *scope, word_list expression, int call_num)
    */
   FACT_t arg1;
   FACT_t arg2;
-  FACT_t return_value;
+  FACT_t ret_val;
 
   /* This is a list of every math call's corresponding
    * function. It's an array of function pointers. Wild!
@@ -166,23 +166,34 @@ eval_math (func_t *scope, word_list expression, int call_num)
   /* Evaluate the two arguments to the math call, and
    * if they are errors, return them.
    */
-  if ((arg1 = eval (scope, expression)).type == ERROR_TYPE)
-    return arg1;
-  if ((arg2 = eval (scope, expression)).type == ERROR_TYPE)
-    return arg2;
+  if ((arg1 = eval (scope, expression)).type != VAR_TYPE)
+    {
+      if (arg1.type != ERROR_TYPE && (call_num != 0 && call_num != 13))
+        return (arg1.type == ERROR_TYPE
+                ? arg1
+                : FACT_throw_error (scope, "first argument to math call is a function", expression));
+    }
+  if ((arg2 = eval (scope, expression)).type != VAR_TYPE)
+    {
+      if (arg2.type != ERROR_TYPE && (call_num != 0 && call_num != 13))
+        return (arg2.type == ERROR_TYPE
+                ? arg2
+                : FACT_throw_error (scope, "second argument to math call is a function", expression));
+    }
+  if (arg1.type != arg2.type)
+    FACT_throw (scope, "argument types do not match", expression);  
+  if ((call_num == 1 || call_num == 2)
+      && !mpc_cmp_ui (arg2.v_point->data, 0))
+    FACT_throw (scope, "mod by zero", expression);
+  if (call_num == 9 || call_num == 10
+      && !mpc_cmp_ui (arg2.v_point->data, 0))
+    FACT_throw (scope, "division by zero", expression);
 
-  return_value = math_calls[call_num] (arg1, arg2);
-
-  /* Since math calls do not get sent a scope to use
-   * for error handeling, we have to set it in this
-   * function.
-   */
-  if (return_value.type == ERROR_TYPE)
-    return_value.error.scope = scope;
+  ret_val = math_calls[call_num] (arg1, arg2);
 
   // Set the signals to their defaults.
-  return_value.break_signal  = false;
-  return_value.return_signal = false;
+  ret_val.break_signal  = false;
+  ret_val.return_signal = false;
 
-  return return_value;
+  return ret_val;
 }

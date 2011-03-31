@@ -1,38 +1,42 @@
 #include "FACT.h"
 
+/**
+ * execfile - run external FACT program files.
+ * @TODO:
+ *   + Needs to be fixed to handle if/else statements on the
+ *     top level.
+ *   + This cannot be done by allocating space for the entire
+ *     file, that is simply not an option.
+ */
+
 FACT_t
-run_file (func_t *scope, const char *filename, bool silent)
+run_file (func_t *scope, const char *f_name, bool silent)
 {
-  int             print_parsed;
-  int             hold_line;
-#ifdef DEBUG
-  char         *  scroll_through;
-#endif
-  char         *  hold_fn;
-  char         *  input;
-  char         ** parsed_input;
-  FILE         *  fp;
-  FACT_t          returned;
-  linked_word  *  formatted;
-  unsigned int    end_line;
-  unsigned int    check_line;
+  int    print_parsed;
+  int    hold_line;
+  FACT_t returned;
+  unsigned int end_line;
+
+  int  *newlines;
+  char *hold_fn;
+  char *input;
+  char **parsed_input;
+  FILE *fp;
 
   if (!silent)
-    printf ("Opening file <%s>\n", filename);
+    printf ("Opening file <%s>\n", f_name);
 
-  fp               = fopen (filename, "r");
+  fp               = fopen (f_name, "r");
   hold_line        = scope->line;
   scope->line      = 1;
   hold_fn          = scope->name;
-  scope->name      = (char *) filename;
-  scope->file_name = (char *) filename;
-
-  extern char **parse (char **);
+  scope->name      = (char *) f_name;
+  scope->file_name = (char *) f_name;
 
   if (fp == NULL)
     {
       scope->name = hold_fn;
-      return errorman_throw_reg (scope, "could not open file");
+      FACT_ret_error (scope, "could not open file");
     }
 
   end_line = 1;
@@ -40,59 +44,24 @@ run_file (func_t *scope, const char *filename, bool silent)
   for (;;)
     {
       scope->line = end_line;
-      input       = get_input (fp, &end_line, NULL, NULL);
+      input = get_input (fp, &end_line, NULL, NULL);
 
       if (input == NULL)
-	{
-	  fclose (fp);
-
-	  if (!silent)
-	    printf ("Closing file <%s>.\n", filename);
-
-	  returned.type          = VAR_TYPE;
-	  returned.return_signal = false;
-	  scope->name            = hold_fn;
-	  scope->line            = hold_line;
-	  return returned;
-	}
+        break;
 
       parsed_input = get_words (input);
 
       if (parsed_input == NULL)
-	{
-	  fclose (fp);
+        break;
 
-	  if (!silent)
-	    printf ("Closing file <%s>.\n", filename);
+      newlines = get_newlines (parsed_input);
+      parsed_input = parse (parsed_input, f_name, end_line);
 
-	  returned.type = VAR_TYPE;
-	  scope->name   = hold_fn;
-	  scope->line   = hold_line;
-	  return returned;
-	}
-      parsed_input = parse (parsed_input);
-
-      /*
-      formatted = create_list (parsed_input);
-      formatted = set_list (formatted, END);
-      for (formatted = set_list (formatted, END); formatted->previous != NULL; formatted = formatted->previous);
-
-      check_line = end_line;
-      if (check_for_errors (formatted, 0, &check_line, false))
-	{
-	  print_parsing_error ("stdin", hold_line);
-	  continue;
-	}
-
-      for (rev_shunting_yard (formatted); formatted->previous != NULL; formatted = formatted->previous);
-      
-      set_link (formatted);
-      parsed_input = convert_link (formatted);
-      compile_to_bytecode (parsed_input);
-      */
+      if (parsed_input == NULL)
+        break;
 
       reset_ip ();
-      returned = eval_expression (scope, make_word_list (parsed_input, true));
+      returned = eval_expression (scope, make_syn_tree (parsed_input, newlines));
 
       if (returned.type == ERROR_TYPE)
         {
@@ -101,58 +70,15 @@ run_file (func_t *scope, const char *filename, bool silent)
         }
 
       if (returned.return_signal == true)
-        {
-	  fclose (fp);
-
-	  if (!silent)
-	    printf ("Closing file <%s>.\n", filename);
-	  scope->name = hold_fn;
-	  scope->line = hold_line;
-	  return returned;
-        }
+        break;
     }
-}
-
-#ifdef LOAD_FILE_FIXED
-FACT_t 
-run_file (func_t *scope, const char *file_name, bool silent)
-{
-  /**
-   * run_file - load and run a file.
-   *
-   * @silent: whether or not to print trivial info.
-   * 
-   * @TODO: Currently we just load the entire file into memory and parse it. This
-   * should probably be fixed so that only parts of the file are loaded at a time.
-   * Right now though, this works fine.
-   */
-  int i, c;
-  int hold_line;  
-
-  char        *contents;   // Contents of the file.
-  char        *parsed;     // Contents of the file, parsed.
-  char        *hold_fname; // Holds the old filename.
-  FILE        *fp;
-  linked_word *formatted;
+  fclose (fp);
 
   if (!silent)
-    printf ("Opening file <%s>.\n", file_name);
+    printf ("Closing file <%s>.\n", f_name);
 
-  if ((fp = fopen (filename, "r")) == NULL)
-    errorman_throw_catchable (scope, "could not open file");
-
-  hold_line   = scope->line;
-  scope->line = 1;
-  hold_fname  = scope->name;
-  scope->name = scope->file_name = (char *) file_name;
-
-  // Load all of the contents of the file into contents.
-  contents = NULL;
-  for (i = 0; (c = fgetc (fp)) != EOF; i++)
-    {
-      contents = better_realloc (contents, sizeof (char) * (i + 1));
-      contents[i] = c;
-    }
-  
+  scope->name = hold_fn;
+  scope->line = hold_line;
+  return returned;
 }
-#endif
+

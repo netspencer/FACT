@@ -28,12 +28,13 @@ thread_wrapper (void *arg)
    * thread_wrapper - Used as a wrapper between pthreads_create and
    * eval_expression. Also creates the scope for the thread.
    */
-  word_list expression;
+  syn_tree_t exp;
+
   func_t        *scope;
   FACT_thread_t *curr;
 
   // Get the expression and the current tid.
-  expression = *((word_list *) arg);
+  exp = *((syn_tree_t *) arg);
 
   do
     curr = FACT_get_curr_thread ();
@@ -43,7 +44,7 @@ thread_wrapper (void *arg)
   scope = alloc_func ();
   init_BIFs (scope);
 
-  curr->return_status = eval_expression (scope, make_word_list (expression.syntax, false));
+  curr->return_status = eval_expression (scope, make_syn_tree (exp.syntax, exp.lines));
   curr->exited = true;
 
   // if stdout is turned on...
@@ -56,21 +57,20 @@ thread_wrapper (void *arg)
 
 
 FACT_t
-sprout (func_t * scope, word_list expression)
+sprout (func_t * scope, syn_tree_t expression)
 {
   /**
    * sprout - Create a new thread and manage the threads structure. 
    * returns the id of the thread created.
    */
-  word_list     *arg;
+  syn_tree_t    *arg;
   FACT_thread_t *curr;
   FACT_thread_t *temp;
 
   static pthread_mutex_t list_lock = PTHREAD_MUTEX_INITIALIZER;
     
   expression.syntax += get_ip ();
-  expression.lines += get_ip ();
-  arg = better_malloc (sizeof (word_list));
+  arg = better_malloc (sizeof (syn_tree_t));
   *arg = expression;
 
   // Wait until we have control of the list
@@ -133,14 +133,14 @@ FACT_DEFINE_BIF (get_thread_status, "def tid")
 
   tid = mpc_get_ui ((get_var (scope, "tid"))->data); // Convert the var_t to a ulong.
   if (tid < 0) // If the tid is invalid, throw an error.
-    FACT_throw (scope, "invalid thread id");
+    FACT_ret_error (scope, "invalid thread id");
 
   curr = root_thread;
   for (i = 0; i < tid; i++)
     {
       curr = curr->next;
       if (curr == NULL)
-        FACT_throw (scope, "invalid thread id");
+        FACT_ret_error (scope, "invalid thread id");
     }
   
   return FACT_get_ui (i);
@@ -185,7 +185,7 @@ FACT_DEFINE_BIF (pop, NOARGS)
   while (pthread_mutex_trylock (&curr->queue_lock) == EBUSY);
 
   if (curr->root == NULL)
-    FACT_throw (scope, "current thread's queue is empty");
+    FACT_ret_error (scope, "current thread's queue is empty");
 
   // Set the return value.
   return_value.v_point = curr->root->value;
@@ -221,7 +221,7 @@ FACT_DEFINE_BIF (send, "def tid, def msg")
 
   // If the tid is obviously invalid, throw an error.
   if (tid < 0)
-    FACT_throw (scope, "invalid thread id");
+    FACT_ret_error (scope, "invalid thread id");
 
   for (dest = root_thread; dest != NULL; dest = dest->next)
     {
@@ -230,9 +230,9 @@ FACT_DEFINE_BIF (send, "def tid, def msg")
     }
 
   if (dest == NULL)
-    FACT_throw (scope, "invalid thread id");
+    FACT_ret_error (scope, "invalid thread id");
   else if (dest->exited)
-    FACT_throw (scope, "thread has exited");
+    FACT_ret_error (scope, "thread has exited");
 
   // Wait for control.
   while (pthread_mutex_trylock (&dest->queue_lock) == EBUSY);
