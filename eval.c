@@ -3,7 +3,7 @@
 syn_tree_t
 make_syn_tree (char **words, int *lines)
 {
-  int i, j, k;
+  int i, j;
   int token_len;
   syn_tree_t expression;
 
@@ -17,16 +17,14 @@ make_syn_tree (char **words, int *lines)
   
   for (i--; i >= 0; i--)
     {
-      for (j = 0; words[i][j] == '\n'; j++); // Do nothing.
-
-      if (words[i] + j == '\0')
+      if (words[i] == '\0')
         expression.syntax[i] = NULL;
       else
         {
           // Do not allocate useless information.
-          if (words[i][j] == 1)
+          if (words[i][0] == 1)
             {
-              switch (words[i][j + 1])
+              switch (words[i][1])
                 {
                 case STOP:
                 case IGNORE:
@@ -49,20 +47,19 @@ make_syn_tree (char **words, int *lines)
                 }
             }
           else                  
-            token_len = strlen (words[i]) - j + 1;
+            token_len = strlen (words[i]) + 1;
           
           expression.syntax[i] = FACT_malloc (sizeof (char) * (token_len));
           
-          for (k = 0; k < token_len; k++)
-            expression.syntax[i][k] = words[i][k + j];
+          for (j = 0; j < token_len; j++)
+            expression.syntax[i][j] = words[i][j];
 
-          if (words[i][j] != 1)
-            expression.syntax[i][k] = '\0';
+          if (words[i][0] != 1)
+            expression.syntax[i][j] = '\0';
         }
-      expression.lines[i] = j;
     }
 
-  expression.base = expression.syntax[0];
+  expression.base = expression.syntax;
   return expression;
 }
 
@@ -272,8 +269,6 @@ eval_expression (func_t *scope, syn_tree_t expression)
                 return return_value;
               
               expression.syntax += i;
-              expression.lines  += i;
-
               return_value = else_clause (scope, expression);
             }
           break;
@@ -327,7 +322,6 @@ eval_expression (func_t *scope, syn_tree_t expression)
     {
       /* Move expression back. */
       expression.syntax -= get_ip ();
-      expression.lines  -= get_ip ();
       return_value = eval (scope, expression);
     }
   
@@ -393,9 +387,7 @@ procedure (func_t *scope, syn_tree_t expression)
 	length = get_exp_length_first (expression.syntax, ';');
 
       ip += length + 1;
- 
       expression.syntax += length;
-      expression.lines  += length;
     }
 
   next_inst ();
@@ -422,10 +414,10 @@ lambda_proc (func_t *scope, syn_tree_t expression)
    * other field is initialized to NULL already (except for
    * array_size, which would be initialized to one).
    */
-  new_scope->line      = scope->line;
-  new_scope->name      = scope->name;
+  new_scope->line = scope->line;
+  new_scope->name = scope->name;
   new_scope->file_name = scope->file_name;
-  new_scope->up        = scope;
+  new_scope->up = scope;
 
   // Here is where the procedure is actually run (see procedure).  
   return_value = procedure (new_scope, expression);
@@ -513,15 +505,13 @@ eval (func_t * scope, syn_tree_t expression)
   else
     {
       /* If it is not a bytecode instruction, then we check to see if it's
-       * a variable or a function. If it's neither, we return an un-catchable
-       * error. We have to do this check every time because variables/function
+       * a variable or a function. If it's neither, we return an exception.
+       * We have to do this check every time because variables/function
        * cannot be known for sure to exist. For example, one odd thing a user
        * can legitamitely do is conditionally define differently named
        * variables/functions.
        */
-      if ((call_num = isprim (current_token)) != -1)
-	return_value = run_prim (scope, expression, call_num);
-      else if ((hold_var = get_var (scope, current_token)) != NULL)
+      if ((hold_var = get_var (scope, current_token)) != NULL)
 	{
 	  return_value.v_point = hold_var;
 	  return_value.type    = VAR_TYPE;
@@ -533,6 +523,8 @@ eval (func_t * scope, syn_tree_t expression)
 	  return_value.type    = FUNCTION_TYPE;
           return_value.break_signal = return_value.return_signal = false;
 	}
+      else if ((call_num = isprim (current_token)) != -1)
+	return_value = run_prim (scope, expression, call_num);
       else
 	FACT_throw (scope, combine_strs ("cannot evaluate ", current_token), expression);
     }

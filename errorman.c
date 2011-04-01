@@ -3,18 +3,22 @@
 FACT_t
 FACT_throw_error (func_t *scope, const char *desc, syn_tree_t exp)
 {
-  int i;
-  FACT_t ret_val;
-
-  ret_val.type = ERROR_TYPE;
-  ret_val.error.line = scope->line;
-  ret_val.error.description = (char *) desc;
-  ret_val.error.scope = scope;
+  char **i;
+  FACT_t ret_val =
+    {
+      .type = ERROR_TYPE,
+      .error =
+      {
+        .line = scope->line,
+        .description = (char *) desc,
+        .scope = scope,
+      },
+    };
 
   if (exp.lines != NULL)
     {
-      for (i = 0; i < (*exp.syntax - exp.base); i++)
-        ret_val.error.line += exp.lines[i];
+      for (i = exp.base; i <= exp.syntax; i++)
+        ret_val.error.line += *(exp.lines++);
     }
   
   return ret_val;
@@ -23,5 +27,5 @@ FACT_throw_error (func_t *scope, const char *desc, syn_tree_t exp)
 void
 errorman_dump (error_t error)
 {
-  fprintf (stderr, "E> Caught error in %s at line %d: %s.\n", error.scope->name, error.line, error.description);
+  fprintf (stderr, "E> Caught error \"%s\" from %s at (%s:%d).\n", error.description, error.scope->name, error.scope->file_name, error.line);
 }

@@ -4,7 +4,7 @@
 #include "FACT.h"
 
 static inline FACT_t
-FACT_ret_error (func_t *scope, const char *desc)
+FACT_noline_throw (func_t *scope, const char *desc)
 {
   FACT_t ret_val;
 
@@ -16,6 +16,7 @@ FACT_ret_error (func_t *scope, const char *desc)
   return ret_val;
 }
 
+#define FACT_ret_error return FACT_noline_throw
 #define FACT_throw return FACT_throw_error
 
 FACT_INTERN_FUNC (FACT_t) FACT_throw_error (func_t *, const char *, syn_tree_t);

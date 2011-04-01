@@ -23,30 +23,24 @@ liven_func (func_t *scope, syn_tree_t exp)
 
   exp.syntax += get_ip ();
   func.f_point->file_name = scope->file_name;
-  func.f_point->line = scope->line;
-  func.f_point->lines = exp.lines + (*exp.syntax - exp.base);
+  func.f_point->line = scope->line; 
   pos_args = get_exp_length (exp.syntax + 1, ')');
   args_formatted = FACT_malloc (sizeof (char *) * pos_args);
   args_formatted[pos_args - 1] = NULL;
-
-  i = pos_args - 1;  
-  while (i > 0)
-    {
-      i--;
-      args_formatted[i] = exp.syntax[i + 1];
-    }
-    
+  
+  // Get the line of the function
+  for (i = 0; i < (exp.syntax - exp.base); i++)
+    func.f_point->line += exp.lines[i];
+  func.f_point->lines = exp.lines + i;
+  for (i = 0; i < pos_args - 1; i++)
+    args_formatted[i] = exp.syntax[i + 1];
+  
   pos_block = get_exp_length_first (exp.syntax + pos_args, ';');
   block_formatted = FACT_malloc (sizeof (char *) * pos_block);
   block_formatted[--pos_block] = NULL;
 
-  i = pos_block;
-  while (i > 0)
-    {
-      i--;
-      block_formatted[i] = exp.syntax[i + pos_args + 1];
-      block_formatted[i] = block_formatted[i];
-    }
+  for (i = 0; i < pos_block; i++)
+    block_formatted[i] = exp.syntax[i + pos_args + 1];
   
   func.f_point->args = args_formatted;
   func.f_point->body = block_formatted;
@@ -189,10 +183,10 @@ liven_func (func_t *scope, syn_tree_t exp)
 
        if (arg.type == VAR_TYPE)
 	 {
-	   hold                  = passed.v_point->next;
-	   passed.v_point->next  = NULL;
-	   temp                  = clone_var (passed.v_point, arg.v_point->name);
-	   passed.v_point->next  = hold;
+	   hold = passed.v_point->next;
+	   passed.v_point->next = NULL;
+	   temp = clone_var (passed.v_point, arg.v_point->name);
+	   passed.v_point->next = hold;
 	   arg.v_point->array_up = temp->array_up;
 
 	   mpz_set (arg.v_point->array_size, temp->array_size);
@@ -248,8 +242,9 @@ liven_func (func_t *scope, syn_tree_t exp)
 FACT_t
 new_scope (func_t *scope, syn_tree_t exp)
 {
-  FACT_t     ret_val;
-  FACT_t     prepared;
+  int    i, len; 
+  FACT_t ret_val;
+  FACT_t prepared;
   syn_tree_t func_body;
   unsigned long ip;
 
@@ -264,14 +259,26 @@ new_scope (func_t *scope, syn_tree_t exp)
   new_scope->caller = scope;
 
   if (new_scope->extrn_func != NULL)
-    prepared = (((FACT_t (*)(func_t *)) new_scope->extrn_func) (new_scope));
+    {
+      prepared = (((FACT_t (*)(func_t *)) new_scope->extrn_func) (new_scope));
+      if (ret_val.type == ERROR_TYPE)
+        {
+          ret_val.error.scope->file_name = scope->file_name;
+          ret_val.error.scope->line = scope->line;
+          FACT_throw (ret_val.error.scope, ret_val.error.description, exp);
+        }
+    }
   else
     {
       // Hold the instruction pointer for later and reset it. 
       ip = get_ip ();
       reset_ip ();
       func_body = make_syn_tree (prepared.f_point->body + 1, prepared.f_point->lines);
-      func_body.base = *prepared.f_point->args;
+      len = count_until_NULL (prepared.f_point->args) + 2;
+      for (i = 0; i <= len; i++)
+        new_scope->line += func_body.lines[i];
+      func_body.lines += i;
+      func_body.base--;
       prepared = procedure (new_scope, func_body);
       // Restore the instruction pointer.
       set_ip (ip);
@@ -284,15 +291,15 @@ new_scope (func_t *scope, syn_tree_t exp)
   ret_val.type = FUNCTION_TYPE;
   ret_val.return_signal = false;
   ret_val.break_signal = false;
-
   return ret_val;
 }
 
 FACT_t
 run_func (func_t *scope, syn_tree_t exp)
 {
-  FACT_t     ret_val;
-  FACT_t     prepared;
+  int    i, len;
+  FACT_t ret_val;
+  FACT_t prepared;
   syn_tree_t func_body;
   unsigned long ip;
 
@@ -307,20 +314,32 @@ run_func (func_t *scope, syn_tree_t exp)
   new_scope->caller = scope;
   
   if (new_scope->extrn_func != NULL)
-    ret_val = (((FACT_t (*)(func_t *)) new_scope->extrn_func) (new_scope));
+    {
+      ret_val = (((FACT_t (*)(func_t *)) new_scope->extrn_func) (new_scope));
+      if (ret_val.type == ERROR_TYPE)
+        {
+          ret_val.error.scope->file_name = scope->file_name;
+          ret_val.error.scope->line = scope->line;
+          FACT_throw (ret_val.error.scope, ret_val.error.description, exp);
+        }
+    }
   else
     {
       ip = get_ip ();
       reset_ip ();
       func_body = make_syn_tree (prepared.f_point->body + 1, prepared.f_point->lines);
-      func_body.base = *prepared.f_point->args;
+      // We don't want to have to call this function for each iteration
+      len = count_until_NULL (prepared.f_point->args) + 2;
+      for (i = 0; i <= len; i++)
+        new_scope->line += func_body.lines[i];
+      func_body.lines += i;
+      func_body.base--;
       ret_val = procedure (new_scope, func_body);
       set_ip (ip);      
     }
 
   ret_val.return_signal = false;
   ret_val.break_signal = false;
-
   return ret_val;
 }
 

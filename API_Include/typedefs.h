@@ -5,179 +5,92 @@
 // Enumerations. 
 //////////////////
 
-typedef enum _TYPE_DEFINE
+typedef enum FACT_type
   {   
     VAR_TYPE      ,
     FUNCTION_TYPE ,
     ERROR_TYPE    ,
-  } type_define;
-
-typedef enum _word_codes
-  {
-    PARSING_ERROR = -1 ,
-    END                , // 0
-    UNKNOWN            , // 1
-    NEWLINE            ,
-    COMB_ARR           ,
-    PLUS               ,                    
-    MINUS              ,
-    MULTIPLY           ,
-    DIVIDE             ,
-    MOD                ,
-    NEG                ,
-    ADD_ASSIGN         ,
-    SUB_ASSIGN         ,
-    MULT_ASSIGN        ,
-    DIV_ASSIGN         ,
-    MOD_ASSIGN         ,
-    AT                 ,
-    SET                ,
-    DEF                ,
-    DEFUNC             ,
-    FUNC_RET           ,
-    FUNC_OBJ           ,
-    COMMA              ,
-    IN_SCOPE           ,
-    OP_CURLY           ,
-    CL_CURLY           ,
-    OP_BRACKET         ,
-    NOP_BRACKET        ,
-    CL_BRACKET         ,
-    OP_PAREN           ,
-    CL_PAREN           ,
-    QUOTE              ,
-    AND                ,
-    OR                 ,
-    BIT_AND            ,
-    BIT_IOR            ,
-    BIT_XOR            ,
-    EQ                 ,
-    NEQ                ,
-    LESS               ,
-    MORE               ,
-    LESS_EQ            ,
-    MORE_EQ            ,
-    VARIADIC           ,
-    SIZE               ,
-    IF                 ,
-    ON_ERROR           ,
-    WHILE              ,
-    FOR                ,
-    THEN               ,
-    ELSE               ,
-    SEMI               ,
-    RETURN_STAT        ,
-    BREAK_SIG          ,
-    SPROUT             ,
-  } word_code;
+  } type_t;
 
 /////////////////////
 // Data structures.
 /////////////////////
 
-/* mpc_t is used for arbitrary-precision arithmetic */
+// mpc_t is used for arbitrary-precision arithmetic
 typedef struct
 {
   mpz_t        object;
-  unsigned int precision;
-  
-}mpc_t;
+  unsigned int precision;  
+} mpc_t;
 
-/* _VAR and var_t are the variable holding structures */
-typedef struct  _VAR
+// FACT_var and var_t are the variable holding structures
+typedef struct FACT_var
 {
   bool  locked;
   mpz_t array_size;
   mpc_t data;
 
   char *name;
-
-  struct _VAR *next;
-  struct _VAR *array_up;
-  
+  struct FACT_var *next;
+  struct FACT_var *array_up;
 } var_t;
 
-// _FUNC and func_t are the function holding structures
-typedef struct _FUNC
+typedef struct FACT_func
 {  
   int   line;
   bool  locked;
   mpz_t array_size;
-  
-  char   *name;
-  char   *file_name;
+
+  int   *lines;
+  char  *name;
+  char  *file_name;
   char  **args;
   char  **body;
-  void   *usr_data;
-  var_t  *vars;
+  void  *usr_data;
+  var_t *vars;
 
-  void *(*extrn_func)(struct _FUNC *);
-
-  struct _FUNC *funcs; 
-  struct _FUNC *up;
-  struct _FUNC *caller;
-  struct _FUNC *array_up;
-  struct _FUNC *next;
-
-  struct _MIXED
+  void *(*extrn_func)(struct FACT_func *);
+  struct FACT_func *funcs; 
+  struct FACT_func *up;
+  struct FACT_func *caller;
+  struct FACT_func *array_up;
+  struct FACT_func *next;
+  struct FACT_mixed
   {
-    type_define type;
+    type_t type;
     
     var_t *var_p;
-    
-    struct _FUNC  *func_p;
-    struct _MIXED *next;
-    
+    struct FACT_func  *func_p;
+    struct FACT_mixed *next;
   } *variadic;
-  
 } func_t;
 
-// _ERROR holds thrown errors to be caught
-typedef struct 
+typedef struct FACT_error 
 {
-  bool thrown;
-  
+  int line;
   char   *description;
-  func_t *scope;
-  
-} _ERROR;
+  func_t *scope;  
+} error_t;
 
 // Ambigious structure that holds a var, func, and error, along with other data.
 typedef struct 
 {
-
-  bool        break_signal;
-  bool        return_signal;
-  _ERROR      error;
-  type_define type;
+  bool    break_signal;
+  bool    return_signal;
+  type_t  type;
+  error_t error;
   
   var_t  *v_point;
-  func_t *f_point;
-  
+  func_t *f_point;  
 } FACT_t;
   
 // Used for evaluating. Someday I hope this will be completely removed.
-typedef struct
+typedef struct FACT_syn_tree
 {
-  int   *lines;
-  char **syntax;
-  
-} word_list;
-
-// Used for parsing.
-typedef struct _LINKED_WORD
-{
-  int       newlines;
-  word_code code;
-
-  char *physical; // physical is only used if code is equal to UNKNOWN, otherwise it is NULL.
-  
-  struct _LINKED_WORD *hidden;
-  struct _LINKED_WORD *hidden_up;
-  struct _LINKED_WORD *next;
-  struct _LINKED_WORD *previous;
-  
-} linked_word;
+  int  *lines;
+  char **base;
+  char **syntax;  
+} syn_tree_t;
 
 struct elements
 {

@@ -3,14 +3,7 @@
 FACT_t
 ft_putchar (func_t *scope)
 {
-  /**
-   * Name: putchar
-   * Arguments: def char
-   * Returns: 0
-   * On error: None
-   */
-  
-  var_t * to_put;
+  var_t *to_put;
 
   to_put = get_var (scope, "char");
   putchar (var_get_si (to_put));
@@ -21,32 +14,22 @@ ft_putchar (func_t *scope)
 FACT_t
 throw_error (func_t *scope)
 {
-  /**
-   * Name: throw
-   * Arguments: def description
-   * Returns: A constructed error.
-   * On error: None, I guess?
-   */
-  char   * description;
-  var_t  * to_throw;
-  FACT_t   return_value;
+  FACT_t return_value;
+  char  *description;
+  var_t *to_throw;
 
   to_throw = get_var (scope, "description");
 
-  description                    = array_to_string (to_throw);
-  return_value.type              = ERROR_TYPE;
-  return_value.error.scope       = scope->up;
+  description = array_to_string (to_throw);
+  return_value.type = ERROR_TYPE;
+  return_value.error.scope = scope->up;
   return_value.error.description = description;
-  return_value.error.thrown      = true;
 
   return return_value;
 }
 
 struct elements MOD_MAP [] =
   {
-    /* This should have a bit more consistency in way of argument
-     * names. It shouldn't be anything symbolic though.
-     */
     { "fopen"       , "def filename, def mode" , &open_file     },
     { "fclose"      , "defunc file_object"     , &close_file    },
     { "fgetc"       , "defunc file_object"     , &get_char_file },

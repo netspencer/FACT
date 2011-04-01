@@ -10,11 +10,11 @@ defunc_array (func_t *base, func_t *scope, syn_tree_t expression)
    * and that is dimensions of size one will cause a segfault.
    * It's not a very good solution to increase the minimum
    * dimension size (which is 0), this surprisingly has a bit
-   * of use, which I will not go into now.
-   * Also, this function is recursive. While that may seem like
-   * an issue, it only calls itself recursively once per
-   * dimension. An array would have to have something like
-   * over 10000 dimensions to cause this.
+   * of use, which I will not go into now.  Also, this function
+   * is recursive. While that may seem like an issue, it only
+   * calls itself recursively once per dimension. An array
+   * would have to have something like over 10000 dimensions
+   * to cause this.
    */
   mpz_t  i;
   mpz_t  size;
@@ -27,7 +27,7 @@ defunc_array (func_t *base, func_t *scope, syn_tree_t expression)
 
   // Set the return value defaults.
   return_value.f_point = alloc_func ();
-  return_value.type    = FUNCTION_TYPE;
+  return_value.type = FUNCTION_TYPE;
 
   if (expression.syntax[0] == NULL)
     FACT_throw (scope, "cannot make an anonymous function array", expression);
@@ -61,7 +61,7 @@ defunc_array (func_t *base, func_t *scope, syn_tree_t expression)
        * between the last token evaluated by get_array_size and the
        * current token.
        */
-      ip_mv              = get_ip () - ip;
+      ip_mv = get_ip () - ip;
       expression.syntax += get_ip () - ip;
 
       /* If there was an error in the dimension declaration, we return
@@ -75,7 +75,7 @@ defunc_array (func_t *base, func_t *scope, syn_tree_t expression)
 	FACT_throw (scope, "array size needs to be a variable", expression);
 
       // Set array_size to an mpc_t and truncate it.
-      mpz_init    (size);
+      mpz_init (size);
       mpc_get_mpz (size, array_size.v_point->data);
 
       // If the array size is out of bounds, return an error.
@@ -124,10 +124,10 @@ defunc (func_t *scope, syn_tree_t expression)
 
       if (temp.type != ERROR_TYPE)
 	{
-	  return_value.f_point            = add_func (scope, temp.f_point->array_up->name);
-	  return_value.f_point->line      = scope->line;
-	  return_value.f_point->array_up  = temp.f_point->array_up;
-	  return_value.f_point->up        = scope;
+	  return_value.f_point = add_func (scope, temp.f_point->array_up->name);
+	  return_value.f_point->line = scope->line;
+	  return_value.f_point->array_up = temp.f_point->array_up;
+	  return_value.f_point->up = scope;
 	  return_value.f_point->file_name = scope->file_name; 
 	  
 	  mpz_set (return_value.f_point->array_size, temp.f_point->array_size);
@@ -143,8 +143,8 @@ defunc (func_t *scope, syn_tree_t expression)
       if (return_value.f_point == NULL)
 	FACT_throw (scope, "could not define function", expression);
 
-      return_value.f_point->line      = scope->line;
-      return_value.f_point->up        = scope;
+      return_value.f_point->line = scope->line;
+      return_value.f_point->up = scope;
       return_value.f_point->file_name = scope->file_name; 
       mpz_set_ui (return_value.f_point->array_size, 1);
     }
@@ -179,7 +179,6 @@ def_array (var_t *base, func_t *scope, syn_tree_t expression)
   else
     {
       expression.syntax++;
-      scope->line += expression.lines[0];
 
       ip = get_ip ();
 

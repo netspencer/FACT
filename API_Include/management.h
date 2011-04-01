@@ -26,7 +26,4 @@ FACT_API_FUNC ( void ) free_func (func_t *);
 }
 #endif
 
-#define resize_array(arg1, arg2)      resize_var  (arg1, arg2)
-#define resize_func_array(arg1, arg2) resize_func (arg1, arg2)
-
 #endif

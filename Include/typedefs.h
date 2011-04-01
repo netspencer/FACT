@@ -88,7 +88,7 @@ typedef struct
 typedef struct FACT_syn_tree
 {
   int  *lines;
-  char *base;
+  char **base;
   char **syntax;  
 } syn_tree_t;
 

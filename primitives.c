@@ -163,9 +163,6 @@ eval_math (func_t *scope, syn_tree_t expression, int call_num)
       combine_arrays  , // ~  19 
     };
 
-  /* Evaluate the two arguments to the math call, and
-   * if they are errors, return them.
-   */
   if ((arg1 = eval (scope, expression)).type != VAR_TYPE)
     {
       if (arg1.type != ERROR_TYPE && (call_num != 0 && call_num != 13))
@@ -185,7 +182,7 @@ eval_math (func_t *scope, syn_tree_t expression, int call_num)
   if ((call_num == 1 || call_num == 2)
       && !mpc_cmp_ui (arg2.v_point->data, 0))
     FACT_throw (scope, "mod by zero", expression);
-  if (call_num == 9 || call_num == 10
+  if ((call_num == 9 || call_num == 10)
       && !mpc_cmp_ui (arg2.v_point->data, 0))
     FACT_throw (scope, "division by zero", expression);
 

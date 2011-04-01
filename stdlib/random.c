@@ -3,10 +3,10 @@
 FACT_t
 simple_rand (func_t * scope)
 {
-  /* simple_rand - generate a simple random number. */
+  // simple_rand - generate a simple random number.
   FACT_t return_value;
 
-  return_value.type    = VAR_TYPE;
+  return_value.type = VAR_TYPE;
   return_value.v_point = alloc_var ();
 
   srand (time (NULL));

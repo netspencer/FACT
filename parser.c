@@ -605,13 +605,16 @@ parse (char **input, const char *f_name, int start_line)
   if (check (input, f_name, start_line))
     return NULL;
 
-  // Remove newlines
+  // Remove newlines, again
   for (i = 0; input[i] != NULL; i++)
     {
-      if (input[i][0] == '\n')
+      if (input[i][0] == '"')
+        i += 2;
+      else if (input[i][0] == '\n')
         {
           for (j = i; input[j] != NULL; j++)
             input[j] = input[j + 1];
+          i--;
         }
     }
   
@@ -763,21 +766,22 @@ get_end_block (int block)
 int *
 get_newlines (char **exp)
 {
-  int i, j;
+  int i, j, k;
   int *ret_val;
 
   ret_val = NULL;
 
-  for (i = 0; exp[i] != NULL; i++)
+  for (i = k = 0; exp[i + k] != NULL; i++)
     {
       ret_val = FACT_realloc (ret_val, sizeof (int) * (i + 1));
-      ret_val[i] = 0;
-      for (j = 0; exp[i][j] == '\n'; j++)
-        ret_val[i]++;
+      for (j = 0; exp[i + k][j] == '\n'; j++);
+      ret_val[i] = j;
+      if (j != 0)
+        k++;
     }
 
   ret_val = FACT_realloc (ret_val, sizeof (int) * (i + 1));
-  ret_val[i] = 0;
+  ret_val[i] = -1;
   
   return ret_val;
 }

@@ -36,10 +36,10 @@ compare_var_arrays (var_t *op1, var_t *op2, bool first)
 char *
 combine_strs (char *str1, char *str2)
 {
-  int    new_length;
-  int    scroll1;
-  int    scroll2;
-  char * new_string;
+  int new_length;
+  int scroll1;
+  int scroll2;
+  char *new_string;
 
   new_length = strlen (str1) + strlen (str2);
   new_string = (char *) better_malloc (sizeof (char) * (new_length + 1));
@@ -61,63 +61,62 @@ rm_cslashes (char *op)
   /* rm_cslashes - remove slashes and escape characters in C, replacing
    * them with their equivalent ascii code.
    */
-  int    index;
-  int    jndex;
-  char * new;
+  int i, j;
+  char *new;
 
   new = better_malloc (sizeof (char) * strlen (op));
 
-  for (index = jndex = 0; op[index] != '\0'; jndex++, index++)
+  for (i = j = 0; op[i] != '\0'; j++, i++)
     {
-      if (op[index] == '\\')
+      if (op[i] == '\\')
         {
-          switch (op[index + 1])
+          switch (op[i + 1])
             {
             case 'b':
-              new[jndex] = '\b';
+              new[j] = '\b';
               break;
 
             case 'f':
-              new[jndex] = '\f';
+              new[j] = '\f';
               break;
 
             case 'n':
-              new[jndex] = '\n';
+              new[j] = '\n';
               break;
 
             case 'r':
-              new[jndex] = '\r';
+              new[j] = '\r';
               break;
 
             case 't':
-              new[jndex] = '\t';
+              new[j] = '\t';
               break;
 
             case '\\':
-              new[jndex] = '\\';
+              new[j] = '\\';
               break;
 
             case '"':
-              new[jndex] = '"';
+              new[j] = '"';
               break;
 
             case '\0':
-              new[jndex] = '\\';
-              index--;
+              new[j] = '\\';
+              i--;
               break;
               
             default:
-              new[jndex] = '\\';
-              new[jndex + 1] = op[index + 1];
+              new[j] = '\\';
+              new[j + 1] = op[i + 1];
             }
-          index++;
+          i++;
         }
       else
-        new[jndex] = op[index];
+        new[j] = op[i];
     }
 
-  new = better_realloc (new, sizeof (char) * (jndex + 1));
-  new[jndex] = '\0';
+  new = better_realloc (new, sizeof (char) * (j + 1));
+  new[j] = '\0';
 
   return new;
 }
@@ -125,9 +124,9 @@ rm_cslashes (char *op)
 char **
 copy (char **words)
 {
-  int     pos;
-  int     count;
-  char ** temp;
+  int pos;
+  int count;
+  char **temp;
 
   if (words == NULL)
     return NULL;
@@ -147,9 +146,9 @@ copy (char **words)
 char *
 array_to_string (var_t *convertable)
 {
-  char  * return_value;
-  char  * setter;
-  var_t * scroller;
+  char  *return_value;
+  char  *setter;
+  var_t *scroller;
   
   return_value = better_malloc (sizeof (char) * (mpz_get_ui (convertable->array_size) + 1));
   setter       = return_value;
@@ -168,22 +167,22 @@ array_to_string (var_t *convertable)
 var_t *
 string_to_array (char *convertable, char *name)
 {
-  int     index;
-  var_t * root;
-  var_t * scroller;
+  int i;
+  var_t *root;
+  var_t *scroller;
 
-  root     = alloc_var ();
+  root = alloc_var ();
   scroller = root;
   
-  for (index = 0; convertable[index] != '\0'; index++)
+  for (i = 0; convertable[i] != '\0'; i++)
     {
-      mpc_set_si (&(scroller->data), (int) (convertable [index]));
+      mpc_set_si (&(scroller->data), (int) (convertable [i]));
       scroller->name = name;
       
-      if (convertable[index + 1] != '\0')
+      if (convertable[i + 1] != '\0')
         {
           scroller->next = alloc_var ();
-          scroller       = scroller->next;
+          scroller = scroller->next;
         }
     }
 
@@ -193,11 +192,11 @@ string_to_array (char *convertable, char *name)
 var_t *
 string_array_to_var (char **strings, char *var_name, int array_size)
 {
-  int     pos;
-  var_t * root;
-  var_t * scroller;
+  int pos;
+  var_t *root;
+  var_t *scroller;
   
-  root       = alloc_var ();
+  root = alloc_var ();
   root->name = var_name;
 
   for (scroller = root, pos = 0; pos < array_size; pos++)
@@ -205,11 +204,11 @@ string_array_to_var (char **strings, char *var_name, int array_size)
       if (pos != 0)
 	{
 	  scroller->next = alloc_var ();
-	  scroller       = scroller->next;
+	  scroller = scroller->next;
 	}
 
-      scroller->name       = var_name;
-      scroller->array_up   = string_to_array (strings[pos], var_name);
+      scroller->name = var_name;
+      scroller->array_up = string_to_array (strings[pos], var_name);
       mpz_set_si (scroller->array_size, strlen (strings[pos]) + 1);
     }
 
@@ -219,12 +218,13 @@ string_array_to_var (char **strings, char *var_name, int array_size)
 FACT_t
 FACT_get_ui (unsigned int op)
 {
-  FACT_t ret;
-
-  ret.type          = VAR_TYPE;
-  ret.return_signal = false;
-  ret.break_signal  = false;
-  ret.v_point       = alloc_var ();
+  FACT_t ret =
+    {
+      .type = VAR_TYPE,
+      .return_signal = false,
+      .break_signal = false,
+      .v_point = alloc_var (),
+    };
   mpc_set_ui (&(ret.v_point->data), op);
 
   return ret;
@@ -233,12 +233,13 @@ FACT_get_ui (unsigned int op)
 FACT_t
 FACT_get_si (signed int op)
 {
-  FACT_t ret;
-
-  ret.type          = VAR_TYPE;
-  ret.return_signal = false;
-  ret.break_signal  = false;
-  ret.v_point       = alloc_var ();
+  FACT_t ret =
+    {
+      .type = VAR_TYPE,
+      .return_signal = false,
+      .break_signal = false,
+      .v_point = alloc_var (),
+    };
   mpc_set_si (&(ret.v_point->data), op);
 
   return ret;
@@ -269,12 +270,13 @@ tokcmp_safe (const char *str1, const char *str2, int line, char *file)
 unsigned int
 strcount (const char op1, const char *op2)
 {
-  int index;
+  int i;
   
-  for (index = 0; *op2 != '\0'; op2++)
+  for (i = 0; *op2 != '\0'; op2++)
     {
       if (op1 == *op2)
-	index++;
+	i++;
     }
-  return 0;
+  
+  return i;
 }
