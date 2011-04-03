@@ -52,7 +52,7 @@ more (FACT_t arg1, FACT_t arg2)
 {
   FACT_t return_value;
 
-  return_value.type    = VAR_TYPE;
+  return_value.type = VAR_TYPE;
   return_value.v_point = alloc_var ();
 
   if (mpc_cmp (arg1.v_point->data, arg2.v_point->data) > 0)

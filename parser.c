@@ -154,8 +154,7 @@ get_words (char *start)
         end++;
       else
         {
-          while (isalnum (*end) || *end == '_'
-                 || *end == '.')
+          while (isalnum (*end) || *end == '_' || *end == '.')
             end++;
         }
 
@@ -766,7 +765,7 @@ get_end_block (int block)
 int *
 get_newlines (char **exp)
 {
-  int i, j, k;
+  int i, j, k, l;
   int *ret_val;
 
   ret_val = NULL;
@@ -774,7 +773,21 @@ get_newlines (char **exp)
   for (i = k = 0; exp[i + k] != NULL; i++)
     {
       ret_val = FACT_realloc (ret_val, sizeof (int) * (i + 1));
-      for (j = 0; exp[i + k][j] == '\n'; j++);
+      // Check for string deliminaters
+      if (i > 0 && exp[i + k - 1][0] == '"')
+        {
+          // Go through the entire string.
+          for (j = l = 0; exp[i + k][j] != '\0'; j++)
+            {
+              if (exp[i + k][j] == '\n')
+                l++;
+            }
+          j = l;
+        }
+      else
+        {
+          for (j = 0; exp[i + k][j] == '\n'; j++);
+        }
       ret_val[i] = j;
       if (j != 0)
         k++;

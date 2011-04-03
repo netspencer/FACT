@@ -165,14 +165,14 @@ eval_math (func_t *scope, syn_tree_t expression, int call_num)
 
   if ((arg1 = eval (scope, expression)).type != VAR_TYPE)
     {
-      if (arg1.type != ERROR_TYPE && (call_num != 0 && call_num != 13))
+      if (arg1.type == ERROR_TYPE && (call_num != 0 && call_num != 13))
         return (arg1.type == ERROR_TYPE
                 ? arg1
                 : FACT_throw_error (scope, "first argument to math call is a function", expression));
     }
   if ((arg2 = eval (scope, expression)).type != VAR_TYPE)
     {
-      if (arg2.type != ERROR_TYPE && (call_num != 0 && call_num != 13))
+      if (arg2.type == ERROR_TYPE && (call_num != 0 && call_num != 13))
         return (arg2.type == ERROR_TYPE
                 ? arg2
                 : FACT_throw_error (scope, "second argument to math call is a function", expression));
