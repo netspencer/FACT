@@ -6,6 +6,7 @@
 ////////////
 // Macros.
 ////////////
+
 #define NOARGS ""
 
 //////////////////////
@@ -27,10 +28,11 @@ FACT_INSTALL_BIF (func_t *scope, char *name, BIF dec)
 // BIF definitions.
 /////////////////////
 
-FACT_EXTERN_BIF (ref   ); // Get the address of a variable/function.
-FACT_EXTERN_BIF (str   ); // Convert a variable to a string array.
-FACT_EXTERN_BIF (deref ); // Derefrence an address.
-FACT_EXTERN_BIF (print ); // Print a string.
+FACT_EXTERN_BIF (ref);    // Get the address of a variable/function.
+FACT_EXTERN_BIF (str);    // Convert a variable to a string array.
+FACT_EXTERN_BIF (deref);  // Derefrence an address.
+FACT_EXTERN_BIF (print);  // Print a string.
 FACT_EXTERN_BIF (sizeof); // Get the size of an array.
+FACT_EXTERN_BIF (lock);   // Lock a variable/function.
 
 #endif 

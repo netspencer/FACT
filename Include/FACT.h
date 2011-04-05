@@ -7,7 +7,6 @@
  * the library headers, macro and
  * struct definitions, and typedefs.
  *
- * Now let's do that Allegro thing:
  *    ________  ________   ________  _________
  *   /\  _____\/\  ___  \ /\  _____\/\___  ___\
  *   \ \ \____/\ \ \__L\ \\ \ \____/\/__/\ \__/

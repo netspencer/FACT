@@ -36,7 +36,7 @@ struct elements MOD_MAP [] =
     { "run"         , "def filename, defunc in", &run_file_soft },
     { "run_loud"    , "def filename, defunc in", &run_file_loud },
     { "putchar"     , "def char"               , &ft_putchar    },
-    { "lock"        , "defunc search, def name", &lock_object   },
+    // { "lock"        , "defunc search, def name", &lock_object   },
     { "throw"       , "def description"        , &throw_error   },
     { "get_arg_type", "->"                     , &get_arg_type  },
     { "get_arg_num" , ""                       , &get_arg_num   },

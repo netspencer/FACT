@@ -53,8 +53,6 @@ defunc_array (func_t *base, func_t *scope, syn_tree_t expression)
        */
       expression.syntax++;
       ip = get_ip ();
-
-      // Get the array size, self explanatory.
       array_size = get_array_size (scope, expression);
 
       /* Move the expression forward only by the difference in positions
@@ -79,7 +77,7 @@ defunc_array (func_t *base, func_t *scope, syn_tree_t expression)
       mpc_get_mpz (size, array_size.v_point->data);
 
       // If the array size is out of bounds, return an error.
-      if (mpz_cmp_ui (size, 1) < 0)
+      if (mpz_cmp_ui (size, 1) <= 0)
 	FACT_throw (scope, "invalid array size", expression);
 
       base = resize_func_array (base, size);
@@ -194,7 +192,7 @@ def_array (var_t *base, func_t *scope, syn_tree_t expression)
       mpz_init    (size);
       mpc_get_mpz (size, array_size.v_point->data);
 
-      if (mpz_cmp_ui (size, 1) < 0)
+      if (mpz_cmp_ui (size, 1) <= 0)
 	FACT_throw (scope, "invalid array size", expression);
       
       base = resize_array (base, size);
@@ -231,9 +229,8 @@ define (func_t *scope, syn_tree_t expression)
 
       if (temp.type != ERROR_TYPE)
 	{
-	  return_value.v_point             = add_var (scope, temp.v_point->array_up->name);
-	  return_value.v_point->array_up   = temp.v_point->array_up;
-	  
+	  return_value.v_point = add_var (scope, temp.v_point->array_up->name);
+	  return_value.v_point->array_up = temp.v_point->array_up;
 	  mpz_set (return_value.v_point->array_size, temp.v_point->array_size);
 	}
       else
@@ -302,19 +299,19 @@ set (func_t *scope, syn_tree_t expression)
       if (arg1.f_point->locked)
 	return arg2;
 
-      arg1.f_point->line       = arg2.f_point->line;
-      arg1.f_point->file_name  = arg2.f_point->file_name;
-      arg1.f_point->args       = arg2.f_point->args;
-      arg1.f_point->body       = arg2.f_point->body;
-      arg1.f_point->usr_data   = arg2.f_point->usr_data;
+      arg1.f_point->line = arg2.f_point->line;
+      arg1.f_point->file_name = arg2.f_point->file_name;
+      arg1.f_point->args = arg2.f_point->args;
+      arg1.f_point->body = arg2.f_point->body;
+      arg1.f_point->usr_data = arg2.f_point->usr_data;
       arg1.f_point->extrn_func = arg2.f_point->extrn_func;
-      arg1.f_point->vars       = arg2.f_point->vars;
-      arg1.f_point->funcs      = arg2.f_point->funcs;
-      arg1.f_point->up         = arg2.f_point->up;
-      arg1.f_point->caller     = arg2.f_point->caller;
-      arg1.f_point->array_up   = arg2.f_point->array_up;
-      arg1.f_point->variadic   = arg2.f_point->variadic;
-
+      arg1.f_point->vars = arg2.f_point->vars;
+      arg1.f_point->funcs = arg2.f_point->funcs;
+      arg1.f_point->up = arg2.f_point->up;
+      arg1.f_point->caller = arg2.f_point->caller;
+      arg1.f_point->array_up = arg2.f_point->array_up;
+      arg1.f_point->variadic = arg2.f_point->variadic;
+      
       mpz_set (arg1.f_point->array_size, arg2.f_point->array_size);
     }
 

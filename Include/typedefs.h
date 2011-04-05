@@ -57,8 +57,7 @@ typedef struct FACT_func
   struct FACT_func *next;
   struct FACT_mixed
   {
-    type_t type;
-    
+    type_t type;    
     var_t *var_p;
     struct FACT_func  *func_p;
     struct FACT_mixed *next;
@@ -72,7 +71,6 @@ typedef struct FACT_error
   func_t *scope;  
 } error_t;
 
-// Ambigious structure that holds a var, func, and error, along with other data.
 typedef struct 
 {
   bool    break_signal;
@@ -84,7 +82,6 @@ typedef struct
   func_t *f_point;  
 } FACT_t;
   
-// Used for evaluating. Someday I hope this will be completely removed.
 typedef struct FACT_syn_tree
 {
   int  *lines;

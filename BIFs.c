@@ -1,6 +1,6 @@
-/* BIFs.c - a collections of misc. built-in-functions for FACT. There
- * are BIFs that are defined in other files, however they fit the
- * context of the entire file. These don't really fit anywhere else.
+/* BIFs.c - a collections of misc. built-in-functions for FACT. These
+ * functions don't really fit anywhere else, and thus they are placed
+ * here.
  */
 
 #include "FACT.h"
@@ -63,6 +63,31 @@ FACT_DEFINE_BIF (ref, "->")
   return return_value;
 }
 
+#ifdef SAFE
+// Some simple functions for checking arrays.
+static bool
+check_func_array (func_t *curr, func_t *op)
+{
+  for (; curr != NULL; curr = curr->next)
+    {
+      if (curr == op || check_func_array (curr->array_up, op))
+        return true;
+    }
+  return false;
+}
+
+static bool
+check_var_array (var_t *curr, var_t *op)
+{
+  for (; curr != NULL; curr = curr->next)
+    {
+      if (curr == op || check_var_array (curr->array_up, op))
+        return true;
+    }
+  return false;
+}
+#endif /* SAFE */
+
 FACT_DEFINE_BIF (deref, "def op")
 {
   /**
@@ -74,34 +99,51 @@ FACT_DEFINE_BIF (deref, "def op")
    * @op: Value that contains the address of the 
    *      variable/function to dereference. 
    */
-  var_t         *op;
-  FACT_t return_value;
-  unsigned long address; 
-
+  var_t *op;
+#ifdef SAFE
+  func_t *curr;
+#endif
+  FACT_t ret_val;
+  unsigned long addr;
+  
   op = get_var (scope, "op");
   
   // Check to make sure that op is not floating point.
   if (op->data.precision > 1)
     FACT_ret_error (scope, "addresses cannot be floating point");
 
-  address = mpz_get_ui (op->data.object);
-  return_value.type = (mpz_sgn (op->data.object) < 0)
-    ? FUNCTION_TYPE
-    : VAR_TYPE;
+  addr = mpz_get_ui (op->data.object);
+  ret_val.type = ((mpz_sgn (op->data.object) < 0)
+                  ? FUNCTION_TYPE
+                  : VAR_TYPE);
   
 #ifdef SAFE
   /* There will be a routine here to check the validity of
-   * the address. Right now that has been left out, but I
-   * plan to add it very soon.
+   * the address. It's very slow, so we don't make it
+   * needed to build.
    */
+  for (curr = scope->caller; curr != NULL; curr = curr->up)
+    {
+      if ((ret_val.type == FUNCTION_TYPE
+           && check_func_array (curr->funcs, (func_t *) addr))
+          || check_var_array (curr->vars, (var_t *) addr))
+        goto FOUND;
+    }
+  /* We've looped through every valid scope and it was no
+   * where to be found.
+   */
+  FACT_ret_error (scope, "invalid address");
+
+ FOUND:
 #endif /* SAFE */
 
-  // We just set both of the pointers to the address, as the
-  // invalid one will just be ignored. 
-  return_value.v_point = (var_t *) address;
-  return_value.f_point = (func_t *) address;
+  /* We just set both of the pointers to the address, as the
+   * invalid one will just be ignored.
+   */
+  ret_val.v_point = (var_t *) addr;
+  ret_val.f_point = (func_t *) addr;
 
-  return return_value;
+  return ret_val;
 }
 
 FACT_DEFINE_BIF (print, "def str")
@@ -124,8 +166,8 @@ FACT_DEFINE_BIF (print, "def str")
 FACT_DEFINE_BIF (str, "def val")
 {
   /**
-   * str - converts a variable into a string array. If passed an array, it
-   * will only convert the base value.
+   * str - converts a variable into a string array. If passed an array, 
+   * it will only convert the base value.
    *
    * @val: value to convert.
    */
@@ -149,4 +191,51 @@ FACT_DEFINE_BIF (str, "def val")
   mpz_set_si (return_str.v_point->array_size, strlen (str));
 
   return return_str;
+}
+
+///////////////////////
+// Locking functions:
+///////////////////////
+
+static void
+lock_var_array (var_t *curr)
+{
+  for (; curr != NULL; curr = curr->next)
+    {
+      lock_var_array (curr->array_up);
+      curr->locked = true;
+    }
+}
+
+static void
+lock_func_array (func_t *curr)
+{
+  for (; curr != NULL; curr = curr->next)
+    {
+      lock_func_array (curr->array_up);
+      curr->locked = true;
+    }
+}
+
+FACT_DEFINE_BIF (lock, "->")
+{
+  /**
+   * lock - lock the passed variables/functions and prevent
+   * changes in their values. Note, this does not prevent elements
+   * of a scope being changed, just function pointer itself.
+   */
+  struct FACT_mixed *curr;
+  
+  if (scope->variadic == NULL)
+    FACT_ret_error (scope, "lock expects at least one argument");
+
+  for (curr = scope->variadic; scope != NULL; scope = scope->next)
+    {
+      if (curr->type == FUNCTION_TYPE)
+        lock_func_array (curr->func_p);
+      else 
+        lock_var_array (curr->var_p);
+    }
+
+  return FACT_get_ui (0);
 }
