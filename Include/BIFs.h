@@ -14,12 +14,12 @@
 //////////////////////
 
 static inline void
-FACT_INSTALL_BIF (func_t *scope, char *name, BIF dec)
+FACT_INSTALL_BIF (func_t *scope, BIF dec)
 {
   func_t *temp;
   char **get_words (char *);
   
-  temp = add_func (scope, name);
+  temp = add_func (scope, dec.name);
   temp->args = get_words (dec.arguments);
   temp->extrn_func = dec.function;
 }

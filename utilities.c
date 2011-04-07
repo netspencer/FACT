@@ -15,22 +15,24 @@ count_until_NULL (char **words)
   return pos;
 }
 
-bool
+int
 compare_var_arrays (var_t *op1, var_t *op2, bool first)
 {
-  // compare_var_arrays: returns true on == and false on !=. 
-
-  if (op1 == NULL && op2 == NULL)
-    return true;
-  if (op1 == NULL || op2 == NULL)
-    return false;
+  int res;
   
-  if (!mpc_cmp (op1->data, op2->data))
-    return compare_var_arrays (op1->array_up, op2->array_up, false)
-      && ((first) // If we're not in the first position, search the 'next' element.
-          ? true
-          : compare_var_arrays (op1->next, op2->next, false));
-  return false;
+  if (op1 == NULL && op2 == NULL)
+    return 0;
+  if (op1 == NULL || op2 == NULL)
+    return (op1 == NULL) ? -1 : 1;
+
+  res = mpc_cmp (op1->data, op2->data);
+  if (res == 0)
+    {
+      res = compare_var_arrays (op1->array_up, op2->array_up, false);
+      if (res == 0 && !first)
+        return compare_var_arrays (op1->next, op2->next, false);
+    }
+  return res;
 }
 
 char *

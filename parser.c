@@ -130,12 +130,8 @@ get_words (char *start)
              && *end != '\n' && *end != '\0')
         start = ++end;
 
-      if (*end == '\n')
-        {
-          while (*end == '\n')
-            end++;
-        }
-      else if (is_string)
+      // Check for a string
+      if (is_string)
         {
           is_string = false;
           end++;
@@ -148,6 +144,13 @@ get_words (char *start)
           end--;
           is_string = true;
         }
+      // Check for newlines
+      else if (*end == '\n')
+        {
+          while (*end == '\n')
+            end++;
+        }
+      // Check for everything else
       else if (is_opt ((int) *end, (int) *(end + 1)))
         end += 2;
       else if (ispunct ((int) *end) && *end != '.')
@@ -158,6 +161,7 @@ get_words (char *start)
             end++;
         }
 
+      // Tokenize
       if ((end - start) > 0)
         {
           result[i] = better_malloc ((end - start + 1) * sizeof (char));
@@ -228,7 +232,7 @@ op_get_prec (char *op)
       { "&&", NULL },
       { "||", NULL },
       { "=", "+=", "-=", "*=", "/=", "%=", NULL },
-      // Special keywords (highest precedence): 15 -> 18
+      // Special keywords (lowest precedence): 15 -> 18
       { "if", "error", "while", "for", "then", "else", NULL },
       { "return", "give", "break", "sprout", ";", ",", ")!", NULL },
       { "![", "[", "(", "{", NULL },
@@ -259,15 +263,21 @@ op_is_lr (int prec)
 ////////////////////
 
 bool
-check (char **input, const char *f_name, int start_line)
+check (char **input, const char *f_name, int start_line, int *lines)
 {
+  /**
+   * check - check for errors potentially harmful to the parser, and
+   * print them out. Among other things, this function checks for
+   * incompletions.
+   */
+  
   int i, j;
   int prec;
   int state;
   int s_size;
-  int p_count;
+  int p_hold;
+  int p_count, b_count, c_count;
 
-  int  *lines;
   char *custom_fmt;
   char *next_token;
   char *prev_token;
@@ -292,10 +302,9 @@ check (char **input, const char *f_name, int start_line)
   s_size = 1;
   semi_stack[s_size - 1] = true;
   com_stack[s_size - 1] = def_stack[s_size - 1] = false;
-
-  lines = get_newlines (input);
   
   // Remove newlines
+  /*
   for (i = 0; input[i] != NULL; i++)
     {
       if (input[i][0] == '"')
@@ -307,7 +316,9 @@ check (char **input, const char *f_name, int start_line)
           i--;
         }
     }
+  */
 
+  p_count = b_count = c_count = 0;
   for (i = 0; input[i] != NULL; i++)
     {
       next_token = input[i + 1];
@@ -316,6 +327,11 @@ check (char **input, const char *f_name, int start_line)
         {
           if (op_get_prec (input[i]) == -1)
             {
+              if (isnum (input[i]))
+                {
+                  custom_fmt = "cannot define, %s is a number";
+                  goto custom_error;
+                }
               s_size--;
               STACK_REALLOC ();
               com_stack[s_size] = def_stack[s_size] = semi_stack[s_size] = false;
@@ -346,12 +362,14 @@ check (char **input, const char *f_name, int start_line)
               com_stack[s_size] = def_stack[s_size] = semi_stack[s_size] = false;
               s_size++;
             }
+          p_count++;
         }
       else if (input[i][0] == ')')
         {
           s_size--;
           STACK_REALLOC ();
           com_stack[s_size] = def_stack[s_size] = semi_stack[s_size] = false;
+
           if ((input[i][1] != ')' && state == OP)
               || (state != VAR && (prev_token == NULL || strcmp (prev_token, "("))))
             goto error;
@@ -360,6 +378,11 @@ check (char **input, const char *f_name, int start_line)
               state = START;
               if (input[i][1] == ')')
                 input[i] = ")";
+            }
+          if (--p_count < 0)
+            {
+              custom_fmt = "mismatched %s";
+              goto custom_error;
             }
         }
       else if (!strcmp (input[i], "["))
@@ -378,12 +401,18 @@ check (char **input, const char *f_name, int start_line)
               com_stack[s_size] = def_stack[s_size] = semi_stack[s_size] = false;
               s_size++;
             }
+          b_count++;
           state = OP;
         }
       else if (!strcmp (input[i], "]"))
         {
           if (state != VAR)
             goto error;
+          if (--b_count < 0)
+            {
+              custom_fmt = "mismatched %s";
+              goto custom_error;
+            }
           s_size--;
           STACK_REALLOC ();
           com_stack[s_size] = def_stack[s_size] = semi_stack[s_size] = false;
@@ -397,10 +426,16 @@ check (char **input, const char *f_name, int start_line)
           semi_stack[s_size] = true;
           com_stack[s_size] = def_stack[s_size] = false;
           s_size++;
+          c_count++;
         }
       else if (!strcmp (input[i], "}"))
         {
-          if (strcmp (prev_token, ";") && strcmp (prev_token, "}"))
+          if (--c_count < 0)
+            {
+              custom_fmt = "mismatched %s";
+              goto custom_error;
+            }
+          if (prev_token == NULL || (strcmp (prev_token, ";") && strcmp (prev_token, "}")))
             {
               custom_fmt = "expected ';' before %s";
               goto custom_error;
@@ -436,13 +471,21 @@ check (char **input, const char *f_name, int start_line)
         {
           if (state != VAR || next_token == NULL || strcmp (next_token, "("))
             goto error;
-          for (j = i + 2, p_count = 1; p_count > 0; j++)
+          p_hold = p_count + 1;
+          p_count = 1;
+          for (j = i + 2; p_count > 0; j++)
             {
+              if (input[j] == NULL)
+                {
+                  custom_fmt = "expected '( exp )' after %s";
+                  goto custom_error;
+                }
               if (!strcmp (input[j], "("))
                 p_count++;
               else if (!strcmp (input[j], ")"))
                 p_count--;
             }
+          p_count = p_hold;
           if (input[j] == NULL || strcmp (input[j], "{"))
             {
               custom_fmt = "expected '{' after %s";
@@ -467,8 +510,15 @@ check (char **input, const char *f_name, int start_line)
               custom_fmt = "expected '(' after %s";
               goto custom_error;
             }
-          for (j = i + 2, p_count = 1; p_count > 0; j++)
+          p_hold = p_count + 1;
+          p_count = 1;
+          for (j = i + 2; p_count > 0; j++)
             {
+              if (input[j] == NULL)
+                {
+                  custom_fmt = "expected '( exp )' after %s";
+                  goto custom_error;
+                }
               if (!strcmp (input[j], "("))
                 p_count++;
               else if (!strcmp (input[j], ")"))
@@ -559,6 +609,22 @@ check (char **input, const char *f_name, int start_line)
       prev_token = input[i];
     }
 
+  if (p_count)
+    {
+      custom_fmt = "unmatched '('";
+      goto custom_error;
+    }
+  else if (b_count)
+    {
+      custom_fmt = "unmatched '['";
+      goto custom_error;
+    }
+  else if (c_count)
+    {
+      custom_fmt = "unmatched '{'";
+      goto custom_error;
+    }
+
   FACT_free (com_stack);
   FACT_free (def_stack);
   FACT_free (semi_stack);
@@ -594,17 +660,16 @@ parse (char **input, const char *f_name, int start_line)
   int i, j;
   int p_count;
   int stack_size;
+  int *lines;
   char *goal;
   char *hold;
   char **op_stack;
   char **output;
 
   stack_size = 0;
+  lines = get_newlines (input);
 
-  if (check (input, f_name, start_line))
-    return NULL;
-
-  // Remove newlines, again
+  // Remove newlines
   for (i = 0; input[i] != NULL; i++)
     {
       if (input[i][0] == '"')
@@ -616,7 +681,10 @@ parse (char **input, const char *f_name, int start_line)
           i--;
         }
     }
-  
+
+  if (check (input, f_name, start_line, lines))
+    return NULL;
+
   output = FACT_malloc (sizeof (char *) * (i + 1));
   op_stack = FACT_malloc (sizeof (char *) * (i + 1));
 
@@ -783,14 +851,15 @@ get_newlines (char **exp)
                 l++;
             }
           j = l;
+          k++;
         }
       else
         {
           for (j = 0; exp[i + k][j] == '\n'; j++);
+          if (j != 0)
+            k++;
         }
       ret_val[i] = j;
-      if (j != 0)
-        k++;
     }
 
   ret_val = FACT_realloc (ret_val, sizeof (int) * (i + 1));

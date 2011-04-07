@@ -5,19 +5,20 @@ equal (FACT_t arg1, FACT_t arg2)
 {
   FACT_t return_value;
 
-  return_value.type    = VAR_TYPE;
+  return_value.type = VAR_TYPE;
   return_value.v_point = alloc_var ();
   
   if (arg1.type == VAR_TYPE)
     {
-      if (compare_var_arrays (arg1.v_point, arg2.v_point, true))
+      if (!compare_var_arrays (arg1.v_point, arg2.v_point, true))
         mpc_set_si (&(return_value.v_point->data), 1);
     }
   else
     {
       // Not good enough.
       if (arg1.f_point->vars == arg2.f_point->vars
-	  && arg1.f_point->funcs == arg2.f_point->funcs)
+	  && arg1.f_point->funcs == arg2.f_point->funcs
+          && arg1.f_point->usr_data == arg2.f_point->usr_data)
         mpc_set_si (&(return_value.v_point->data), 1);
     }
 
@@ -29,12 +30,12 @@ not_equal (FACT_t arg1, FACT_t arg2)
 {
   FACT_t return_value;
 
-  return_value.type    = VAR_TYPE;
+  return_value.type = VAR_TYPE;
   return_value.v_point = alloc_var ();
     
   if (arg1.type == VAR_TYPE)
     {
-      if (!compare_var_arrays (arg1.v_point, arg2.v_point, true))
+      if (compare_var_arrays (arg1.v_point, arg2.v_point, true))
         mpc_set_si (&(return_value.v_point->data), 1);
     }
   else
@@ -55,7 +56,7 @@ more (FACT_t arg1, FACT_t arg2)
   return_value.type = VAR_TYPE;
   return_value.v_point = alloc_var ();
 
-  if (mpc_cmp (arg1.v_point->data, arg2.v_point->data) > 0)
+  if (compare_var_arrays (arg1.v_point, arg2.v_point, true) > 0) 
     mpc_set_si (&(return_value.v_point->data), 1);
 
   return return_value;
@@ -66,10 +67,10 @@ more_equal (FACT_t arg1, FACT_t arg2)
 {
   FACT_t return_value;
 
-  return_value.type    = VAR_TYPE;
+  return_value.type = VAR_TYPE;
   return_value.v_point = alloc_var ();
 
-  if (mpc_cmp (arg1.v_point->data, arg2.v_point->data) >= 0)
+  if (compare_var_arrays (arg1.v_point, arg2.v_point, true) >= 0)
     mpc_set_si (&(return_value.v_point->data), 1);
 
   return return_value;
@@ -80,10 +81,10 @@ less (FACT_t arg1, FACT_t arg2)
 {
   FACT_t return_value;
   
-  return_value.type    = VAR_TYPE;
+  return_value.type = VAR_TYPE;
   return_value.v_point = alloc_var ();
 
-  if (mpc_cmp (arg1.v_point->data, arg2.v_point->data) < 0)
+  if (compare_var_arrays (arg1.v_point, arg2.v_point, true) < 0)
     mpc_set_si (&(return_value.v_point->data), 1);
 
   return return_value;
@@ -94,10 +95,10 @@ less_equal (FACT_t arg1, FACT_t arg2)
 {
   FACT_t return_value;
 
-  return_value.type    = VAR_TYPE;
+  return_value.type = VAR_TYPE;
   return_value.v_point = alloc_var ();
 
-  if (mpc_cmp (arg1.v_point->data, arg2.v_point->data) <= 0)
+  if (compare_var_arrays (arg1.v_point, arg2.v_point, true) <= 0)
     mpc_set_si (&(return_value.v_point->data), 1);
 
   return return_value;
@@ -201,7 +202,7 @@ and (func_t *scope, syn_tree_t expression)
   else if (arg1.type == FUNCTION_TYPE)
     FACT_throw (scope, "both arguments to && must be variables", expression);
 
-  return_value.type    = VAR_TYPE;
+  return_value.type = VAR_TYPE;
   return_value.v_point = alloc_var ();
   expression.syntax += get_ip ();
   len = statement_length (expression.syntax);
@@ -247,7 +248,7 @@ or (func_t *scope, syn_tree_t expression)
   else if (arg1.type == FUNCTION_TYPE)
     FACT_throw (scope, "both arguments to || must be variables", expression);
 
-  return_value.type    = VAR_TYPE;
+  return_value.type = VAR_TYPE;
   return_value.v_point = alloc_var ();
   mpc_set_ui (&(return_value.v_point->data), 1);
   expression.syntax += get_ip ();

@@ -99,6 +99,7 @@ struct elements
 // BIF - structure that defines a BIF's arguments and function.
 typedef struct
 {
+  char *name;
   char *arguments;
   void *(*function)(func_t *);
 } BIF;

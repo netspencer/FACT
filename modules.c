@@ -7,7 +7,7 @@ typedef struct _LIB
   struct _LIB *next;
 } lib_t;
 
-static lib_t * root;
+static lib_t *root;
 
 /* I am a little tired, so this may be a giant clusterfuck
  * of awful. I don't know. Also, I have to add the using of
@@ -29,7 +29,7 @@ FACT_DEFINE_BIF (import, "def path")
     void *(*function)(func_t *);
   } *MOD_MAP;
 
-  path  = get_var (scope, "path"); 
+  path = get_var (scope, "path"); 
   scope = scope->up;
   fpath = array_to_string (path);
 
@@ -46,12 +46,12 @@ FACT_DEFINE_BIF (import, "def path")
 	    FACT_ret_error (scope, "cannot re-load library");
 	}
       scroller->next = better_malloc (sizeof (lib_t));
-      scroller       = scroller->next;
+      scroller = scroller->next;
     }
 
-  scroller->next      = NULL;
+  scroller->next = NULL;
   scroller->file_path = fpath;
-  scroller->library   = dlopen (fpath, RTLD_LAZY);
+  scroller->library = dlopen (fpath, RTLD_LAZY);
 
   if (scroller->library == NULL)
     {
@@ -67,12 +67,13 @@ FACT_DEFINE_BIF (import, "def path")
   for (i = 0; MOD_MAP[i].name != NULL; i++)
     {
       func_t *ref;
+      ref = add_func (scope, MOD_MAP[i].name);
 
-      if ((ref = add_func (scope, MOD_MAP[i].name)) == NULL)
+      if (ref == NULL)
 	continue; /* if it couldn't be added, just skip it. */
-
       if (MOD_MAP[i].arguments == NULL)
 	continue;
+      
       ref->args = get_words (combine_strs (MOD_MAP[i].arguments, " "));
 
       ref->locked = true;
@@ -89,7 +90,7 @@ close_libs ( void )
 
   for (scroller = root; scroller != NULL; scroller = scroller->next)
     {
-      if (scroller->library != NULL) /* in case there was an error loading something */
-	dlclose (scroller->library);
+      if (scroller->library != NULL) // in case there was an error loading a library
+        dlclose (scroller->library);
     }
 }

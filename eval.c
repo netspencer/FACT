@@ -540,8 +540,8 @@ eval (func_t * scope, syn_tree_t expression)
   break_signal  = return_value.break_signal;
   return_signal = return_value.return_signal;
 
-  /* Depending on whether or not the return value is
-   * a variable or a function, we check for a variable
+  /* Depending on whether or not the return value is a
+   * variable or a function, we check for a variable
    * array or a function array. This includes numbers,
    * values returned by primitives, etc. Believe me,
    * accessing array elements after a primitive is

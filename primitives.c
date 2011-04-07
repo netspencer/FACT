@@ -52,27 +52,27 @@ init_BIFs (func_t *scope)
 
   // General:
   
-  FACT_INSTALL_BIF (scope, "ref"   , FACT_BIF (ref));
-  FACT_INSTALL_BIF (scope, "deref" , FACT_BIF (deref));
-  FACT_INSTALL_BIF (scope, "print" , FACT_BIF (print));
-  FACT_INSTALL_BIF (scope, "import", FACT_BIF (import));
-  FACT_INSTALL_BIF (scope, "sizeof", FACT_BIF (sizeof));
+  FACT_INSTALL_BIF (scope, FACT_BIF (ref));
+  FACT_INSTALL_BIF (scope, FACT_BIF (deref));
+  FACT_INSTALL_BIF (scope, FACT_BIF (print));
+  FACT_INSTALL_BIF (scope, FACT_BIF (import));
+  FACT_INSTALL_BIF (scope, FACT_BIF (sizeof));
 
   // Casting:
 
-  FACT_INSTALL_BIF (scope, "str", FACT_BIF (str));
+  FACT_INSTALL_BIF (scope, FACT_BIF (str));
 
   // Threading:
   
-  FACT_INSTALL_BIF (scope, "pop", FACT_BIF (pop));
-  FACT_INSTALL_BIF (scope, "send", FACT_BIF (send));
-  FACT_INSTALL_BIF (scope, "queue_size", FACT_BIF (queue_size));
-  FACT_INSTALL_BIF (scope, "get_tid", FACT_BIF (get_tid));
-  FACT_INSTALL_BIF (scope, "get_thread_status", FACT_BIF (get_thread_status));
+  FACT_INSTALL_BIF (scope, FACT_BIF (pop));
+  FACT_INSTALL_BIF (scope, FACT_BIF (send));
+  FACT_INSTALL_BIF (scope, FACT_BIF (queue_size));
+  FACT_INSTALL_BIF (scope, FACT_BIF (get_tid));
+  FACT_INSTALL_BIF (scope, FACT_BIF (get_thread_status));
 
   // Locking:
 
-  FACT_INSTALL_BIF (scope, "lock", FACT_BIF (lock));
+  FACT_INSTALL_BIF (scope, FACT_BIF (lock));
 }
 
 int

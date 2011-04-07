@@ -31,12 +31,13 @@
 # define FACT_INTERN_DEPRECATED(type) type
 #endif /* (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 1)) */
 
-#define FACT_DEFINE_BIF(name, args) FACT_t name##_func (func_t * scope); \
-  BIF name##_BIF = {							\
-    .arguments = args " ",						\
-    .function = (void * (*) (struct FACT_func *)) &(name ## _func)      \
+#define FACT_DEFINE_BIF(op1, op2) FACT_t op1##_func (func_t * scope);   \
+  BIF op1##_BIF = {                                                     \
+    .name = #op1,                                                       \
+    .arguments = op2 " ",						\
+    .function = (void * (*) (struct FACT_func *)) &(op1##_func)         \
   };									\
-  FACT_t name##_func (func_t * scope)
+  FACT_t op1##_func (func_t * scope)
 
 #define FACT_EXTERN_BIF(name) BIF name ## _BIF
 #define FACT_BIF(name) name ## _BIF

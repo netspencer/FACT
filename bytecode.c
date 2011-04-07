@@ -271,7 +271,7 @@ compile_constants (char **expression)
 	   */
 	  for (j = 0; j < next_available; j++)
 	    {
-	      if (compare_var_arrays (values[j], returned.v_point, true))
+	      if (compare_var_arrays (values[j], returned.v_point, true) == 0)
 		break;
 	    }
 	  /* If jndex equals next_available, that means the

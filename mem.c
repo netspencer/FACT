@@ -262,6 +262,24 @@ clone_var (var_t *surrogate, char *name)
   return clone;
 }
 
+static var_t *
+clone_var_f (var_t *surr, char *name)
+{
+  // Just to simplify things
+  var_t *hold_n;
+  var_t *hold_r;
+
+  if (surr == NULL)
+    return NULL;
+
+  hold_n = surr->next;
+  surr->next = NULL;
+  hold_r = clone_var (surr, name);
+  surr->next = hold_n;
+
+  return hold_r;
+}
+
 FACT_t
 set (func_t *scope, syn_tree_t expression)
 {
@@ -282,9 +300,9 @@ set (func_t *scope, syn_tree_t expression)
       if (arg1.v_point->locked)
 	return arg2;
       
-      hold               = arg2.v_point->next;
+      hold = arg2.v_point->next;
       arg2.v_point->next = NULL;
-      copy               = clone_var (arg2.v_point, arg1.v_point->name);
+      copy = clone_var (arg2.v_point, arg1.v_point->name);
       arg2.v_point->next = hold;
       
       free_var (arg1.v_point->array_up);
@@ -355,23 +373,10 @@ return_array (func_t *scope, syn_tree_t expression)
   FACT_t hold;
   type_t type;
   unsigned long ip;
-  
-  /* Something tells me that it was sort of pointless to use unions in this
-   * case, and I'll probably remove them at a later date. But, alas, this
-   * project was designed so that I could learn C from it, and this helped,
-   * so it was included.
-   */
-  union
-  {
-    var_t  *var_root;
-    func_t *func_root;
-  } roots;
-  union
-  {
-    var_t  *var_value;
-    func_t *func_value;
-  } values;
 
+  void *curr;
+  void *base;
+  
   ip = get_ip ();
   expression.syntax += ip;
   reset_ip ();
@@ -379,26 +384,19 @@ return_array (func_t *scope, syn_tree_t expression)
   /* Get the initial argument, the one that determines the type of
    * the array.
    */
-  if ((hold = eval (scope, expression)).type == ERROR_TYPE)
+  hold = eval (scope, expression);
+  if (hold.type == ERROR_TYPE)
     return hold;
 
   type = hold.type;
-
+  // To avoid a nasty ? conditional expression.
   if (type == VAR_TYPE)
-    {
-      values.var_value         = hold.v_point;
-      roots.var_root           = alloc_var ();
-      roots.var_root->array_up = values.var_value;
-    }
-  else if (type == FUNCTION_TYPE)    
-    {
-      values.func_value         = hold.f_point;
-      roots.func_root           = alloc_func ();
-      roots.func_root->up       = scope;
-      roots.func_root->array_up = values.func_value;
-    }
-
+    curr = (void *) clone_var_f (hold.v_point, NULL);
+  else
+    curr = (void *) hold.f_point;
+  base = curr;
   mpz_init_set_ui (size, 1);
+
   for (;;)
     {
       ip += get_ip ();
@@ -407,34 +405,31 @@ return_array (func_t *scope, syn_tree_t expression)
       
       if (!tokcmp (expression.syntax[0], "]"))
 	{
-	  next_inst ();
+	  ip++;
 	  break;
 	}
 
-      /* If there was a comma, then move the instruction pointer forward one
-       * and get the next argument.
-       */
-      next_inst ();      
+      next_inst ();
+      hold = eval (scope, expression);
 
-      if ((hold = eval (scope, expression)).type == ERROR_TYPE)
-	return hold;
+      if (hold.type == ERROR_TYPE)
+        return hold;
       else if (type != hold.type)
 	{
-	  if (type == VAR_TYPE)
-	    FACT_throw (scope, "unexpected function returned in a variable array", expression);
-	  else
-	    FACT_throw (scope, "unexpected variable returned in a function array", expression);
+          FACT_throw (scope, ((type == VAR_TYPE)
+                              ? "unexpected function returned in a variable array"
+                              : "unexpected variable returned in a function array"), expression);
 	}
 
       if (type == VAR_TYPE)
 	{
-	  values.var_value->next = hold.v_point;
-	  values.var_value = values.var_value->next;
+	  ((var_t *) curr)->next = clone_var_f (hold.v_point, NULL);
+          curr = (void *) (((var_t *) curr)->next);
 	}
-      else if (type == FUNCTION_TYPE)
+      else 
 	{
-	  values.func_value->next = hold.f_point;
-	  values.func_value = values.func_value->next;
+	  ((func_t *) curr)->next = hold.f_point;
+	  curr = (void *) (((func_t *) curr)->next);
 	}
       mpz_add_ui (size, size, 1);
     }
@@ -444,20 +439,24 @@ return_array (func_t *scope, syn_tree_t expression)
   if (type == VAR_TYPE)
     {
       if (!mpz_cmp_ui (size, 1))
-	return_value.v_point = roots.var_root->array_up;
+	return_value.v_point = (var_t *) base;
       else
-	return_value.v_point = roots.var_root;
-
-      mpz_set (return_value.v_point->array_size, size);
+        {
+          return_value.v_point = alloc_var ();
+          return_value.v_point->array_up = (var_t *) base;
+          mpz_set (return_value.v_point->array_size, size);
+        }
     }
-  else if (type == FUNCTION_TYPE)
+  else 
     {
       if (!mpz_cmp_ui (size, 1))
-	return_value.f_point = roots.func_root->array_up;
+	return_value.f_point = (func_t *) base;
       else
-	return_value.f_point = roots.func_root;
-
-      mpz_set (return_value.f_point->array_size, size);
+        {
+          return_value.f_point = alloc_func ();
+          return_value.f_point->array_up = (func_t *) base;
+          mpz_set (return_value.f_point->array_size, size);
+        }
     }
 
   // Set the instruction pointer back.
@@ -507,7 +506,7 @@ get_array_var (var_t *root, func_t *scope, syn_tree_t expression)
   if (array_size.type != VAR_TYPE)
     FACT_throw (scope, "array position cannot be a function", expression);
 
-  mpz_init    (size);
+  mpz_init (size);
   mpc_get_mpz (size, array_size.v_point->data);
 
   if (mpz_cmp (size, root->array_size) >= 0 || mpz_cmp_ui (size, 0) < 0)
@@ -609,15 +608,15 @@ combine_arrays (FACT_t op1, FACT_t op2)
   var_t *temp2;
   var_t *hold;
 
-  hold              = op1.v_point->next;
+  hold = op1.v_point->next;
   op1.v_point->next = NULL;
-  temp1             = clone_var (op1.v_point, "temp1");
+  temp1 = clone_var (op1.v_point, "temp1");
   op1.v_point->next = hold;
-  hold              = op2.v_point->next;
+  hold = op2.v_point->next;
   op2.v_point->next = NULL;
-  temp2             = clone_var (op2.v_point, "temp2");
+  temp2 = clone_var (op2.v_point, "temp2");
   op2.v_point->next = hold;
-  result            = alloc_var ();
+  result = alloc_var ();
 
   mpz_add (result->array_size, temp1->array_size, temp2->array_size);
 
