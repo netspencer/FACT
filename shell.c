@@ -34,9 +34,6 @@ get_input (FILE *fp, unsigned int *line_number, const char *start_prompt, const 
 	{
 	  while ((curr_char = fgetc (fp)) != EOF && curr_char != '\n')
 	    ;
-	  ungetc (curr_char, fp);
-	  i--;
-	  continue;
 	}
       if (curr_char == '\n')
 	{
@@ -200,8 +197,7 @@ shell (func_t * scope)
 	}
 
       // Get the newlines and parse the string.
-      newlines = get_newlines (tokenized);
-      tokenized = parse (tokenized, "stdin", end_line);
+      tokenized = parse (tokenized, "stdin", scope->line, &newlines);
 
       if (tokenized == NULL)
         continue;

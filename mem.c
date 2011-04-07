@@ -4,17 +4,10 @@ FACT_t
 defunc_array (func_t *base, func_t *scope, syn_tree_t expression)
 {
   /**
-   * defunc_array - create a function array. This function is
-   * called be defunc in order to more easily create mult-
-   * dimensionaly arrays. Currently there is only one bug,
-   * and that is dimensions of size one will cause a segfault.
-   * It's not a very good solution to increase the minimum
-   * dimension size (which is 0), this surprisingly has a bit
-   * of use, which I will not go into now.  Also, this function
-   * is recursive. While that may seem like an issue, it only
-   * calls itself recursively once per dimension. An array
-   * would have to have something like over 10000 dimensions
-   * to cause this.
+   * defunc_array - create a function array. This function is called by defunc
+   * in order to create mult-dimensional arrays. The method used is recursive
+   * traversing of the linked-list. Since def_array works in essentially the
+   * same way, def_array isn't as commented.
    */
   mpz_t  i;
   mpz_t  size;
@@ -109,8 +102,10 @@ defunc_array (func_t *base, func_t *scope, syn_tree_t expression)
 FACT_t
 defunc (func_t *scope, syn_tree_t expression)
 {
+  int b_count;
   FACT_t return_value;
   FACT_t temp;
+  unsigned long i;
 
   return_value.f_point = alloc_func ();
   return_value.type = FUNCTION_TYPE;
@@ -118,8 +113,24 @@ defunc (func_t *scope, syn_tree_t expression)
 
   if (!tokcmp (expression.syntax[0], "["))
     {
+      // Check for a redeclaration
+      for (b_count = i = 1; b_count > 0; i++)
+        {
+        another_dimension:
+          if (!tokcmp (expression.syntax[i], "["))
+            b_count++;
+          else if (!tokcmp (expression.syntax[i], "]"))
+            b_count--;
+        }
+      if (!tokcmp (expression.syntax[i], "["))
+        goto another_dimension;
+      else if (get_local_var (scope, expression.syntax[i]) != NULL)
+        {
+          expression.syntax += i;
+          FACT_throw (scope, combine_strs (expression.syntax[0], " already declared as a local variable"), expression);
+        }
+      
       temp = defunc_array (NULL, scope, expression);
-
       if (temp.type != ERROR_TYPE)
 	{
 	  return_value.f_point = add_func (scope, temp.f_point->array_up->name);
@@ -127,17 +138,18 @@ defunc (func_t *scope, syn_tree_t expression)
 	  return_value.f_point->array_up = temp.f_point->array_up;
 	  return_value.f_point->up = scope;
 	  return_value.f_point->file_name = scope->file_name; 
-	  
 	  mpz_set (return_value.f_point->array_size, temp.f_point->array_size);
-	  GC_free (temp.f_point);
+	  FACT_free (temp.f_point);
 	}
       else
 	return_value = temp;
     }
   else
     {
-      return_value.f_point = add_func (scope, expression.syntax[0]);
+      if (get_local_var (scope, expression.syntax[0]) != NULL)
+        FACT_throw (scope, combine_strs (expression.syntax[0], " already declared as a local variable"), expression);
 
+      return_value.f_point = add_func (scope, expression.syntax[0]);
       if (return_value.f_point == NULL)
 	FACT_throw (scope, "could not define function", expression);
 
@@ -216,8 +228,10 @@ def_array (var_t *base, func_t *scope, syn_tree_t expression)
 FACT_t
 define (func_t *scope, syn_tree_t expression)
 {
+  int b_count;
   FACT_t return_value;
   FACT_t temp;
+  unsigned long i;
 
   return_value.v_point = alloc_var ();
   return_value.type = VAR_TYPE;
@@ -225,6 +239,23 @@ define (func_t *scope, syn_tree_t expression)
 
   if (!tokcmp (expression.syntax[0], "["))
     {
+      // Check for a redeclaration
+      for (b_count = i = 1; b_count > 0; i++)
+        {
+        another_dimension:
+          if (!tokcmp (expression.syntax[i], "["))
+            b_count++;
+          else if (!tokcmp (expression.syntax[i], "]"))
+            b_count--;
+        }
+      if (!tokcmp (expression.syntax[i], "["))
+        goto another_dimension;
+      else if (get_local_var (scope, expression.syntax[i]) != NULL)
+        {
+          expression.syntax += i;
+          FACT_throw (scope, combine_strs (expression.syntax[0], " already declared as a local function"), expression);
+        }
+      
       temp = def_array (NULL, scope, expression);
 
       if (temp.type != ERROR_TYPE)
@@ -237,7 +268,11 @@ define (func_t *scope, syn_tree_t expression)
 	return_value = temp;
     }
   else
-    return_value.v_point = add_var (scope, expression.syntax[0]);
+    {
+      if (get_local_var (scope, expression.syntax[0]) != NULL)
+        FACT_throw (scope, combine_strs (expression.syntax[0], " already declared as a local function"), expression);
+      return_value.v_point = add_var (scope, expression.syntax[0]);
+    }
 
   next_inst ();
   return return_value;

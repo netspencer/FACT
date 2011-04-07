@@ -1,36 +1,28 @@
 #include "FACT.h"
 
-/**
- * execfile - run external FACT program files.
- * @TODO:
- *   + Needs to be fixed to handle if/else statements on the
- *     top level.
- *   + This cannot be done by allocating space for the entire
- *     file, that is simply not an option.
- */
-
 FACT_t
 run_file (func_t *scope, const char *f_name, bool silent)
 {
-  int    print_parsed;
-  int    hold_line;
   FACT_t returned;
   unsigned int end_line;
+  unsigned long hold_line;
 
   int  *newlines;
   char *hold_fn;
   char *input;
-  char **parsed_input;
+  char *hold_input;
+  char **tokenized;
+  char **hold_tokens;
   FILE *fp;
 
   if (!silent)
     printf ("Opening file <%s>\n", f_name);
 
-  fp               = fopen (f_name, "r");
-  hold_line        = scope->line;
-  scope->line      = 1;
-  hold_fn          = scope->name;
-  scope->name      = (char *) f_name;
+  fp = fopen (f_name, "r");
+  hold_line = scope->line;
+  scope->line = 1;
+  hold_fn = scope->name;
+  scope->name = (char *) f_name;
   scope->file_name = (char *) f_name;
 
   if (fp == NULL)
@@ -40,7 +32,6 @@ run_file (func_t *scope, const char *f_name, bool silent)
     }
 
   end_line = 1;
-
   for (;;)
     {
       scope->line = end_line;
@@ -49,19 +40,47 @@ run_file (func_t *scope, const char *f_name, bool silent)
       if (input == NULL)
         break;
 
-      parsed_input = get_words (input);
-
-      if (parsed_input == NULL)
+      tokenized = get_words (input);
+      if (tokenized == NULL)
         break;
 
-      newlines = get_newlines (parsed_input);
-      parsed_input = parse (parsed_input, f_name, end_line);
+      if ((tokenized[0][0] == '\n'
+	   && (!tokcmp (tokenized[1], "if")
+	       || !tokcmp (tokenized[1], "error")))
+	  || (!tokcmp (tokenized[0], "if")
+	      || !tokcmp (tokenized[0], "error")))
+	{
+	  for (;;)
+	    {
+	      /* Go through all the steps we went through from the start of the loop
+               * down to here.
+	       */
+	      hold_input = get_input (fp, &end_line, NULL, NULL);
 
-      if (parsed_input == NULL)
+	      if (hold_input == NULL|| (hold_tokens = get_words (hold_input)) == NULL)
+		break;
+	      // Check to see if the statement starts with else.
+	      if ((hold_tokens[0][0] == '\n'
+		   && !tokcmp (hold_tokens[1], "else"))
+		  || !tokcmp (hold_tokens[0], "else"))
+		{
+		  input[strlen (input) - 1] = '\0';
+		  input = combine_strs (input, hold_input);
+		  hold_input = NULL;
+		}
+	      else
+		break;
+	    }
+	  tokenized = get_words (input);
+	}
+
+      tokenized = parse (tokenized, f_name, end_line, &newlines);
+
+      if (tokenized == NULL)
         break;
 
       reset_ip ();
-      returned = eval_expression (scope, make_syn_tree (parsed_input, newlines));
+      returned = eval_expression (scope, make_syn_tree (tokenized, newlines));
 
       if (returned.type == ERROR_TYPE)
         {
@@ -72,8 +91,8 @@ run_file (func_t *scope, const char *f_name, bool silent)
       if (returned.return_signal == true)
         break;
     }
+  
   fclose (fp);
-
   if (!silent)
     printf ("Closing file <%s>.\n", f_name);
 

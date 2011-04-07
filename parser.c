@@ -302,23 +302,8 @@ check (char **input, const char *f_name, int start_line, int *lines)
   s_size = 1;
   semi_stack[s_size - 1] = true;
   com_stack[s_size - 1] = def_stack[s_size - 1] = false;
-  
-  // Remove newlines
-  /*
-  for (i = 0; input[i] != NULL; i++)
-    {
-      if (input[i][0] == '"')
-        i += 2;
-      else if (input[i][0] == '\n')
-        {
-          for (j = i; input[j] != NULL; j++)
-            input[j] = input[j + 1];
-          i--;
-        }
-    }
-  */
-
   p_count = b_count = c_count = 0;
+
   for (i = 0; input[i] != NULL; i++)
     {
       next_token = input[i + 1];
@@ -650,7 +635,7 @@ check (char **input, const char *f_name, int start_line, int *lines)
 }
 
 char **
-parse (char **input, const char *f_name, int start_line)
+parse (char **input, const char *f_name, int start_line, int **lines)
 {
   /**
    * parse - convert the input string array from infix to polish
@@ -660,14 +645,13 @@ parse (char **input, const char *f_name, int start_line)
   int i, j;
   int p_count;
   int stack_size;
-  int *lines;
   char *goal;
   char *hold;
   char **op_stack;
   char **output;
 
   stack_size = 0;
-  lines = get_newlines (input);
+  *lines = get_newlines (input);
 
   // Remove newlines
   for (i = 0; input[i] != NULL; i++)
@@ -682,7 +666,7 @@ parse (char **input, const char *f_name, int start_line)
         }
     }
 
-  if (check (input, f_name, start_line, lines))
+  if (check (input, f_name, start_line, *lines))
     return NULL;
 
   output = FACT_malloc (sizeof (char *) * (i + 1));
@@ -834,27 +818,28 @@ int *
 get_newlines (char **exp)
 {
   int i, j, k, l;
+  bool ignore;
   int *ret_val;
 
   ret_val = NULL;
+  ignore = false;
 
   for (i = k = 0; exp[i + k] != NULL; i++)
     {
       ret_val = FACT_realloc (ret_val, sizeof (int) * (i + 1));
-      // Check for string deliminaters
-      if (i > 0 && exp[i + k - 1][0] == '"')
+      if (!ignore && i > 0 && exp[i + k - 1][0] == '"')
         {
-          // Go through the entire string.
-          for (j = l = 0; exp[i + k][j] != '\0'; j++)
+          for (j = l = 0; exp[i + k][l] != '\0'; l++)
             {
-              if (exp[i + k][j] == '\n')
-                l++;
+              if (exp[i + k][l] == '\n')
+                j++;
             }
-          j = l;
-          k++;
+          ignore = true;
         }
       else
         {
+          if (exp[i + k][0] != '"')
+            ignore = false;
           for (j = 0; exp[i + k][j] == '\n'; j++);
           if (j != 0)
             k++;
