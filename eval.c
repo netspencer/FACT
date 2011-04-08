@@ -476,7 +476,7 @@ eval (func_t * scope, syn_tree_t expression)
       /* check which category it's from */
       if (current_token[1] == MATH_CALL)
 	return_value = eval_math (scope, expression, (int) current_token[2]);
-      if (current_token[1] == PRIMITIVE)
+      else if (current_token[1] == PRIMITIVE)
 	return_value = run_prim (scope, expression, (int) current_token[2]);
       else if (current_token[1] == CONSTANT)
 	{

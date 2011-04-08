@@ -141,13 +141,42 @@ mpc_mul (mpc_t *rop, mpc_t op1, mpc_t op2)
 void
 mpc_div (mpc_t *rop, mpc_t op1, mpc_t op2) 
 {
-  /* This function needs to be fixed. */
-  mpc_t temp;
-  mpz_t temp_res;
+  /* This function needs to be fixed. At the current moment I am tired
+   * of having to mess around with the precision values, so I'm just
+   * going to convert the values to 'mpf's and call it quits for the
+   * day. I'll fix it later.
+   * Division by zero is not checked for in this function.
+   */
+  mpf_t hold_op1;
+  mpf_t hold_op2;
+  mpf_t hold_res;
+  unsigned int prec;
 
-  mpz_init (temp.object);
-  mpz_init (temp_res);
+  mpf_init (hold_op1);
+  mpf_init (hold_op2);
+  mpf_init (hold_res);
+  mpf_set_z (hold_op1, op1.object);
+  mpf_set_z (hold_op2, op2.object);
 
+  // Get the largest precision
+  prec = (op1.precision > op2.precision) ? op1.precision : op2.precision;
+  if (prec == 0)
+    prec = default_prec;
+
+  // Set the scalar values
+  while (op1.precision-- > 0)
+    mpf_div_ui (hold_op1, hold_op1, 10);
+  while (op2.precision-- > 0)
+    mpf_div_ui (hold_op2, hold_op2, 10);
+
+  // Get the value
+  mpf_div (hold_res, hold_op1, hold_op2);
+
+  for (rop->precision = prec; prec > 0; prec--)
+    mpf_mul_ui (hold_res, hold_res, 10);
+  
+  mpz_set_f (rop->object, hold_res);
+  /*
   temp.precision = (op1.precision < op2.precision) ? op2.precision : op1.precision;
 
   if (!op1.precision && !op2.precision)
@@ -180,38 +209,54 @@ mpc_div (mpc_t *rop, mpc_t op1, mpc_t op2)
 
   rop->precision = temp.precision;
   mpz_set (rop->object, temp_res);
+  */
 }
 
 void
 mpc_mod (mpc_t *rop, mpc_t op1, mpc_t op2)
 {
-  mpc_t temp;
-  
-  temp.precision = (op1.precision < op2.precision) ? op2.precision : op1.precision;
-  mpz_init (temp.object);
-  
-  if (op1.precision == op2.precision)
-    mpz_mod (temp.object, op1.object, op2.object);
-  else if (op1.precision > op2.precision)
-    {
-      mpz_set (temp.object, op2.object);
-      power_of_ten (temp.object, op1.precision - op2.precision);
-      mpz_mod (temp.object, op1.object, temp.object);
-    }
-  else
-    {
-      mpz_set (temp.object, op1.object);
-      power_of_ten (temp.object, op2.precision - op1.precision);
-      mpz_mod (temp.object, temp.object, op2.object);
-    }
+  /* I am 90% sure that this doesn't work. However, it works for
+   * integers, so I'll put off fixing it for a little while.
+   */
+  mpf_t hold_op1;
+  mpf_t hold_op2;
+  mpf_t hold_res;
+  unsigned int prec;
 
-  rop->precision = temp.precision;
-  mpz_set (rop->object, temp.object);
+  mpf_init (hold_op1);
+  mpf_init (hold_op2);
+  mpf_init (hold_res);
+  mpf_set_z (hold_op1, op1.object);
+  mpf_set_z (hold_op2, op2.object);
+
+  // Get the largest precision.
+  prec = (op1.precision > op2.precision) ? op1.precision : op2.precision;
+
+  // Set the scalar values
+  while (op1.precision-- > 0)
+    mpf_div_ui (hold_op1, hold_op1, 10);
+  while (op2.precision-- > 0)
+    mpf_div_ui (hold_op2, hold_op2, 10);
+
+  // Get the value
+  mpf_div (hold_res, hold_op1, hold_op2);
+  mpf_floor (hold_res, hold_res);
+  mpf_mul (hold_res, hold_res, hold_op2);
+  mpf_sub (hold_res, hold_op1, hold_res);
+
+  for (rop->precision = prec; prec > 0; prec--)
+    mpf_mul_ui (hold_res, hold_res, 10);
+  
+  mpz_set_f (rop->object, hold_res);
 }
 
 void
 mpc_and (mpc_t *rop, mpc_t op1, mpc_t op2)
 {
+  /* Little did I realize that I would eventually make it
+   * an error to apply bitwise operators to floating point
+   * variables.
+   */
   mpc_t temp;
   
   temp.precision = (op1.precision < op2.precision) ? op2.precision : op1.precision;
@@ -366,14 +411,14 @@ mpc_get_si (mpc_t rop)
 static char *
 concatinate_free (char *op1, char *op2, bool fop1, bool fop2)
 {
-  char * return_value;
+  char *return_value;
 
   return_value = combine_strs (op1, op2);
 
   if (fop1)
-    GC_free (op1);
+    FACT_free (op1);
   if (fop2)
-    GC_free (op2);
+    FACT_free (op2);
 
   return return_value;
 }

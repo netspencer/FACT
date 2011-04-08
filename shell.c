@@ -30,10 +30,17 @@ get_input (FILE *fp, unsigned int *line_number, const char *start_prompt, const 
   
   for (i = 1; (curr_char = fgetc (fp)) != EOF; i++)
     {
+      // Skip the char if it invalid
+      if (curr_char > 126 || curr_char < 0)
+        continue;
+      
       if (curr_char == '#' && !in_quotes)
 	{
 	  while ((curr_char = fgetc (fp)) != EOF && curr_char != '\n')
 	    ;
+          i--;
+          ungetc ('\n', fp);
+          continue;
 	}
       if (curr_char == '\n')
 	{
@@ -84,12 +91,12 @@ get_input (FILE *fp, unsigned int *line_number, const char *start_prompt, const 
   
   if (input != NULL)
     {
-      input        = better_realloc (input, sizeof (char) * (i + 2));
-      input[i]     = curr_char;
+      input = FACT_realloc (input, sizeof (char) * (i + 2));
+      input[i] = ((curr_char != EOF) ? curr_char : '\0');
       input[i + 1] = '\0';
       for (i--; i >= 0; i--)
 	{
-	  if (!isspace ((int) input[i]) && input[i] != '\0')
+	  if (!isspace ((int) input[i]) && input[i] != '\0' && input[i] != -1)
 	    return input;
 	}  
     }

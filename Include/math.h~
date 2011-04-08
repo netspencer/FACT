@@ -14,7 +14,6 @@ FACT_INTERN_FUNC (FACT_t) mod    (FACT_t, FACT_t);  /* modulos two numbers      
 FACT_INTERN_FUNC (FACT_t) bit_and (FACT_t, FACT_t); 
 FACT_INTERN_FUNC (FACT_t) bit_ior (FACT_t, FACT_t);
 FACT_INTERN_FUNC (FACT_t) bit_xor (FACT_t, FACT_t);
-FACT_INTERN_FUNC (FACT_t) bit_not (func_t *, syn_tree_t);
 
 FACT_INTERN_FUNC (FACT_t) add_assignment  (FACT_t, FACT_t);
 FACT_INTERN_FUNC (FACT_t) sub_assignment  (FACT_t, FACT_t);
@@ -22,7 +21,7 @@ FACT_INTERN_FUNC (FACT_t) mult_assignment (FACT_t, FACT_t);
 FACT_INTERN_FUNC (FACT_t) div_assignment  (FACT_t, FACT_t);
 FACT_INTERN_FUNC (FACT_t) mod_assignment  (FACT_t, FACT_t);
 
-FACT_INTERN_FUNC (FACT_t) negative  (func_t *, syn_tree_t);
-FACT_INTERN_FUNC (FACT_t) paren     (func_t *, syn_tree_t);
+FACT_INTERN_FUNC (FACT_t) negative  (func_t *, word_list);
+FACT_INTERN_FUNC (FACT_t) paren     (func_t *, word_list);
 
 #endif

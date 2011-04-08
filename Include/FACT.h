@@ -80,6 +80,7 @@
 #include "errorman.h"
 #include "management.h"
 #include "BIFs.h"
+#include "variadic.h"
 #include "modules.h"
 #include "bytecode.h"
 #include "shell.h"

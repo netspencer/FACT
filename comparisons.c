@@ -196,8 +196,9 @@ and (func_t *scope, syn_tree_t expression)
   ip = get_ip ();
   reset_ip ();
   expression.syntax += ip;
+  arg1 = eval (scope, expression);
 
-  if ((arg1 = eval (scope, expression)).type == ERROR_TYPE)
+  if (arg1.type == ERROR_TYPE)
     return arg1;
   else if (arg1.type == FUNCTION_TYPE)
     FACT_throw (scope, "both arguments to && must be variables", expression);
@@ -215,8 +216,9 @@ and (func_t *scope, syn_tree_t expression)
   
   ip += get_ip ();
   reset_ip ();
+  arg2 = eval (scope, expression);
 
-  if ((arg2 = eval (scope, expression)).type == ERROR_TYPE)
+  if (arg2.type == ERROR_TYPE)
     return arg2;
   else if (arg2.type == FUNCTION_TYPE)
     FACT_throw (scope, "both arguments to && must be variables", expression);

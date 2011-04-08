@@ -115,7 +115,7 @@ divide (FACT_t arg1, FACT_t arg2)
   FACT_t ret_val;
 
   // Divide by zero not checked for.
-  ret_val.type    = VAR_TYPE;
+  ret_val.type = VAR_TYPE;
   ret_val.v_point = alloc_var ();
   mpc_div (&(ret_val.v_point->data), arg1.v_point->data, arg2.v_point->data);
 
@@ -128,9 +128,34 @@ mod (FACT_t arg1, FACT_t arg2)
   FACT_t ret_val;
 
   // Mod by zero not checked.
-  ret_val.type    = VAR_TYPE;
+  ret_val.type = VAR_TYPE;
   ret_val.v_point = alloc_var ();
   mpc_mod (&(ret_val.v_point->data), arg1.v_point->data, arg2.v_point->data);
+
+  return ret_val;
+}
+
+FACT_t
+bit_not (func_t *scope, syn_tree_t exp)
+{
+  FACT_t op;
+  FACT_t ret_val;
+
+  op = eval (scope, exp);
+  if (op.type != VAR_TYPE)
+    {
+      exp.syntax += get_ip (); 
+      return (op.type == ERROR_TYPE
+              ? op
+              : FACT_throw_error (scope, "argument to ~ cannot be a function", exp));
+    }
+  else if (op.v_point->data.precision != 0)
+    FACT_throw (scope, "bitwise operators cannot be applied to floats", exp);
+  
+  ret_val.type = VAR_TYPE;
+  ret_val.v_point = alloc_var ();
+  mpc_neg (&(ret_val.v_point->data), op.v_point->data);
+  mpc_sub_ui (&(ret_val.v_point->data), ret_val.v_point->data, 1);
 
   return ret_val;
 }
@@ -140,7 +165,7 @@ bit_and (FACT_t arg1, FACT_t arg2)
 {
   FACT_t ret_val;
 
-  ret_val.type    = VAR_TYPE;
+  ret_val.type = VAR_TYPE;
   ret_val.v_point = alloc_var ();
   mpc_and (&(ret_val.v_point->data), arg1.v_point->data, arg2.v_point->data);
 
@@ -152,7 +177,7 @@ bit_ior (FACT_t arg1, FACT_t arg2)
 {
   FACT_t ret_val;
 
-  ret_val.type    = VAR_TYPE;
+  ret_val.type = VAR_TYPE;
   ret_val.v_point = alloc_var ();
   mpc_ior (&(ret_val.v_point->data), arg1.v_point->data, arg2.v_point->data);
 
@@ -164,7 +189,7 @@ bit_xor (FACT_t arg1, FACT_t arg2)
 {
   FACT_t ret_val;
 
-  ret_val.type    = VAR_TYPE;
+  ret_val.type = VAR_TYPE;
   ret_val.v_point = alloc_var ();
   mpc_xor (&(ret_val.v_point->data), arg1.v_point->data, arg2.v_point->data);
 

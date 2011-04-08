@@ -18,7 +18,7 @@ FACT_INTERN_FUNC (void) mpc_neg (mpc_t *, mpc_t       );
 FACT_INTERN_FUNC (void) mpc_mul (mpc_t *, mpc_t, mpc_t);
 FACT_INTERN_FUNC (void) mpc_div (mpc_t *, mpc_t, mpc_t);
 FACT_INTERN_FUNC (void) mpc_mod (mpc_t *, mpc_t, mpc_t); 
-/* Bit wise operations. */
+/* Bitwise operations. */
 FACT_INTERN_FUNC (void) mpc_and (mpc_t *, mpc_t, mpc_t);
 FACT_INTERN_FUNC (void) mpc_ior (mpc_t *, mpc_t, mpc_t);
 FACT_INTERN_FUNC (void) mpc_xor (mpc_t *, mpc_t, mpc_t);
@@ -32,4 +32,12 @@ FACT_INTERN_FUNC (signed long int  ) mpc_get_si  (mpc_t       );
 FACT_INTERN_FUNC (char *           ) mpc_get_str (mpc_t       );
 FACT_INTERN_FUNC (void             ) mpc_get_mpz (mpz_t, mpc_t);
 
+////////////
+// Macros:
+////////////
+
+#define mpc_add_ui(o1, o2, o3) mpc_add (o1, o2, FACT_get_ui (o3).v_point->data)
+#define mpc_add_si(o1, o2, o3) mpc_add (o1, o2, FACT_get_si (o3).v_point->data)
+#define mpc_sub_ui(o1, o2, o3) mpc_sub (o1, o2, FACT_get_ui (o3).v_point->data)
+#define mpc_sub_si(o1, o2, o3) mpc_sub (o1, o2, FACT_get_si (o3).v_point->data)
 #endif

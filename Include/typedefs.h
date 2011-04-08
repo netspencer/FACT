@@ -19,8 +19,8 @@ typedef enum FACT_type
 // mpc_t is used for arbitrary-precision arithmetic
 typedef struct
 {
-  mpz_t        object;
-  unsigned int precision;  
+  mpz_t object;
+  unsigned long precision;  
 } mpc_t;
 
 // FACT_var and var_t are the variable holding structures

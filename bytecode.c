@@ -31,6 +31,7 @@ static struct
     { MATH_CALL, 0x00, "!=" },
     { MATH_CALL, 0x01, "%"  },
     { MATH_CALL, 0x02, "%=" },
+    { MATH_CALL, 0x11, "&!" }, // Out of order, will be fixed.
     { MATH_CALL, 0x03, "*"  },
     { MATH_CALL, 0x04, "*=" },
     { MATH_CALL, 0x05, "+"  },
@@ -45,7 +46,6 @@ static struct
     { MATH_CALL, 0x0e, ">"  },
     { MATH_CALL, 0x0f, ">=" },
     { MATH_CALL, 0x10, "^"  },
-    { MATH_CALL, 0x11, "`"  },
     { MATH_CALL, 0x12, "|"  },
     { MATH_CALL, 0x13, "~"  },
 
@@ -72,6 +72,7 @@ static struct
     { PRIMITIVE, 0x10, "up"     },
     // { PRIMITIVE, 0x11, "{"   }, to be added later.
     { PRIMITIVE, 0x12, "||"     },
+    { PRIMITIVE, 0x13, "~!"     }, 
   };
 static struct 
 {
@@ -87,7 +88,7 @@ static struct
      */
     { 0x00, 0x07 }, // Statements
     { 0x08, 0x1b }, // Math calls
-    { 0x1c, 0x2b }, // Primitives
+    { 0x1c, 0x2c }, // Primitives
   };
 
 inline char *
@@ -112,7 +113,7 @@ get_bcode_label (byte *byte_code)
    * because some instructions may be missing, which would cause
    * errors.
    */
-  end   = ends[byte_code[1] - STATEMENT].end;
+  end = ends[byte_code[1] - STATEMENT].end;
   start = ends[byte_code[1] - STATEMENT].start;
 
   while (end >= start)

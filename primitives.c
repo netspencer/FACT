@@ -26,6 +26,7 @@ static struct  _prims
     { "up"    , up           },
     { "{"     , lambda_proc  },
     { "||"    , or           },
+    { "~!"    , bit_not      },
   };
 
 static int
@@ -73,6 +74,12 @@ init_BIFs (func_t *scope)
   // Locking:
 
   FACT_INSTALL_BIF (scope, FACT_BIF (lock));
+
+  // Variadic arguments:
+
+  FACT_INSTALL_BIF (scope, FACT_BIF (type));
+  FACT_INSTALL_BIF (scope, FACT_BIF (args));
+  FACT_INSTALL_BIF (scope, FACT_BIF (arg));
 }
 
 int
@@ -129,11 +136,14 @@ eval_math (func_t *scope, syn_tree_t expression, int call_num)
    * except the function pointer is different. Also, I
    * could only have used two FACT_t variables, but that
    * would be really confusing.
+   *
+   * Hey baby, so I heard you like das kludge code?
    */
   FACT_t arg1;
   FACT_t arg2;
   FACT_t ret_val;
-
+  unsigned long hold_ip;
+  
   /* This is a list of every math call's corresponding
    * function. It's an array of function pointers. Wild!
    */
@@ -156,39 +166,57 @@ eval_math (func_t *scope, syn_tree_t expression, int call_num)
       more            , // >  14
       more_equal      , // >= 15
       bit_xor         , // ^  16
-      bit_and         , // `  17
+      bit_and         , // &  17
       bit_ior         , // |  18
       combine_arrays  , // ~  19 
     };
 
-  if ((arg1 = eval (scope, expression)).type != VAR_TYPE)
+  arg1 = eval (scope, expression);
+  expression.syntax += get_ip ();
+  hold_ip = get_ip ();
+  reset_ip ();
+
+  // Check for errors in the first argument
+  if (arg1.type != VAR_TYPE) 
     {
+      // If there was an error
       if (arg1.type == ERROR_TYPE && (call_num != 0 && call_num != 13))
         return (arg1.type == ERROR_TYPE
                 ? arg1
                 : FACT_throw_error (scope, "first argument to math call is a function", expression));
     }
-  if ((arg2 = eval (scope, expression)).type != VAR_TYPE)
+  else if (call_num >= 16 && call_num <= 18 && arg1.v_point->data.precision != 0)
+    // Bitwise operators cannot be applied to floats.
+    FACT_throw (scope, "bitwise operators cannot be applied to floats", expression);
+
+  arg2 = eval (scope, expression);
+  expression.syntax += get_ip ();
+  hold_ip += get_ip ();
+  reset_ip ();
+
+  // Check for errors in the second argument
+  if (arg2.type != VAR_TYPE)
     {
       if (arg2.type == ERROR_TYPE && (call_num != 0 && call_num != 13))
         return (arg2.type == ERROR_TYPE
                 ? arg2
                 : FACT_throw_error (scope, "second argument to math call is a function", expression));
     }
-  if (arg1.type != arg2.type)
+  else if (call_num >= 16 && call_num <= 18 && arg2.v_point->data.precision != 0)
+    FACT_throw (scope, "bitwise operators cannot be applied to floats", expression);
+  else if (arg1.type != arg2.type)
     FACT_throw (scope, "argument types do not match", expression);  
-  if ((call_num == 1 || call_num == 2)
-      && !mpc_cmp_ui (arg2.v_point->data, 0))
+  else if ((call_num == 1 || call_num == 2)
+           && !mpc_cmp_ui (arg2.v_point->data, 0))
     FACT_throw (scope, "mod by zero", expression);
-  if ((call_num == 9 || call_num == 10)
-      && !mpc_cmp_ui (arg2.v_point->data, 0))
+  else if ((call_num == 9 || call_num == 10)
+           && !mpc_cmp_ui (arg2.v_point->data, 0))
     FACT_throw (scope, "division by zero", expression);
 
-  ret_val = math_calls[call_num] (arg1, arg2);
-
-  // Set the signals to their defaults.
-  ret_val.break_signal  = false;
-  ret_val.return_signal = false;
+  // Evaluate the call and set the signals.
+  ret_val = math_calls[call_num] (arg1, arg2); 
+  ret_val.break_signal = ret_val.return_signal = false;
+  set_ip (hold_ip);
 
   return ret_val;
 }

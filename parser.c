@@ -58,6 +58,9 @@ is_opt (int op1, int op2)
    *  *=
    *  /=
    *  %=
+   *  &=
+   *  |=
+   *  ^=
    *  <=
    *  >=
    *  !=
@@ -74,7 +77,11 @@ is_opt (int op1, int op2)
         || op1 == '%'
         || op1 == '<'
         || op1 == '>'
-        || op1 == '!') && op2 == '=')
+        || op1 == '!'
+        /*
+        || op1 == '&'
+        || op1 == '|'
+        || op1 == '^'*/) && op2 == '=')
       || (op1 == '&' && op2 == '&')
       || (op1 == '|' && op2 == '|') || (op1 == '-' && op2 == '>'))
     return true;
@@ -221,17 +228,17 @@ op_get_prec (char *op)
       { "$", "&", NULL },
       { ":", NULL },
       { "@", NULL },
-      { "--", NULL },
+      { "--", "~!", NULL },
       { "~", "*", "/", "%", NULL },
       { "+", "-", NULL },
       { "<", "<=", ">", ">=", NULL },
       { "==", "!=", NULL },
-      { "`", NULL },
+      { "&!", NULL },
       { "^", NULL },
       { "|", NULL },
       { "&&", NULL },
       { "||", NULL },
-      { "=", "+=", "-=", "*=", "/=", "%=", NULL },
+      { "=", "+=", "-=", "*=", "/=", "%=", /* "&=", "|=", "^=",*/ NULL },
       // Special keywords (lowest precedence): 15 -> 18
       { "if", "error", "while", "for", "then", "else", NULL },
       { "return", "give", "break", "sprout", ";", ",", ")!", NULL },
@@ -253,9 +260,9 @@ op_get_prec (char *op)
 static inline bool
 op_is_lr (int prec)
 {
-  return (prec == 14)
-    ? false
-    : true;
+  return ((prec == 14 || prec == 4)
+          ? false
+          : true);
 }
 
 ////////////////////
@@ -433,8 +440,16 @@ check (char **input, const char *f_name, int start_line, int *lines)
       else if (!strcmp (input[i], "$") || !strcmp (input[i], "&"))
         {
           if (state == VAR && (prev_token != NULL && strcmp (prev_token, "}")))
-            goto error;
-          if (strcmp (next_token, "("))
+            {
+              if (!strcmp (input[i], "&"))
+                {
+                  input[i] = "&!";
+                  state = OP;
+                }
+              else
+                goto error;
+            }
+          else if (strcmp (next_token, "("))
             {
               custom_fmt = "expected '(' after %s";
               goto custom_error;
@@ -569,8 +584,12 @@ check (char **input, const char *f_name, int start_line, int *lines)
           // If we've hit an operator
           if (state != VAR)
             {
-              if (prev_token != NULL && strcmp (prev_token, "--"))
+              if (!strcmp (input[i], "-")
+                  && (prev_token == NULL || strcmp (prev_token, "--")))
                 input[i] = "--";
+              else if (!strcmp (input[i], "~")
+                       && (prev_token == NULL || strcmp (prev_token, "~!")))
+                input[i] = "~!";
               else
                 goto error;
             }

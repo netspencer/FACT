@@ -14,5 +14,6 @@ FACT_INTERN_FUNC (FACT_t) get_array_var   (var_t  *, func_t *, syn_tree_t);
 FACT_INTERN_FUNC (FACT_t) combine_arrays  (FACT_t, FACT_t);
 
 FACT_INTERN_FUNC (var_t *) clone_var (var_t *, char *);
+FACT_INTERN_FUNC (var_t *) clone_var_f (var_t *, char *);
 
 #endif

@@ -250,7 +250,7 @@ define (func_t *scope, syn_tree_t expression)
         }
       if (!tokcmp (expression.syntax[i], "["))
         goto another_dimension;
-      else if (get_local_var (scope, expression.syntax[i]) != NULL)
+      else if (get_local_func (scope, expression.syntax[i]) != NULL)
         {
           expression.syntax += i;
           FACT_throw (scope, combine_strs (expression.syntax[0], " already declared as a local function"), expression);
@@ -269,7 +269,7 @@ define (func_t *scope, syn_tree_t expression)
     }
   else
     {
-      if (get_local_var (scope, expression.syntax[0]) != NULL)
+      if (get_local_func (scope, expression.syntax[0]) != NULL)
         FACT_throw (scope, combine_strs (expression.syntax[0], " already declared as a local function"), expression);
       return_value.v_point = add_var (scope, expression.syntax[0]);
     }
@@ -297,7 +297,7 @@ clone_var (var_t *surrogate, char *name)
   return clone;
 }
 
-static var_t *
+var_t *
 clone_var_f (var_t *surr, char *name)
 {
   // Just to simplify things
