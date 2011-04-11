@@ -1,0 +1,42 @@
+#!/usr/bin/FACT -i
+# FACT threading test.
+# Objective:
+# Spawn 5 threads, each of which sends a message to the previous thread,
+# printing the messages they recieve. When the main thread gets a message,
+# it proceeds to send the EXIT message to all the threads, killing them.
+
+def [5]tids;
+
+for def i, 4 then
+{
+  tids[i] =
+   sprout
+   {
+     $(print, "Now in thread: " ~ $(str, $(get_tid)) ~ "\n");
+     if ($(get_tid) == 5)
+     {
+       $(print, "Sent message!\n");
+       $(send, $(get_tid) - 1, "Hello from thread " ~ $(str, $(get_tid)) ~ "\n");
+       return 0;
+     }
+
+#     def x;
+#     while ((x = $(queue_size)) == 0)
+#      1; # Do nothing.
+#     $(print, "hey " ~ $(str, x) ~ "\n");
+     while ($(queue_size) == 0)
+      1; # Do nothing.
+     $(print, "Recieved message [" ~ $(str, $(get_tid)) ~ "]: " ~ $(pop));
+     $(send, $(get_tid) - 1, "Hello from thread " ~ $(str, $(get_tid)) ~ "\n");
+   }
+}
+
+$(print, "Got here!\n");
+while ($(queue_size) == 0)
+  1; # Do nothing.
+
+$(print, "And here...\n");
+
+return 0;
+
+# And that's all there is to it!

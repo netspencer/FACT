@@ -1,0 +1,105 @@
+#!/usr/bin/FACT-BETA -i
+
+def threshold = 4 / 5; # this means you need to get each question at least 3 out of 5 times right to end the program.
+def min_times_through = 5;
+
+defunc card @ (def question, def answer)
+{
+    def times_right;
+    def total;
+
+    defunc isdone @ ()
+    {
+	if (total == 0)
+	    return false;
+
+	def freq = times_right / total;
+
+	if (freq >= threshold && rounds_done >= min_times_through)
+	    return true;
+
+	return false;
+    }
+
+    defunc isright @ (def usr_answr)
+    {
+	total += 1;
+	
+	if ($(strcmp, usr_answr, answer) == 0)
+	{
+	    times_right += 1;
+	    return true;
+	}
+
+	return false;
+    }
+}
+
+defunc cards = [ (&(card, "Plumbous", "Pb^2+")),
+		  (&(card, "HCl", "hydrochloric acid")),
+		  (&(card, "Arsenate", "AsO4^(3-)")),
+		  (&(card, "Chlorate", "ClO3-")),
+		  (&(card, "Mercuric", "Hg^2+")),
+		  (&(card, "Oxide", "O^2-")),
+		  (&(card, "Chromic", "Cr^3+")),
+		  (&(card, "Nickel (II)", "Ni^2+")),
+		  (&(card, "Dicromate", "Cr2O7^2-")),
+		  (&(card, "Phosphate", "PO4^3-")),
+		  (&(card, "Sulfite", "SO3^2-")),
+		  (&(card, "Cupric", "Cu^2+")),
+		  (&(card, "Perchlorate", "ClO4-")),
+		  (&(card, "Sulfate", "SO4^2-")),
+		  (&(card, "Hydrogen Sulfite Bisulfite", "HSO3-")),
+		  (&(card, "Acetate", "C2H3O2-")),
+		  (&(card, "Peroxide", "O2^2-")),
+		  (&(card, "Thiocyanate", "SCN-")),
+		  (&(card, "Ammonium Ion", "NH4+")),
+		  (&(card, "Carbonate", "CO3^2-")),
+		  (&(card, "Cation", "positively charged")),
+		  (&(card, "Nitrate", "NO3-")),
+		  (&(card, "Hydrogen Phosphate", "HPO4^2-")),
+		  (&(card, "Permanganate", "MnO4-")),
+		  (&(card, "Ferrons", "Fe^2+")),
+		  (&(card, "Ferric", "Fe^3+")),
+		  (&(card, "Cobaltons", "CO^2+")),
+		  (&(card, "Sulfide", "S^2-")),
+		  (&(card, "Chromate", "CrO4^2-")),
+		  (&(card, "Hydroxide", "OH-")),
+		  (&(card, "Nitrite", "NO2-")) ];
+
+def rounds_done;
+def count;
+def ans;
+def all;
+
+while (true)
+{
+    count = 0;
+    all = true;
+    while (count < $(sizeof, cards))
+    {
+	if ($(cards[count]:isdone) != true)
+	{
+	    $(print, "what is the answer to: " ~ (cards[count]:question) ~ "\n");
+	    # ans = $(gets);
+	    if ($((cards[count]:isright), ans))
+	    {
+		$(print, "That is correct, moving on...\n");
+
+		if (all != false)
+		    all = $(cards[count]:isdone);
+	    }
+	    else
+	    {
+		$(print, "That is incorrect, the correct answer is " ~  (cards[count]:answer) ~ "\n");
+		all = false;
+	    }
+	}
+	count += 1;
+    }
+    if (all)
+	break;
+    rounds_done += 1;
+}
+
+$(print, "congratulations, you have finished studying for today.\n");

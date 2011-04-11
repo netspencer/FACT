@@ -1,0 +1,36 @@
+# lambda class!
+defunc obj = &(lambda @ (def x, def y)
+       	     {
+		def z = x * y;
+		defunc set_z @ (def new_z)
+		{
+		   z = new_z;
+		}
+		defunc get_z @ ()
+		{
+		   return z;
+		}
+	     }, 5, 2);
+# Twirl!
+defunc twirl @ (def position)
+{
+    return "||||||||||//////////----------\\\\\\\\\\\\\\\\\\\\"[position];
+}
+defunc print_. @ (def ammount)
+{
+    for def i, ammount then
+       $(print, ".");
+}
+defunc load @ (def string, def to_reach)
+{
+    for def i, to_reach then
+    {
+        def j;
+        while (j < 40)
+        {
+            $(print, "\r" ~ string ~ $(twirl, j));
+            $(print_., i);
+            j += 1;
+        }
+    }
+}

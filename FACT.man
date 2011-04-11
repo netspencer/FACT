@@ -1,0 +1,88 @@
+.\"	$Id$
+.\"	
+.\"	Man page for the FACT programming language.
+.\"	I can already sense that I've done this very poorly,
+.\"	bare with me this is my first time writing a man
+.\"	page. I really looked at the bc man page heavily for
+.\"     this.
+.\"
+.\"	$Log$
+.\"
+
+.TH FACT 1 "February 2011" "Matthew Plant"
+.SH NAME
+FACT - An interpreter, interactive, scope-oriented programming language
+.SH SYNTAX
+\fBFACT\fR [ \fB-hlsrqv\fR ] [long-options] [ \fI file ...\fR ]
+.SH DESCRIPTION
+\fBFACT\fR is a programming language. It's a rather odd one, but is 
+useful as a calculator or simply an alternative to Perl/Python 
+(which I do not purport to "beat" in any way). It supports almost 
+everything Python or Perl does in one form or another, and in
+addition is generally faster than both. It can also be extended with
+C libraries, for which there is a free API available. The name \fBFACT\fR
+stands for \fBF\fRunctions \fBA\fRre \fBC\fRlasses \fBT\fRoo.
+.SS OPTIONS
+.IP "-h --help"
+Print the usage and exit.
+.IP "-l --load [ library ]"
+Dynamically load a C library.
+.IP "-s --stdin"
+Use stdin for interactive mode instead of the default readline interface.
+.IP "-r --readline"
+Force readline for interactive mode.
+.IP "-f --file [ file ]"
+Run a file and then enter interactive mode.
+.IP "-i --interactive [ file ]"
+Run a file and terminate with the file. This is used with shebang lines, 
+of which the invocation would be /path/to/FACT -i
+.SS DOCUMENTATION CONVENTIONS
+Throughout the rest of this lengthy man page certain words or typographical
+settings will be used to help explain a point, and they should be explained
+before hand to prevent any confusion. 
+.IP "expr"
+Used to indicate a valid, syntactically correct expression, minus the
+terminating semicolon. 
+.IP "[ expr ]"
+Opening and closing brackets appear frequently throughout the text, but 
+when they are underlined they are being used to indicate that expr is
+optional. It does \fBNOT\fR mean that expr should be enclosed by brackets!
+.IP "$"
+Indicates a \fBFACT\fR shell prompt.
+.IP ">"
+Indicates \fBFACT\fR shell output.
+.SS EXPRESSIONS 
+Expressions in \fBFACT\fR are expressed the same as in many other C-like 
+languages. The semicolon ('\fB;\fR') terminates an expression. The curly
+brace ('\fB{\fR') indicates a block expression, which is terminated by
+the closing curly brace ('\fB}\fR'). All mathematical operators are 
+expressed using infix notation, and the precedence of operators is 
+identical to that of C. 
+.SS TYPES
+FACT is a strongly typed language, with no casts. That being said, there
+are only two data types, \fBvariables\fR and \fBscopes\fR. \fBVariables\fR 
+are arbitrary precision and can be defined as arbitrarily-dimensional arrays
+of arbitrary length. Scopes, as in many other languages, hold variables and
+other scopes. Unlike other languages, however, scopes in \fBFACT\fR can be 
+traversed, modified, and added to. Because of this, \fBFACT\fR is a 
+scope-oriented language.
+.SS VARIABLES
+Variables can be defined with the \fBdef\fR primitive. Variable names can
+contain letters, numbers, and periods ('\fB.\fR's). The only rule is that
+variable names must not be a valid number on its own. Therefor, \fI2..2\fR
+is a valid variable name, but \fI3.1415\fR is not. The syntax of the \fBdef\fR 
+primitive is as follows:
+.RS
+\fBdef\fR \fI[\fR [ dimension 1 size ] ... [ dimension n size ] \fI]\fR variable_name
+.RE
+Variables when defined are initialized to 0. If they are multi-dimensional, 
+all elements are initialized to 0. Note that it is illegal to define arrays
+of 0 or 1 in length, and doing so will return an error. Variables can also
+be redefined, although their value will be re-initialized to 0 in such case.
+The size of an array's dimensions are dynamic and can even contain other
+variables in the declaration. For example, the code:
+.RS
+\fBdef\fR [var1] var2;
+.RE
+will define var2 as a single-dimensional array of a size equal to whatever
+the value of var1 is at the time of execution.

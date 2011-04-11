@@ -1,0 +1,10 @@
+def tid = 
+ sprout 
+   {
+     def message = "Go";     
+     while (message != "Stop")
+       {
+         if ($(queue_size) != 0)
+           $(print, "Recieved message: " ~ (message = $(pop)) ~ "\n");
+       }
+   }

@@ -1,0 +1,29 @@
+defunc testifelse @ (def arg1, def arg2, def arg3, def arg4, def arg5, def arg6, def arg7, def arg8)
+{
+    #tests for 8 levels of nest
+    if (arg1 >= 1)
+        if (arg2 >= 2)
+            if (arg3 >= 3)
+                if (arg4 >= 4)
+                    $(printstr, "got to four, but not past\n");
+                else
+		    if (arg5 >= 5)
+                        if (arg6 >= 6)
+                            if (arg7 >= 7)
+                                if (arg8 >= 8)
+                                    $(printstr, "got all the way to 8\n");
+                                else
+                                    $(printstr, "got to 7\n");
+                            else
+                                $(printstr, "got to 6\n");
+                        else
+                            $(printstr, "got to 5\n");
+                    else
+                        $(printstr, "got to 4\n");
+            else
+                $(printstr, "got to 3\n");
+        else
+            $(printstr, "got to 2");
+    else
+        $(printstr, "got to 1");
+}

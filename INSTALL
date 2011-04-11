@@ -1,0 +1,7 @@
+Okay, this is a little out of the blue, but here it goes:
+To install, enter:
+sudo make install_headers
+make
+sudo make install
+
+install_headers will install some files into your system so that the FACT standard library can be built correctly.

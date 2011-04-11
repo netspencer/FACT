@@ -1,0 +1,24 @@
+#!/home/jayray/Programming/FACT/FACT-GCC -i
+# A simple echo clone written in FACT
+
+def pos = 1;
+def check;
+def nwln = true;
+
+if (argc > 1 && $strcmp (argv [1], "-n") == 0)
+{
+    nwln = false;
+    pos = pos + 1;
+}
+
+for pos, argc - 1 then
+{
+    if (check != 0)
+	$printstr (" ");
+   
+    $printstr (argv [pos]);
+    check = 1;
+}
+
+if (nwln)
+    $printstr ("\n");

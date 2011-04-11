@@ -1,0 +1,13 @@
+#ifndef STDLIB_H_
+#define STDLIB_H_
+
+#include <stdio.h>
+#include <string.h>
+#include <FACT/FACT.h>
+
+#include "file_io.h"
+#include "lock.h"
+#include "variadic.h"
+#include "casts.h"
+
+#endif

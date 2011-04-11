@@ -1,0 +1,1236 @@
+
+bytecode.c,301
+  const byte category_byte;9,213
+  const byte instruction_byte;10,241
+  const char *id_token;id_token11,272
+} instructions 12,296
+  int start;78,2198
+  int end;79,2211
+} ends 80,2222
+get_bcode_label 94,2653
+#define SET_SIZE 134,3700
+compile_to_bytecode 137,3760
+compile_constants 207,5627
+
+BIFs.c,252
+FACT_DEFINE_BIF 8,173
+FACT_DEFINE_BIF 33,853
+check_func_array 69,1978
+check_var_array 80,2193
+FACT_DEFINE_BIF 91,2410
+FACT_DEFINE_BIF 149,3986
+FACT_DEFINE_BIF 166,4415
+lock_var_array 201,5185
+lock_func_array 211,5351
+FACT_DEFINE_BIF 220,5508
+
+stdlib/variadic.c,56
+get_arg_type 4,30
+get_arg_num 17,430
+get_arg 50,1393
+
+stdlib/file_io.c,103
+run_file_soft 4,29
+run_file_loud 15,238
+open_file 26,446
+close_file 50,1031
+get_char_file 63,1300
+
+stdlib/stdlib.c,69
+ft_putchar 4,28
+throw_error 15,185
+struct elements MOD_MAP 31,519
+
+stdlib/casts.c,39
+var_to_string 4,27
+var_to_int 28,520
+
+stdlib/lock.c,65
+lock_var_array 4,31
+lock_func_array 15,209
+lock_object 26,385
+
+stdlib/random.c,18
+simple_rand 4,28
+
+main.c,90
+process_args 4,24
+gmp_realloc_wrapper 99,1920
+gmp_free_wrapper 105,2013
+main 112,2106
+
+comparisons.c,152
+equal 4,26
+not_equal 28,558
+more 51,1078
+more_equal 65,1353
+less 79,1638
+less_equal 93,1918
+statement_length 107,2207
+and 187,3897
+or 233,4982
+
+execfile.c,17
+run_file 13,276
+
+utilities.c,291
+set_array 4,24
+count_until_NULL 11,99
+compare_var_arrays 19,210
+combine_strs 37,734
+rm_cslashes 59,1233
+copy 125,2472
+array_to_string 147,2809
+string_to_array 168,3330
+string_array_to_var 193,3786
+FACT_get_ui 219,4311
+FACT_get_si 234,4551
+tokcmp_safe 249,4788
+strcount 271,5302
+
+math.c,335
+isnum 4,24
+get_prec 34,564
+num_to_var 56,860
+add 76,1326
+sub 88,1553
+mult 101,1779
+divide 113,2003
+mod 126,2266
+bit_and 139,2519
+bit_ior 151,2746
+bit_xor 163,2973
+add_assignment 175,3200
+sub_assignment 186,3403
+mult_assignment 197,3608
+div_assignment 208,3813
+mod_assignment 220,4056
+negative 233,4290
+paren 253,4683
+
+mpc_functions.c,539
+static unsigned int default_prec 3,19
+power_of_ten 6,63
+mpc_set_default_prec 15,216
+mpc_get_default_prec 21,298
+mpc_init 27,355
+mpc_set 34,444
+mpc_set_ui 41,554
+mpc_set_si 48,664
+mpc_set_str 55,772
+mpc_add 63,992
+mpc_sub 90,1729
+mpc_neg 117,2466
+mpc_mul 130,2691
+mpc_div 142,2902
+mpc_mod 186,4124
+mpc_and 213,4863
+mpc_ior 240,5600
+mpc_xor 267,6337
+mpc_cmp 294,7073
+mpc_cmp_ui 317,7562
+mpc_cmp_si 328,7745
+mpc_get_ui 339,7942
+mpc_get_si 353,8188
+concatinate_free 367,8432
+mpc_get_str 382,8659
+mpc_get_mpz 431,9779
+
+primitives.c,209
+static struct  _prims4,60
+  const char *name;name6,84
+  FACT_t    (*function)function7,104
+} primitives 8,152
+comp_prims 32,817
+init_BIFs 44,1015
+isprim 79,2157
+run_prim 101,2815
+eval_math 126,3482
+
+string.c,94
+new_string 4,26
+print_character 82,1612
+input_character 98,1933
+FACT_t print_var 110,2176
+
+scroll.c,44
+void scroll_array 3,19
+void scroll 17,384
+
+sprout.c,221
+FACT_get_curr_thread 5,80
+thread_wrapper 25,476
+sprout 60,1270
+FACT_DEFINE_BIF 114,2664
+FACT_DEFINE_BIF 122,2814
+FACT_DEFINE_BIF 149,3468
+FACT_DEFINE_BIF 171,3972
+FACT_DEFINE_BIF 202,4681
+thread_cleanup 260,6040
+
+management.c,233
+get_local_var 4,27
+get_local_func 18,271
+get_var 32,517
+get_func 46,729
+alloc_var 60,935
+alloc_func 80,1403
+free_var 111,2078
+free_func 129,2502
+add_var 157,3030
+add_func 203,4026
+resize_var 253,5168
+resize_func 305,6318
+
+functions.c,169
+liven_func 4,29
+ prepare_function 53,1423
+new_scope 243,6741
+run_func 298,8184
+in_scope 347,9474
+lambda 360,9731
+up 373,9969
+this 388,10188
+NULL_func 399,10341
+
+shell.c,51
+print_logo 4,38
+get_input 16,507
+shell 103,2338
+
+malloc_replacements.c,57
+FACT_malloc 4,26
+FACT_realloc 20,323
+FACT_free 36,641
+
+parser.c,367
+is_in_quotes 8,96
+is_opt 50,1123
+get_words 85,1744
+pop_s 182,4812
+push_s 198,5050
+op_get_prec 209,5228
+op_is_lr 250,6319
+check 262,6457
+#define STACK_REALLOC(276,6703
+#define START 281,6973
+#define OP 282,6989
+#define VAR 283,7005
+parse 587,16107
+get_end_block 745,20399
+get_newlines 766,20684
+get_exp_length 803,21442
+get_exp_length_first 829,22091
+
+error_check.c,152
+static char * error;3,19
+print_parsing_error 6,46
+check_for_incompletions 13,212
+check_for_errors 75,1955
+    OP_START,96,2466
+    NON_OP 97,2480
+
+statements.c,96
+if_statement 4,26
+error 53,1121
+else_clause 115,2662
+while_loop 138,3133
+for_loop 178,4129
+
+errorman.c,45
+FACT_throw_error 4,26
+errorman_dump 28,448
+
+mem.c,403
+defunc_array 4,26
+defunc 110,3509
+def_array 155,4712
+FACT_t216,6132
+clone_var 247,6842
+set 266,7228
+get_array_size 322,8999
+return_array 345,9534
+    var_t  *var_root;var_root366,10278
+    func_t *func_root;func_root367,10300
+    var_t  *var_value;var_value371,10346
+    func_t *func_value;func_value372,10369
+get_array_var 469,12653
+get_array_func 537,14539
+combine_arrays 603,16223
+
+modules.c,354
+typedef struct _LIB3,19
+  void        *library;library5,41
+  char        *file_path;file_path6,65
+  struct _LIB *next;next7,91
+} lib_t;8,112
+static lib_t *root;root10,122
+FACT_DEFINE_BIF 18,341
+  struct elements25,440
+    char *name;name27,462
+    char *arguments;arguments28,478
+    void *(*function)function29,499
+close_libs 87,1957
+
+eval.c,213
+make_syn_tree 4,30
+get_ip_ref 71,1775
+get_ip 81,1957
+set_ip 87,2049
+move_ip 96,2230
+next_inst 102,2388
+get_else 112,2563
+eval_expression 188,4108
+procedure 340,8457
+lambda_proc 403,10213
+eval 430,10976
+
+BIFs.c,252
+FACT_DEFINE_BIF 8,173
+FACT_DEFINE_BIF 33,853
+check_func_array 69,1978
+check_var_array 80,2193
+FACT_DEFINE_BIF 91,2410
+FACT_DEFINE_BIF 149,3986
+FACT_DEFINE_BIF 166,4415
+lock_var_array 201,5185
+lock_func_array 211,5351
+FACT_DEFINE_BIF 220,5508
+
+bytecode.c,301
+  const byte category_byte;9,213
+  const byte instruction_byte;10,241
+  const char *id_token;id_token11,272
+} instructions 12,296
+  int start;78,2198
+  int end;79,2211
+} ends 80,2222
+get_bcode_label 94,2653
+#define SET_SIZE 134,3700
+compile_to_bytecode 137,3760
+compile_constants 207,5627
+
+comparisons.c,152
+equal 4,26
+not_equal 28,558
+more 51,1078
+more_equal 65,1353
+less 79,1638
+less_equal 93,1918
+statement_length 107,2207
+and 187,3897
+or 233,4982
+
+error_check.c,152
+static char * error;3,19
+print_parsing_error 6,46
+check_for_incompletions 13,212
+check_for_errors 75,1955
+    OP_START,96,2466
+    NON_OP 97,2480
+
+errorman.c,45
+FACT_throw_error 4,26
+errorman_dump 28,448
+
+eval.c,213
+make_syn_tree 4,30
+get_ip_ref 71,1775
+get_ip 81,1957
+set_ip 87,2049
+move_ip 96,2230
+next_inst 102,2388
+get_else 112,2563
+eval_expression 188,4108
+procedure 340,8457
+lambda_proc 403,10213
+eval 430,10976
+
+execfile.c,17
+run_file 13,276
+
+functions.c,169
+liven_func 4,29
+ prepare_function 53,1423
+new_scope 243,6741
+run_func 298,8184
+in_scope 347,9474
+lambda 360,9731
+up 373,9969
+this 388,10188
+NULL_func 399,10341
+
+main.c,90
+process_args 4,24
+gmp_realloc_wrapper 99,1920
+gmp_free_wrapper 105,2013
+main 112,2106
+
+malloc_replacements.c,57
+FACT_malloc 4,26
+FACT_realloc 20,323
+FACT_free 36,641
+
+management.c,233
+get_local_var 4,27
+get_local_func 18,271
+get_var 32,517
+get_func 46,729
+alloc_var 60,935
+alloc_func 80,1403
+free_var 111,2078
+free_func 129,2502
+add_var 157,3030
+add_func 203,4026
+resize_var 253,5168
+resize_func 305,6318
+
+math.c,335
+isnum 4,24
+get_prec 34,564
+num_to_var 56,860
+add 76,1326
+sub 88,1553
+mult 101,1779
+divide 113,2003
+mod 126,2266
+bit_and 139,2519
+bit_ior 151,2746
+bit_xor 163,2973
+add_assignment 175,3200
+sub_assignment 186,3403
+mult_assignment 197,3608
+div_assignment 208,3813
+mod_assignment 220,4056
+negative 233,4290
+paren 253,4683
+
+mem.c,403
+defunc_array 4,26
+defunc 110,3509
+def_array 155,4712
+FACT_t216,6132
+clone_var 247,6842
+set 266,7228
+get_array_size 322,8999
+return_array 345,9534
+    var_t  *var_root;var_root366,10278
+    func_t *func_root;func_root367,10300
+    var_t  *var_value;var_value371,10346
+    func_t *func_value;func_value372,10369
+get_array_var 469,12653
+get_array_func 537,14539
+combine_arrays 603,16223
+
+modules.c,354
+typedef struct _LIB3,19
+  void        *library;library5,41
+  char        *file_path;file_path6,65
+  struct _LIB *next;next7,91
+} lib_t;8,112
+static lib_t *root;root10,122
+FACT_DEFINE_BIF 18,341
+  struct elements25,440
+    char *name;name27,462
+    char *arguments;arguments28,478
+    void *(*function)function29,499
+close_libs 87,1957
+
+mpc_functions.c,539
+static unsigned int default_prec 3,19
+power_of_ten 6,63
+mpc_set_default_prec 15,216
+mpc_get_default_prec 21,298
+mpc_init 27,355
+mpc_set 34,444
+mpc_set_ui 41,554
+mpc_set_si 48,664
+mpc_set_str 55,772
+mpc_add 63,992
+mpc_sub 90,1729
+mpc_neg 117,2466
+mpc_mul 130,2691
+mpc_div 142,2902
+mpc_mod 186,4124
+mpc_and 213,4863
+mpc_ior 240,5600
+mpc_xor 267,6337
+mpc_cmp 294,7073
+mpc_cmp_ui 317,7562
+mpc_cmp_si 328,7745
+mpc_get_ui 339,7942
+mpc_get_si 353,8188
+concatinate_free 367,8432
+mpc_get_str 382,8659
+mpc_get_mpz 431,9779
+
+parser.c,367
+is_in_quotes 8,96
+is_opt 50,1123
+get_words 85,1744
+pop_s 182,4812
+push_s 198,5050
+op_get_prec 209,5228
+op_is_lr 250,6319
+check 262,6457
+#define STACK_REALLOC(276,6703
+#define START 281,6973
+#define OP 282,6989
+#define VAR 283,7005
+parse 587,16107
+get_end_block 745,20399
+get_newlines 766,20684
+get_exp_length 803,21442
+get_exp_length_first 829,22091
+
+primitives.c,209
+static struct  _prims4,60
+  const char *name;name6,84
+  FACT_t    (*function)function7,104
+} primitives 8,152
+comp_prims 32,817
+init_BIFs 44,1015
+isprim 79,2157
+run_prim 101,2815
+eval_math 126,3482
+
+scroll.c,44
+void scroll_array 3,19
+void scroll 17,384
+
+shell.c,51
+print_logo 4,38
+get_input 16,507
+shell 103,2338
+
+sprout.c,221
+FACT_get_curr_thread 5,80
+thread_wrapper 25,476
+sprout 60,1270
+FACT_DEFINE_BIF 114,2664
+FACT_DEFINE_BIF 122,2814
+FACT_DEFINE_BIF 149,3468
+FACT_DEFINE_BIF 171,3972
+FACT_DEFINE_BIF 202,4681
+thread_cleanup 260,6040
+
+statements.c,96
+if_statement 4,26
+error 53,1121
+else_clause 115,2662
+while_loop 138,3133
+for_loop 178,4129
+
+stdlib/variadic.c,56
+get_arg_type 4,30
+get_arg_num 17,430
+get_arg 50,1393
+
+stdlib/file_io.c,103
+run_file_soft 4,29
+run_file_loud 15,238
+open_file 26,446
+close_file 50,1031
+get_char_file 63,1300
+
+stdlib/stdlib.c,69
+ft_putchar 4,28
+throw_error 15,185
+struct elements MOD_MAP 31,519
+
+stdlib/casts.c,39
+var_to_string 4,27
+var_to_int 28,520
+
+stdlib/lock.c,65
+lock_var_array 4,31
+lock_func_array 15,209
+lock_object 26,385
+
+stdlib/random.c,18
+simple_rand 4,28
+
+string.c,94
+new_string 4,26
+print_character 82,1612
+input_character 98,1933
+FACT_t print_var 110,2176
+
+utilities.c,291
+set_array 4,24
+count_until_NULL 11,99
+compare_var_arrays 19,210
+combine_strs 37,734
+rm_cslashes 59,1233
+copy 125,2472
+array_to_string 147,2809
+string_to_array 168,3330
+string_array_to_var 193,3786
+FACT_get_ui 219,4311
+FACT_get_si 234,4551
+tokcmp_safe 249,4788
+strcount 271,5302
+
+API_Include/utilities.h,300
+#define UTILITIES_H_2,21
+FACT_API_FUNC 18,303
+#define isvar_t(42,931
+#define isfunc_t(43,975
+#define iserror_t(44,1024
+#define FACT_conv_ui(46,1071
+#define FACT_conv_si(47,1127
+#define FACT_conv_str(48,1183
+#define var_get_ui(50,1241
+#define var_get_si(51,1287
+#define var_get_str(52,1333
+
+API_Include/malloc_replacements.h,173
+#define MALLOC_REPLACEMENTS_H_2,31
+#define MAX_BYTES 17,306
+FACT_API_FUNC 19,333
+#define better_malloc(30,626
+#define better_realloc(31,669
+#define better_free(32,729
+
+API_Include/management.h,47
+#define MANAGEMENT_H_2,23
+FACT_API_FUNC 8,92
+
+API_Include/typedefs.h,1945
+#define TYPEDEFS_H_2,20
+typedef enum FACT_type8,98
+    VAR_TYPE 10,128
+    FUNCTION_TYPE 11,148
+    ERROR_TYPE 12,168
+  } type_t;13,188
+  mpz_t        object;22,335
+  unsigned int precision;23,358
+} mpc_t;24,386
+typedef struct FACT_var27,454
+  bool  locked;29,480
+  mpz_t array_size;30,496
+  mpc_t data;31,516
+  char *name;name33,531
+  struct FACT_var *next;next34,545
+  struct FACT_var *array_up;array_up35,570
+} var_t;36,599
+typedef struct FACT_func38,609
+  int   line;40,638
+  bool  locked;41,652
+  mpz_t array_size;42,668
+  int   *lines;lines44,689
+  char  *name;name45,705
+  char  *file_name;file_name46,720
+  char  **args;args47,740
+  char  **body;body48,756
+  void  *usr_data;usr_data49,772
+  var_t *vars;vars50,791
+  void *(*extrn_func)extrn_func52,807
+  struct FACT_func *funcs;funcs53,850
+  struct FACT_func *up;up54,878
+  struct FACT_func *caller;caller55,902
+  struct FACT_func *array_up;array_up56,930
+  struct FACT_func *next;next57,960
+  struct FACT_mixed58,986
+    type_t type;60,1010
+    var_t *var_p;var_p62,1032
+    struct FACT_func  *func_p;func_p63,1050
+    struct FACT_mixed *next;next64,1081
+  } *variadic;variadic65,1110
+} func_t;66,1125
+typedef struct FACT_error 68,1136
+  int line;70,1165
+  char   *description;description71,1177
+  func_t *scope;scope72,1200
+} error_t;73,1219
+  bool    break_signal;78,1330
+  bool    return_signal;79,1354
+  type_t  type;80,1379
+  error_t error;81,1395
+  var_t  *v_point;v_point83,1415
+  func_t *f_point;f_point84,1434
+} FACT_t;85,1455
+typedef struct FACT_syn_tree88,1540
+  int  *lines;lines90,1571
+  char **base;base91,1586
+  char **syntax;syntax92,1601
+} syn_tree_t;93,1620
+struct elements95,1635
+  char    *name;name97,1653
+  char    *arguments;arguments98,1670
+  FACT_t (*function)function99,1692
+  char *arguments;arguments105,1809
+  void *(*function)function106,1828
+} BIF;107,1859
+
+API_Include/mpc_functions.h,679
+#define MPC_FUNCTIONS_H_2,25
+FACT_API_FUNC 20,405
+#define mpc_init(56,1770
+#define mpc_set(58,1806
+#define mpc_set_ui(59,1852
+#define mpc_set_si(60,1904
+#define mpc_set_str(61,1956
+#define mpc_add(63,2016
+#define mpc_sub(64,2072
+#define mpc_neg(65,2128
+#define mpc_mul(66,2184
+#define mpc_div(67,2240
+#define mpc_mod(68,2296
+#define mpc_init_real 72,2419
+#define mpc_set_real 74,2451
+#define mpc_set_ui_real 75,2480
+#define mpc_set_si_real 76,2515
+#define mpc_set_str_real 77,2550
+#define mpc_add_real 79,2588
+#define mpc_sub_real 80,2617
+#define mpc_neg_real 81,2646
+#define mpc_mul_real 82,2675
+#define mpc_div_real 83,2704
+#define mpc_mod_real 84,2733
+
+API_Include/FACT.h,178
+#define FACT_H_2,17
+#define FACT_API_FUNC(4,36
+# define FACT_API_DEPRECATED(6,132
+# define FACT_API_DEPRECATED(8,212
+FACT_noline_throw 25,577
+#define FACT_ret_error 40,838
+
+API_Include/execfile.h,45
+#define EXECFILE_H_2,20
+FACT_API_FUNC 6,60
+
+Include/utilities.h,151
+#define UTILITIES_H_2,21
+FACT_INTERN_FUNC 6,62
+#define tokcmp(35,1172
+#define isvar_t(37,1241
+#define isfunc_t(38,1285
+#define iserror_t(39,1334
+
+Include/mem.h,43
+#define MEM_H_2,15
+FACT_INTERN_FUNC 6,50
+
+Include/comparisons.h,51
+#define COMPARISONS_H_2,23
+FACT_INTERN_FUNC 6,66
+
+Include/bytecode.h,852
+#define BYTECODE_H_2,20
+#define BYTECODE 25,910
+typedef enum bytecode_type 27,932
+    STOP 29,964
+    STOP      = 0x0,x029,964
+    IGNORE 30,1024
+    IGNORE    = 0x1,x130,1024
+    STATEMENT 31,1066
+    STATEMENT = 0x2,x231,1066
+    MATH_CALL 32,1143
+    MATH_CALL = 0x3,x332,1143
+    PRIMITIVE 33,1182
+    PRIMITIVE = 0x4,x433,1182
+    CONSTANT 34,1227
+    CONSTANT  = 0x5,x534,1227
+  } bytecode_type;35,1279
+enum instruction_set40,1395
+    BRK 42,1420
+    BRK = 0x0,x042,1420
+    ELS 43,1445
+    ELS = 0x1,x143,1445
+    ENN 44,1469
+    ENN = 0x2,x244,1469
+    FRL 45,1494
+    FRL = 0x3,x345,1494
+    GIV 46,1522
+    GIV = 0x4,x446,1522
+    IFS 47,1545
+    IFS = 0x5,x547,1545
+    RTN 48,1577
+    RTN = 0x6,x648,1577
+    WHL 49,1603
+    WHL = 0x7,x749,1603
+#define byte 52,1639
+FACT_INLINE_FUNC 54,1658
+
+Include/malloc_replacements.h,148
+#define MALLOC_REPLACEMENTS_H_2,31
+FACT_INTERN_FUNC 6,82
+#define better_malloc 10,238
+#define better_realloc(11,285
+#define better_free(12,344
+
+Include/management.h,113
+#define MANAGEMENT_H_2,23
+FACT_INTERN_FUNC 6,69
+#define resize_array 21,811
+#define resize_func_array 22,851
+
+Include/typedefs.h,1945
+#define TYPEDEFS_H_2,20
+typedef enum FACT_type8,98
+    VAR_TYPE 10,128
+    FUNCTION_TYPE 11,148
+    ERROR_TYPE 12,168
+  } type_t;13,188
+  mpz_t        object;22,335
+  unsigned int precision;23,358
+} mpc_t;24,386
+typedef struct FACT_var27,454
+  bool  locked;29,480
+  mpz_t array_size;30,496
+  mpc_t data;31,516
+  char *name;name33,531
+  struct FACT_var *next;next34,545
+  struct FACT_var *array_up;array_up35,570
+} var_t;36,599
+typedef struct FACT_func38,609
+  int   line;40,638
+  bool  locked;41,652
+  mpz_t array_size;42,668
+  int   *lines;lines44,689
+  char  *name;name45,705
+  char  *file_name;file_name46,720
+  char  **args;args47,740
+  char  **body;body48,756
+  void  *usr_data;usr_data49,772
+  var_t *vars;vars50,791
+  void *(*extrn_func)extrn_func52,807
+  struct FACT_func *funcs;funcs53,850
+  struct FACT_func *up;up54,878
+  struct FACT_func *caller;caller55,902
+  struct FACT_func *array_up;array_up56,930
+  struct FACT_func *next;next57,960
+  struct FACT_mixed58,986
+    type_t type;60,1010
+    var_t *var_p;var_p61,1031
+    struct FACT_func  *func_p;func_p62,1049
+    struct FACT_mixed *next;next63,1080
+  } *variadic;variadic64,1109
+} func_t;65,1124
+typedef struct FACT_error 67,1135
+  int line;69,1164
+  char   *description;description70,1176
+  func_t *scope;scope71,1199
+} error_t;72,1218
+  bool    break_signal;76,1248
+  bool    return_signal;77,1272
+  type_t  type;78,1297
+  error_t error;79,1313
+  var_t  *v_point;v_point81,1333
+  func_t *f_point;f_point82,1352
+} FACT_t;83,1373
+typedef struct FACT_syn_tree85,1386
+  int  *lines;lines87,1417
+  char **base;base88,1432
+  char **syntax;syntax89,1447
+} syn_tree_t;90,1466
+struct elements92,1481
+  char    *name;name94,1499
+  char    *arguments;arguments95,1516
+  FACT_t (*function)function96,1538
+  char *arguments;arguments102,1655
+  void *(*function)function103,1674
+} BIF;104,1705
+
+Include/mpc_functions.h,53
+#define MPC_FUNCTIONS_H_2,25
+FACT_INTERN_FUNC 6,70
+
+Include/FACT.h,392
+#define FACT_H_2,17
+#define FACT_INTERN_FUNC(25,629
+#define FACT_INLINE_FUNC(26,666
+# define FACT_INTERN_DEPRECATED(29,775
+# define FACT_INTERN_DEPRECATED(31,858
+#define FACT_DEFINE_BIF(34,975
+#define FACT_EXTERN_BIF(41,1248
+#define FACT_BIF(42,1296
+#define BYTES_IN_POINTER 44,1335
+#define SAFE 45,1395
+#define PARSE_CHECK46,1493
+#define DEBUG47,1514
+#define GC_THREADS 48,1529
+
+Include/execfile.h,48
+#define EXECFILE_H_2,20
+FACT_INTERN_FUNC 6,60
+
+Include/shell.h,45
+#define SHELL_H_2,17
+FACT_INTERN_FUNC 6,54
+
+Include/errorman.h,132
+#define ERRORMAN_H_2,20
+FACT_noline_throw 7,81
+#define FACT_ret_error 19,307
+#define FACT_throw 20,355
+FACT_INTERN_FUNC 22,399
+
+Include/parser.h,46
+#define PARSER_H_2,18
+FACT_INTERN_FUNC 6,56
+
+Include/error_check.h,51
+#define ERROR_CHECK_H_2,23
+FACT_INTERN_FUNC 6,66
+
+Include/eval.h,69
+#define EVAL_H_2,16
+FACT_INLINE_FUNC 7,94
+#define reset_ip(15,419
+
+Include/modules.h,47
+#define MODULES_H_2,19
+FACT_INTERN_FUNC 7,84
+
+Include/primitives.h,50
+#define PRIMITIVES_H_2,22
+FACT_INTERN_FUNC 6,64
+
+Include/FACT_math.h,44
+#define MATH_H_2,16
+FACT_INTERN_FUNC 6,52
+
+Include/sprout.h,572
+# define SPROUT_H_2,18
+typedef struct thread16,401
+  bool            exited;18,425
+  bool            destroy;19,494
+  FACT_t          return_status;20,575
+  pthread_t       tid;21,637
+  unsigned long   ip;22,684
+  unsigned long   nid;23,750
+  pthread_mutex_t queue_lock;24,829
+  struct thread *next;next26,898
+  struct thread *prev;prev27,980
+  struct queue 28,1059
+    struct queue *next;next30,1144
+    var_t *value;value31,1219
+  } *root;root32,1271
+} FACT_thread_t;33,1354
+FACT_thread_t *root_thread;root_thread39,1440
+FACT_INTERN_FUNC 45,1579
+
+Include/functions.h,49
+#define FUNCTIONS_H_2,21
+FACT_INTERN_FUNC 6,62
+
+Include/BIFs.h,68
+#define BIFS_H_2,16
+#define NOARGS 10,90
+FACT_INSTALL_BIF 17,196
+
+Include/statements.h,50
+#define STATEMENTS_H_2,22
+FACT_INTERN_FUNC 6,64
+
+stdlib/stdlib.h,23
+#define STDLIB_H_2,18
+
+stdlib/random.h,43
+#define RANDOM_H_2,18
+FACT_API_FUNC 6,58
+
+stdlib/casts.h,42
+#define CASTS_H_2,17
+FACT_API_FUNC 6,56
+
+stdlib/variadic.h,45
+#define VARIADIC_H_2,20
+FACT_API_FUNC 6,62
+
+stdlib/file_io.h,44
+#define FILE_IO_H_2,19
+FACT_API_FUNC 6,60
+
+stdlib/lock.h,41
+#define LOCK_H_2,16
+FACT_API_FUNC 6,54
+
+BIFs.c,252
+FACT_DEFINE_BIF 8,173
+FACT_DEFINE_BIF 33,853
+check_func_array 69,1978
+check_var_array 80,2193
+FACT_DEFINE_BIF 91,2410
+FACT_DEFINE_BIF 149,3986
+FACT_DEFINE_BIF 166,4415
+lock_var_array 201,5185
+lock_func_array 211,5351
+FACT_DEFINE_BIF 220,5508
+
+bytecode.c,301
+  const byte category_byte;9,213
+  const byte instruction_byte;10,241
+  const char *id_token;id_token11,272
+} instructions 12,296
+  int start;78,2198
+  int end;79,2211
+} ends 80,2222
+get_bcode_label 94,2653
+#define SET_SIZE 134,3700
+compile_to_bytecode 137,3760
+compile_constants 207,5627
+
+comparisons.c,152
+equal 4,26
+not_equal 28,558
+more 51,1078
+more_equal 65,1353
+less 79,1638
+less_equal 93,1918
+statement_length 107,2207
+and 187,3897
+or 233,4982
+
+error_check.c,152
+static char * error;3,19
+print_parsing_error 6,46
+check_for_incompletions 13,212
+check_for_errors 75,1955
+    OP_START,96,2466
+    NON_OP 97,2480
+
+errorman.c,45
+FACT_throw_error 4,26
+errorman_dump 28,448
+
+eval.c,213
+make_syn_tree 4,30
+get_ip_ref 71,1775
+get_ip 81,1957
+set_ip 87,2049
+move_ip 96,2230
+next_inst 102,2388
+get_else 112,2563
+eval_expression 188,4108
+procedure 340,8457
+lambda_proc 403,10213
+eval 430,10976
+
+execfile.c,17
+run_file 13,276
+
+functions.c,169
+liven_func 4,29
+ prepare_function 53,1423
+new_scope 243,6741
+run_func 298,8184
+in_scope 347,9474
+lambda 360,9731
+up 373,9969
+this 388,10188
+NULL_func 399,10341
+
+main.c,90
+process_args 4,24
+gmp_realloc_wrapper 99,1920
+gmp_free_wrapper 105,2013
+main 112,2106
+
+malloc_replacements.c,57
+FACT_malloc 4,26
+FACT_realloc 20,323
+FACT_free 36,641
+
+management.c,233
+get_local_var 4,27
+get_local_func 18,271
+get_var 32,517
+get_func 46,729
+alloc_var 60,935
+alloc_func 80,1403
+free_var 111,2078
+free_func 129,2502
+add_var 157,3030
+add_func 203,4026
+resize_var 253,5168
+resize_func 305,6318
+
+math.c,335
+isnum 4,24
+get_prec 34,564
+num_to_var 56,860
+add 76,1326
+sub 88,1553
+mult 101,1779
+divide 113,2003
+mod 126,2266
+bit_and 139,2519
+bit_ior 151,2746
+bit_xor 163,2973
+add_assignment 175,3200
+sub_assignment 186,3403
+mult_assignment 197,3608
+div_assignment 208,3813
+mod_assignment 220,4056
+negative 233,4290
+paren 253,4683
+
+mem.c,403
+defunc_array 4,26
+defunc 110,3509
+def_array 155,4712
+FACT_t216,6132
+clone_var 247,6842
+set 266,7228
+get_array_size 322,8999
+return_array 345,9534
+    var_t  *var_root;var_root366,10278
+    func_t *func_root;func_root367,10300
+    var_t  *var_value;var_value371,10346
+    func_t *func_value;func_value372,10369
+get_array_var 469,12653
+get_array_func 537,14539
+combine_arrays 603,16223
+
+modules.c,354
+typedef struct _LIB3,19
+  void        *library;library5,41
+  char        *file_path;file_path6,65
+  struct _LIB *next;next7,91
+} lib_t;8,112
+static lib_t *root;root10,122
+FACT_DEFINE_BIF 18,341
+  struct elements25,440
+    char *name;name27,462
+    char *arguments;arguments28,478
+    void *(*function)function29,499
+close_libs 87,1957
+
+mpc_functions.c,539
+static unsigned int default_prec 3,19
+power_of_ten 6,63
+mpc_set_default_prec 15,216
+mpc_get_default_prec 21,298
+mpc_init 27,355
+mpc_set 34,444
+mpc_set_ui 41,554
+mpc_set_si 48,664
+mpc_set_str 55,772
+mpc_add 63,992
+mpc_sub 90,1729
+mpc_neg 117,2466
+mpc_mul 130,2691
+mpc_div 142,2902
+mpc_mod 186,4124
+mpc_and 213,4863
+mpc_ior 240,5600
+mpc_xor 267,6337
+mpc_cmp 294,7073
+mpc_cmp_ui 317,7562
+mpc_cmp_si 328,7745
+mpc_get_ui 339,7942
+mpc_get_si 353,8188
+concatinate_free 367,8432
+mpc_get_str 382,8659
+mpc_get_mpz 431,9779
+
+parser.c,367
+is_in_quotes 8,96
+is_opt 50,1123
+get_words 85,1744
+pop_s 182,4812
+push_s 198,5050
+op_get_prec 209,5228
+op_is_lr 250,6319
+check 262,6457
+#define STACK_REALLOC(276,6703
+#define START 281,6973
+#define OP 282,6989
+#define VAR 283,7005
+parse 587,16107
+get_end_block 745,20399
+get_newlines 766,20684
+get_exp_length 803,21442
+get_exp_length_first 829,22091
+
+primitives.c,209
+static struct  _prims4,60
+  const char *name;name6,84
+  FACT_t    (*function)function7,104
+} primitives 8,152
+comp_prims 32,817
+init_BIFs 44,1015
+isprim 79,2157
+run_prim 101,2815
+eval_math 126,3482
+
+scroll.c,44
+void scroll_array 3,19
+void scroll 17,384
+
+shell.c,51
+print_logo 4,38
+get_input 16,507
+shell 103,2338
+
+sprout.c,221
+FACT_get_curr_thread 5,80
+thread_wrapper 25,476
+sprout 60,1270
+FACT_DEFINE_BIF 114,2664
+FACT_DEFINE_BIF 122,2814
+FACT_DEFINE_BIF 149,3468
+FACT_DEFINE_BIF 171,3972
+FACT_DEFINE_BIF 202,4681
+thread_cleanup 260,6040
+
+statements.c,96
+if_statement 4,26
+error 53,1121
+else_clause 115,2662
+while_loop 138,3133
+for_loop 178,4129
+
+stdlib/variadic.c,56
+get_arg_type 4,30
+get_arg_num 17,430
+get_arg 50,1393
+
+stdlib/file_io.c,103
+run_file_soft 4,29
+run_file_loud 15,238
+open_file 26,446
+close_file 50,1031
+get_char_file 63,1300
+
+stdlib/stdlib.c,69
+ft_putchar 4,28
+throw_error 15,185
+struct elements MOD_MAP 31,519
+
+stdlib/casts.c,39
+var_to_string 4,27
+var_to_int 28,520
+
+stdlib/lock.c,65
+lock_var_array 4,31
+lock_func_array 15,209
+lock_object 26,385
+
+stdlib/random.c,18
+simple_rand 4,28
+
+string.c,94
+new_string 4,26
+print_character 82,1612
+input_character 98,1933
+FACT_t print_var 110,2176
+
+utilities.c,291
+set_array 4,24
+count_until_NULL 11,99
+compare_var_arrays 19,210
+combine_strs 37,734
+rm_cslashes 59,1233
+copy 125,2472
+array_to_string 147,2809
+string_to_array 168,3330
+string_array_to_var 193,3786
+FACT_get_ui 219,4311
+FACT_get_si 234,4551
+tokcmp_safe 249,4788
+strcount 271,5302

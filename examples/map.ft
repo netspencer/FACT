@@ -1,0 +1,40 @@
+# It's meant to be terrible!
+
+defunc map @ () {
+  def [(def map_s = 2)] ul;
+  defunc get @ (def n) {
+    def i;
+    while (i < map_s) {
+      if (ul[(i += 2) - 2] == n)
+        give ul[i - 1];
+    }
+    def [(map_s += 2)] temp;
+    def j;
+    while (j < map_s - 2) {
+      temp[j] = ul[(j += 1) - 1];
+    }
+    ul = temp;
+    ul[i] = n;
+    give ul[i + 1];
+  }
+  defunc err @ (def n) {
+    n *= 21;
+    # Testing...
+    return 5 / n;
+  }
+}
+
+# Create an unordered list:
+defunc ulist = &(map);
+
+# Set some values in it:
+$(ulist:get, 2) = 32;
+$(ulist:get, 3) = 43;
+$(ulist:get, "hello") = " world!";
+$(ulist:get, "goodbye") = " dear!";
+
+# Print them out:
+$(print, $(str, $(ulist:get, 2)) ~ "\n");
+$(print, $(str, $(ulist:get, 3)) ~ "\n");
+$(print, $(ulist:get, "hello") ~ "\n");
+$(print, $(ulist:get, "goodbye") ~ "\n");

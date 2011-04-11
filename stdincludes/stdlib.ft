@@ -1,0 +1,64 @@
+##############################################################
+# stdlib.ft:                                                 #
+# includes all the standard library functions and constants. #
+##############################################################
+
+# Constant declarations
+def true = 1;
+def false = 0;
+def var = 0; # Used by BIF "type"
+def func = 1;
+
+$(lock, true, false, var, func);
+
+# Standard functions
+defunc sqr @ (def x) { return x * x; }
+
+defunc abs @ (def num)
+{
+    if (num < 0)
+	num = num * -1;
+
+    return num;
+}
+
+defunc factorial @ (def num)
+{
+    def count = num - 1;
+
+    while (count > 1)
+    {
+	num = num * count;
+	count = count - 1;
+    }
+
+    return num;
+}
+
+# map - sample unordered list implementation.
+# Illustrates scope-oriented programming and
+# the give statement. This was designed to be
+# as terse as possible (because I was bored),
+# a good explanation with some examples is in
+# the file (download dir)/examples/map.ft
+
+defunc map @ () {
+  def [(def map_s = 2)] ul;
+  defunc get @ (def n) {
+    def i;
+    while (i < map_s) {
+      if (ul[(i += 2) - 2] == n)
+        give ul[i - 1];
+    }
+    def [(map_s += 2)] temp;
+    def j;
+    while (j < map_s - 2) {
+      temp[j] = ul[(j += 1) - 1];
+    }
+    ul = temp;
+    ul[i] = n;
+    give ul[i + 1];
+  }
+}
+
+# More to come...

@@ -1,0 +1,12 @@
+#!/usr/bin/FACT -i
+# Simple cat clone.
+
+def c;
+defunc file;
+for def i, argc - 1 then
+{
+    $(printstr, argv[i + 1]);
+    file = $(fopen, argv[i + 1], "r");
+    while ((c = $(fgetc, file)) != (-1))
+    $(putchar, c);
+}

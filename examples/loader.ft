@@ -1,0 +1,26 @@
+# Sample littler loader bar that I think is cool.
+
+@defunc loader (def descriptor, def goal)
+{
+    def i;
+    def total;
+    @defunc twirl (def position)
+    {
+       return "||||||||||//////////----------\\\\\\\\\\\\\\\\\\\\"[position];
+    }
+    @defunc iter ()
+    {
+        if (i == 40)
+          i = 0;
+        $(printstr, "\r" ~ descriptor);
+        $(printstr, "-" ~ $(str, $(int, (total / goal) * 100)) ~ "%-" ~ $(twirl, i));
+        i += 1;
+        total += 1;
+    }
+}
+
+defunc obj = &(loader, "Obfuscating", 100000);
+
+while (1)
+  $(obj:iter);
+     

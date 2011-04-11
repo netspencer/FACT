@@ -1,0 +1,4 @@
+defunc error_test @ (def var) # This should be zero to ensure an error is thrown
+{
+   return 0 / var;
+}
