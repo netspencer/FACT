@@ -219,8 +219,6 @@ eval_expression (func_t *scope, syn_tree_t expression)
   bool   is_instruction;
   FACT_t return_value;
 
-  var_t *temp;
-
   /* Init routines -- Set the default return value to var,
    * and set the signals to their default off.
    */
@@ -306,20 +304,16 @@ eval_expression (func_t *scope, syn_tree_t expression)
 
         case GIV:
           set_ip (1);
-          return_value  = eval (scope, expression);
+          return_value = eval (scope, expression);
           return_signal = true;
           break;
           
         case RTN:
           set_ip (1);
-          return_value  = eval (scope, expression);
+          return_value = eval (scope, expression);
           return_signal = true;
           if (return_value.type == VAR_TYPE)
-            {
-              temp = alloc_var ();
-              mpc_set (&temp->data, return_value.v_point->data);
-              return_value.v_point = temp;
-            }
+            return_value.v_point = clone_var_f (return_value.v_point, NULL);
           break;
 
         case BRK:

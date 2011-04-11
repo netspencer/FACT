@@ -1,0 +1,7 @@
+defunc arr_to_str @ (def arr)
+{
+  def [$(sizeof, arr)] string;
+  for def i, $(sizeof, arr) - 1 then
+    string[i] = $(str, arr[i]);
+  return string;
+}
